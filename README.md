@@ -8,6 +8,8 @@ The analysis is based on the [upstream ABSOLVE-seq repository](https://github.co
 
 Try the agent with public ABSOLVE-seq data from [SRA study SRP722226](https://trace.ncbi.nlm.nih.gov/Traces/?view=study&acc=SRP722226) (BioProject PRJNA1503690). The D3734/T1 example uses just two paired-end runs, NoEP `SRR39887646` and HiFi `SRR39887695`. Follow the [D3734/T1 quick start](docs/d3734-t1-quick-start.md) to download the four FASTQs, verify their archive checksums and export the 316-row comparison.
 
+The same donor and replicate also have a wild-type Cas9 library, [WT SRR39887693](https://www.ebi.ac.uk/ena/browser/view/SRR39887693). The [26-library manuscript workflow](#manuscript-comparison) includes the WT versus NoEP comparison.
+
 Clone this repository and run commands from its root. The analysis runs on a Linux Slurm cluster with a shared filesystem. Activate the environment **before** submitting jobs. Supply your site's partition, account or wall time through the usual `sbatch` options.
 
 ```sh

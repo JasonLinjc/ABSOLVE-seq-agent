@@ -44,14 +44,17 @@ The setup script checks the pinned sample and target tables and the SHA-256 of t
 
 ### Public test data from SRA
 
-The D3734/T1 pair is part of ABSOLVE-seq study SRP722226, BioProject PRJNA1503690. These two runs contain all the reads needed for the 79-target paired analysis. The four compressed ENA files total 1.58 GB. [NCBI study](https://trace.ncbi.nlm.nih.gov/Traces/?view=study&acc=SRP722226) · [ENA file report](https://www.ebi.ac.uk/ena/portal/api/filereport?accession=SRP722226&result=read_run&fields=run_accession,library_name,fastq_ftp,fastq_md5,fastq_bytes)
+ABSOLVE-seq study SRP722226 (BioProject PRJNA1503690) includes NoEP, HiFi Cas9 and wild-type Cas9 (WT) pooled reporter libraries from donor D3734, replicate T1. The paired quick start uses NoEP and HiFi to calculate HiFi minus NoEP across 79 targets. These four compressed ENA files total 1.58 GB. [NCBI study](https://trace.ncbi.nlm.nih.gov/Traces/?view=study&acc=SRP722226) · [ENA file report](https://www.ebi.ac.uk/ena/portal/api/filereport?accession=SRP722226&result=read_run&fields=run_accession,library_name,fastq_ftp,fastq_md5,fastq_bytes)
 
 | Library | SRA run | Read pairs |
 | --- | --- | ---: |
 | `NoEP_pool_D3734_T1` | [SRR39887646](https://www.ebi.ac.uk/ena/browser/view/SRR39887646) | 10,084,551 |
 | `HiFi_pool_D3734_T1` | [SRR39887695](https://www.ebi.ac.uk/ena/browser/view/SRR39887695) | 9,868,448 |
+| `WT_pool_D3734_T1` | [SRR39887693](https://www.ebi.ac.uk/ena/browser/view/SRR39887693) | 19,418,487 |
 
-From the repository root on a networked node, download both mates of each run. Keep their ENA filenames. The manifest helper checks each compressed file against its published MD5 and records its SHA-256 for subsequent runs. [Download URLs and checksums](../examples/d3734_t1_ena.tsv)
+The 26-library manuscript analysis includes WT and estimates WT minus NoEP across donors and replicates. See the [manuscript comparison](../README.md#manuscript-comparison) for the full input requirements.
+
+For the paired quick start, download both mates of the NoEP and HiFi runs from the repository root on a networked node. Keep their ENA filenames. The manifest helper checks each compressed file against its published MD5 and records its SHA-256 for subsequent runs. [Download URLs and checksums](../examples/d3734_t1_ena.tsv)
 
 ```bash
 export FASTQ_ROOT="$PWD/data/sra/SRP722226"
