@@ -28,14 +28,34 @@ For each sample and target, the worker passes both mates to CRISPResso2 2.2.13, 
 
 ## Inspect the results
 
-Panel output includes 8,216 target/strategy/library count rows and 632 modeled contrasts in `results/`. The model uses the same donor-adjusted treatment margins, one-sided test and within-strategy/editor BH correction as the fast panel. With a baseline, `results/call_changes.tsv` labels each contrast as concordant in both runs, resolved, persistent or new. Agreement uses strict thresholds of Δ greater than 0.1 percentage points and q below 0.05.
+Panel output includes 8,216 target/strategy/library count rows and 632 modeled contrasts in `results/`. For each treatment, manuscript mode averages the fitted logits for D3734, D3742 and D3908 with weight 1/3 each, then applies the inverse logit. It subtracts the NoEP rate from the edited treatment rate. In `donor_weights.tsv`, `marginal_weight` is the weight used for prediction and `family_row_weight` is the observed share of pBC-family rows. The fast panel uses the observed shares. Both modes use a one-sided treatment-coefficient Wald test and BH correction within each 79-target strategy/editor group. A hit requires Δ greater than 0.1 percentage points and q below 0.05. With a fast baseline, `results/call_changes.tsv` labels contrasts as concordant, resolved, persistent or new.
 
 Each completed library stage and target writes its output atomically. A failed alignment task can be retried for its original array index with the same run configuration. Consult the stage logs and submit the final aggregation after all affected indices complete.
 
+### Refit an existing manuscript panel from counts
+
+Run the following in the repository root with R and brglm2 available. Use a new destination directory and the workbook extracts from the original run. This recomputes all four strategies, both editors, treatment margins, and p and q values from the saved counts.
+
+```sh
+mkdir runs/equal-donor-refit
+cp runs/manuscript-replay/results/library_counts.tsv runs/equal-donor-refit/
+Rscript panel_report/manuscript_model.R runs/equal-donor-refit data/submitted_model_reference equal-donor
+```
+
 ## Luminary validation
 
-The replay used 52 checksum-verified FASTQs, 26 original libraries and 79 targets. An independent check read Supplementary Tables 2 through 5, recalculated both sets of BH q values from their one-sided p values, and compared each of the 632 calls. The replay resolved 21 of the 24 fast-mode discrepancies. Three persisted and three appeared in previously concordant contrasts. Four D3734/T1 families at two targets also matched a separate per-family CRISPResso2 replay in both retained indel reads and retained total reads.
+The paired-end replay used 52 checksum-verified FASTQs, 26 original libraries and 79 targets. Four D3734/T1 families at two targets matched a separate per-family CRISPResso2 replay in both retained indel reads and retained total reads. The initial family-weighted panel agreed with Supplementary Tables 2 through 5 on 626 of 632 calls.
 
-The six remaining differences comprised two Unfiltered WT calls, one Unfiltered HiFi call, two Dedup WT calls and one Dedup HiFi call. In three contrasts only the effect-size threshold changed, and in three both thresholds changed. The local comparison table records the target, editor, rates and q values for each contrast.
+The equal-donor refit reused the same 8,216 count rows. An independent check reconstructed all 632 treatment contrasts from the previous donor-specific logits and checked the submitted rates and BH q values against the four workbooks. All one-sided p and BH q values matched the previous paired-end panel exactly. The fast-mode regression check reproduced its archived panel and model-field tables byte for byte.
 
-All 316 calls across Dedud and Dedud+Dedup agreed at the joint thresholds. Individual fitted rates and q values still differ. The replay changes trimming, read admission, paired merging and the CRISPResso2 version together, so this comparison measures their combined effect.
+One contrast, Unfiltered HiFi at `1617_OT_0356_ALT`, moved from Δ 0.099694 to 0.103867 percentage points (submitted 0.106626) with q 5.10 × 10⁻¹⁰. This restored the submitted hit. No previously concordant call became discordant. The five remaining differences are listed below. Rates are rounded for display, and calls use full precision.
+
+| Strategy | Editor | Target | Equal-donor Δ (pp) | Submitted Δ (pp) | Hit in |
+| --- | --- | --- | ---: | ---: | --- |
+| Unfiltered | WT | `1450_OT_0163_ALT` | 0.088032 | 0.110287 | Submitted |
+| Unfiltered | WT | `1450_OT_0176_ALT` | 0.088096 | 0.130761 | Submitted |
+| Dedup | WT | `1450_OT_0142_ALT` | 0.060436 | 0.110040 | Submitted |
+| Dedup | WT | `1450_OT_0210_ALT` | 0.061957 | 0.118504 | Submitted |
+| Dedup | HiFi | `1617_OT_0041_REF` | 0.119431 | 0.085360 | Equal-donor replay |
+
+The final panel agreed on 627 of 632 calls, including all 316 Dedud and Dedud+Dedup contrasts. Agreement here refers to the joint Δ and q thresholds.

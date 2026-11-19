@@ -67,7 +67,7 @@ python panel_report/references.py /path/to/submitted/workbooks data/submitted_mo
 python paired.py --manuscript-panel --read-mode manuscript --output runs/manuscript-replay
 ```
 
-The model uses Firth binomial regression with treatment and donor, the observed donor frequencies among eligible pBC-family rows for treatment margins on the logit scale, and a one-sided Wald test with BH correction across 79 targets per editor and strategy. The primary comparison uses Δ greater than 0.1 percentage points and BH q below 0.05.
+The manuscript panel fits a Firth binomial regression with treatment and donor. For each treatment, it averages the three donor-specific logits with weight 1/3 each and converts the mean back to a probability. Δ is the edited treatment rate minus the NoEP rate, in percentage points. The one-sided Wald test uses the treatment coefficient, with BH correction across 79 targets per editor and strategy. A hit requires Δ above 0.1 percentage points and q below 0.05. The fast panel uses the observed pBC-family counts to weight donors.
 
 | Output under the manuscript run’s `results/` directory | Contents |
 | --- | --- |
@@ -77,7 +77,7 @@ The model uses Firth binomial regression with treatment and donor, the observed 
 | `library_counts.tsv` | Per-library counts before and after cross-target filtering |
 | `donor_weights.tsv`, `sample_inventory.tsv`, `provenance.json` | Marginalization weights, library inventory and source hashes |
 
-On Luminary, the paired-end replay agreed with the submitted tables on 626 of 632 calls, compared with 608 for fast mode. It resolved 21 of the original 24 discrepancies and introduced three new ones. All 316 Dedud and Dedud+Dedup calls agreed. See the [paired-end validation](docs/manuscript-reads.md#luminary-validation) for the six remaining contrasts and the [discordance audit](docs/manuscript-discordance.md) for count-level checks.
+On Luminary, the equal-donor manuscript panel agreed with the submitted tables on **627 of 632 calls**. Refitting the paired-end counts resolved one of the six earlier discrepancies and introduced none. All 316 Dedud and Dedud+Dedup calls agreed. The fast panel reproduced its earlier 608 agreements. See the [validation and five remaining contrasts](docs/manuscript-reads.md#luminary-validation) and the [count-level audit](docs/manuscript-discordance.md).
 
 ## Local inputs and caches
 

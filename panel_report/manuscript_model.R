@@ -1,8 +1,8 @@
-# Manuscript step 7 for its additive treatment/donor model. Fit using sufficient
-# binomial cell counts, then restore the original pBC-row frequencies for ggeffect.
+# Fit the additive treatment/donor model from sufficient binomial cell counts.
 args <- commandArgs(TRUE)
-stopifnot(length(args)==2L, requireNamespace("brglm2",quietly=TRUE))
+stopifnot(length(args) %in% 2:3, requireNamespace("brglm2",quietly=TRUE))
 stage <- args[1]; refs <- args[2]
+margin <- if (length(args)==3L) match.arg(args[3],c("equal-donor","family-rows")) else "family-rows"
 d <- read.delim(file.path(stage,"library_counts.tsv"),stringsAsFactors=FALSE)
 stage_table <- c(Dedud=2L,Unfiltered=3L,Dedup=4L,"Dedud+Dedup"=5L)
 arms <- c("NoEP","HiFi","WTCas9")
@@ -25,7 +25,7 @@ rows <- list(); details <- list(); weights <- list()
 for (s in names(stage_table)) for (target in targets) {
     sub <- d[d$strategy==s & d$target==target,]
     x <- aggregate(cbind(indel,denominator,family_rows)~donor+treat,sub,sum)
-    stopifnot(nrow(x)==9,all(x$denominator>0))
+    stopifnot(all(table(x$donor,x$treat)==1L),nlevels(x$donor)==3L,all(x$denominator>0))
     warns <- character()
     model <- withCallingHandlers(glm(cbind(indel,denominator-indel)~treat+donor,data=x,family=binomial(),
                     method=brglm2::brglmFit,type="AS_mean",control=brglm2::brglmControl(maxit=300,epsilon=1e-9)),
@@ -38,11 +38,17 @@ for (s in names(stage_table)) for (target in targets) {
     p <- 1-pnorm(z)
     Xmar <- X[match(arms,x$treat),,drop=FALSE]
     donor_cols <- startsWith(colnames(X),"donor")
-    for (j in which(donor_cols)) Xmar[,j] <- weighted.mean(X[,j],x$family_rows)
     donor_weights <- tapply(x$family_rows,x$donor,sum)/sum(x$family_rows)
+    if (margin=="equal-donor") {
+        # One design row per donor and treatment. Average the three rows on the link scale.
+        for (i in seq_along(arms)) Xmar[i,] <- colMeans(X[x$treat==arms[i],,drop=FALSE])
+    } else {
+        for (j in which(donor_cols)) Xmar[,j] <- weighted.mean(X[,j],x$family_rows)
+    }
     id <- paste(target,s)
     weights[[id]] <- data.frame(target=target,strategy=s,donor=names(donor_weights),
                 family_row_weight=as.numeric(donor_weights),iterations=model$iter,warning=paste(unique(warns),collapse=" | "))
+    if (margin=="equal-donor") weights[[id]]$marginal_weight <- 1/nlevels(x$donor)
     calculated <- c(setNames(beta,paste0("estim-",names(beta))),setNames(z,paste0("zScore-",names(z))),
         setNames(p,paste0("asymPval-",names(p))),tabulate_rates(X,beta,V,paste(x$donor,x$treat,sep="-")),
         tabulate_rates(Xmar,beta,V,arms))
@@ -81,7 +87,8 @@ export <- function(x,name) write.table(x,file.path(stage,paste0(name,".tsv")),se
 export(panel,"panel_comparison"); export(summary,"comparison_summary")
 export(do.call(rbind,details),"model_field_comparison"); export(do.call(rbind,weights),"donor_weights")
 writeLines(c(paste("brglm2",packageVersion("brglm2")), "Model: Firth logistic regression, treatment + donor, NoEP reference.",
-    "Treatment margin: inverse logit after averaging donor design columns over original sample/target/pBC rows across treatments.",
+    if (margin=="equal-donor") "Treatment margin: inverse logit of the equally weighted mean of the three donor-specific logits for each treatment."
+    else "Treatment margin: inverse logit after averaging donor design columns over original sample/target/pBC rows across treatments.",
     "Tests: one-sided coefficient Wald. BH within each 79-target editor/strategy combination.",
     "The field-level comparison covers submitted model coefficients, z, p, donor/treatment and treatment estimates, SE and 95% limits.",
     "The separate simulation-based power columns are outside the indel-rate comparison."),file.path(stage,"model_info.txt"))

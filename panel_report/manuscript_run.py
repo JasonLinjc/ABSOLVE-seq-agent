@@ -68,7 +68,8 @@ def finish(config):
                      worker_sha256=digest(PANEL/"manuscript_reads.py"),model_sha256=digest(PANEL/"manuscript_model.R"))
         if len(libs)==26:
             refs=Path(cfg["refs"])
-            command=["Rscript",str(PANEL/"manuscript_model.R"),str(stage),str(refs)]
+            receipt["donor_margin"]="equal-donor"
+            command=["Rscript",str(PANEL/"manuscript_model.R"),str(stage),str(refs),receipt["donor_margin"]]
             if cfg.get("stats_image"):
                 binds=",".join(str(p) for p in sorted({stage.resolve(),refs.resolve(),PANEL.resolve()}))
                 command=["apptainer","exec","--cleanenv","--bind",binds,cfg["stats_image"],*command]
