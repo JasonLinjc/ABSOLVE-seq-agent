@@ -1,0 +1,11 @@
+name: absolve-agent
+channels:
+  - conda-forge
+  - bioconda
+dependencies:
+  - python>=3.10
+  - crispresso2=2.3.4
+  - r-base
+  - r-brglm2
+  - openpyxl
+  - matplotlib

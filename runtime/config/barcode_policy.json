@@ -1,0 +1,22 @@
+{
+  "schema_version": 1,
+  "pbc_length": 16,
+  "constant": "CCAACCTCATAGAACACTCATCC",
+  "constant_max_mismatches": 2,
+  "adapter": "AGATCGGAAGAGC",
+  "min_pbc_base_q": 20,
+  "min_pbc_mean_q": 30,
+  "min_tbc_base_q": 20,
+  "min_tbc_mean_q": 30,
+  "min_target_base_q": 20,
+  "min_target_mean_q": 30,
+  "min_exact_support": 3,
+  "min_exact_fraction": 0.95,
+  "entropy_percentile": 5.0,
+  "max_eligible_tbc": 2,
+  "structures": {
+    "original": "",
+    "CACC": "CACC",
+    "STUFFER_CACC": "ATGCATTATGCAATTAGTCACACC"
+  }
+}

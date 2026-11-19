@@ -1,0 +1,3 @@
+dataset	pair_key	r1	r2	sha256_r1	sha256_r2	sra_row	sample_name	library_ID	status
+NoEP	example_noep	/path/to/noep_R1.fq.gz	/path/to/noep_R2.fq.gz	REPLACE_WITH_SHA256	REPLACE_WITH_SHA256		NoEP_pool_D3734_T1	NoEP_pool_D3734_T1	matched
+HiFi	example_hifi	/path/to/hifi_R1.fq.gz	/path/to/hifi_R2.fq.gz	REPLACE_WITH_SHA256	REPLACE_WITH_SHA256		HiFi_pool_D3734_T1	HiFi_pool_D3734_T1	matched

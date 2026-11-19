@@ -1,0 +1,1 @@
+{"schema_version":1,"min_target_base_q":20,"min_target_mean_q":30,"max_target_length":100,"right_context":"observed_adapter_first_4nt","adapter_boundary":"unique_exact_13nt_motif","target_filter":"quality_and_boundary_only_no_reference_match_requirement","crispresso_quantification_window":"32-63"}

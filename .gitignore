@@ -1,0 +1,12 @@
+__pycache__/
+*.py[cod]
+.DS_Store
+.venv/
+.env
+/data/
+/runs/
+/results/
+sample_manifest.tsv
+*.fastq*
+*.fq*
+slurm-*.out
