@@ -17,7 +17,7 @@ from pilot import CUT, PUBLIC, table
 
 AGENT = Path(__file__).resolve().parent
 SCRIPTS = AGENT / 'workers'
-from settings import MANIFEST, DEPLOYMENT, PUBLISHED
+from settings import MANIFEST, DEPLOYMENT, PUBLISHED, RUNS
 ARCHIVE = DEPLOYMENT / 'paired_cohort_261119/cohort_results/jobs.json'
 CONDITIONS = ('NoEP', 'HiFi')
 
@@ -82,7 +82,7 @@ def execute(args, samples):
     published_targets = {r['OT'].replace('-', '_'): r['Barcode'] for r in table(PUBLIC/'target_oligos_sequenes.csv')}
     if len(targets) != 79 or targets != published_targets:
         raise ValueError('Target map disagrees with the published 79-target panel.')
-    work = args.output.resolve() if args.output else AGENT/'runs'/f'paired_{os.environ["SLURM_JOB_ID"]}'
+    work = args.output.resolve() if args.output else RUNS/f'paired_{os.environ["SLURM_JOB_ID"]}'
     work.mkdir(parents=True, exist_ok=False)
     previous = None if args.fresh else previous_alignment(args.donor, args.replicate, samples)
     config = dict(donor=args.donor, replicate=args.replicate, samples=samples, maxi_method=args.maxi_method, target_filter=args.target_filter,

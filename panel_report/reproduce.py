@@ -17,7 +17,7 @@ from pilot import PUBLIC
 from target_identity import TargetIdentity, filtered_counts
 
 AGENT = Path(__file__).resolve().parents[1]
-from settings import DEPLOYMENT, MANIFEST, DATA, PUBLISHED
+from settings import DEPLOYMENT, MANIFEST, DATA, PUBLISHED, RUNS
 PANEL = AGENT/'panel_report'
 ARMS = {'WTCas9':'WT', 'noEP':'NoEP', 'HiFiCas9':'HiFi'}
 STRATEGIES = ('Unfiltered','Dedup','Dedud','Dedud+Dedup')
@@ -141,7 +141,7 @@ def recount_target(task):
 
 def run_panel(output):
     workers = int(os.environ.get('SLURM_CPUS_PER_TASK','1'))
-    output = Path(output).resolve() if output else AGENT/'runs'/('manuscript_'+os.environ['SLURM_JOB_ID'])
+    output = Path(output).resolve() if output else RUNS/('manuscript_'+os.environ['SLURM_JOB_ID'])
     output.parent.mkdir(parents=True,exist_ok=True)
     if output.exists():
         raise FileExistsError(output)

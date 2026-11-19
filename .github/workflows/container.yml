@@ -1,0 +1,52 @@
+name: Build analysis container
+
+on:
+  push:
+    tags: ['container-v*']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build the locked Linux x86-64 image
+        run: |
+          docker build --platform linux/amd64 --label "org.opencontainers.image.revision=$GITHUB_SHA" \
+            -t "absolve-seq-agent:$GITHUB_SHA" .
+          docker run --rm "absolve-seq-agent:$GITHUB_SHA" CRISPResso --version
+          docker run --rm "absolve-seq-agent:$GITHUB_SHA" Rscript -e 'stopifnot(requireNamespace("brglm2", quietly=TRUE))'
+          docker run --rm -e ABSOLVE_MANIFEST=/opt/absolve/examples/manifest.example.tsv \
+            "absolve-seq-agent:$GITHUB_SHA" python /opt/absolve/paired.py --list
+      - name: Export the Docker image and convert it to SIF
+        run: |
+          sudo add-apt-repository -y ppa:apptainer/ppa
+          sudo apt-get -qq update
+          sudo apt-get -qq install -y apptainer
+          mkdir -p dist
+          docker save "absolve-seq-agent:$GITHUB_SHA" -o "$RUNNER_TEMP/absolve.tar"
+          apptainer build dist/absolve-linux-amd64.sif "docker-archive:$RUNNER_TEMP/absolve.tar"
+          apptainer exec --cleanenv dist/absolve-linux-amd64.sif CRISPResso --version
+          gzip -1c "$RUNNER_TEMP/absolve.tar" > dist/absolve-linux-amd64.tar.gz
+          (cd dist && sha256sum absolve-linux-amd64.* > SHA256SUMS)
+      - name: Publish versioned container assets
+        if: startsWith(github.ref, 'refs/tags/container-v')
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "$GITHUB_REF_NAME" --verify-tag --title "ABSOLVE-seq analysis container ${GITHUB_REF_NAME#container-}" \
+            --notes 'Linux x86-64 Docker archive and Apptainer SIF built from the same locked environment. Verify each download using SHA256SUMS.' \
+            dist/absolve-linux-amd64.tar.gz dist/absolve-linux-amd64.sif dist/SHA256SUMS
+      - uses: actions/upload-artifact@v4
+        if: github.event_name == 'workflow_dispatch'
+        with:
+          name: analysis-container
+          path: dist/
+          compression-level: 0
+          retention-days: 3

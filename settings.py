@@ -8,6 +8,7 @@ def location(variable, default):
 
 
 ROOT = Path(__file__).resolve().parent
+RUNS = location('ABSOLVE_RUNS', ROOT / 'runs')
 DATA = location('ABSOLVE_DATA', ROOT / 'data')
 REFERENCES = DATA / 'references'
 PUBLIC = REFERENCES / 'target_info'
