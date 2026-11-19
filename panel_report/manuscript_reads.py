@@ -20,6 +20,12 @@ sys.path.insert(0, str(ROOT))
 from target_identity import TargetIdentity
 
 STRATEGIES = ("Unfiltered", "Dedup", "Dedud", "Dedud+Dedup")
+GITHUB_TRIM_STEPS = ("LEADING:3", "TRAILING:3", "AVGQUAL:20", "MINLEN:48")
+HISTORICAL_TRIM_STEPS = {
+    "WT": GITHUB_TRIM_STEPS,
+    "NoEP": ("LEADING:3", "TRAILING:3", "SLIDINGWINDOW:4:20", "AVGQUAL:20", "MINLEN:48", "CROP:105"),
+}
+HISTORICAL_TRIM_STEPS["HiFi"] = HISTORICAL_TRIM_STEPS["NoEP"]
 
 
 def table(path, delimiter="\t"):
@@ -57,8 +63,8 @@ def trim(cfg, sample, dest, workers):
     command = ["java", "-Xmx3g", "-jar", jar, "PE", "-threads", str(workers), "-phred33",
                sample["r1"], sample["r2"], str(dest/"R1.gz"), str(dest/"unpaired1.gz"),
                str(dest/"R2.gz"), str(dest/"unpaired2.gz"),
-               "ILLUMINACLIP:" + cfg["adapters"] + ":2:30:10", "LEADING:3", "TRAILING:3",
-               "AVGQUAL:20", "MINLEN:48"]
+               "ILLUMINACLIP:" + cfg["adapters"] + ":2:30:10",
+               *sample.get("trim_steps", GITHUB_TRIM_STEPS)]
     with (dest/"trim.log").open("w") as log:
         subprocess.run(command, stdout=log, stderr=log, check=True)
     for f in ("unpaired1.gz", "unpaired2.gz"):

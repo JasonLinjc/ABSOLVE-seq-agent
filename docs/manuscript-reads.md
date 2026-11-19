@@ -12,7 +12,7 @@ export ABSOLVE_CRISPRESSO2213_IMAGE=/shared/images/crispresso-2.2.13.sif
 export ABSOLVE_IMAGE=/shared/images/absolve-linux-amd64.sif
 python panel_report/references.py /shared/submitted-workbooks data/submitted_model_reference --full-model
 python paired.py --manuscript-panel --read-mode manuscript \
-  --baseline-panel /shared/earlier-fast-run/panel_comparison.tsv \
+  --baseline-panel /shared/previous-panel/panel_comparison.tsv \
   --output runs/manuscript-replay
 ```
 
@@ -22,19 +22,28 @@ For a single complete donor/replicate pair, run `python paired.py --donor D3734 
 
 ## How reads are counted
 
-Both input FASTQs are checked against their manifest SHA-256 hashes. Trimmomatic uses the upstream adapter file and paired clipping and quality settings. Reads are assigned using the published 23-base constant with up to five no-calls and a recognized target barcode. The 16-base pBC is recorded before removing it from R1 and from the end of R2.
+Both FASTQs are checked against the manifest SHA-256 hashes. Paired-end Trimmomatic 0.36 uses Phred+33 and the upstream adapter file with `ILLUMINACLIP:adapters.fa:2:30:10`. The remaining steps follow the processing record for each original library, in the order shown.
+
+| Libraries | Trimmomatic steps after adapter clipping |
+| --- | --- |
+| HiFi (8) and NoEP (9) | `LEADING:3 TRAILING:3 SLIDINGWINDOW:4:20 AVGQUAL:20 MINLEN:48 CROP:105` |
+| WT (9) | `LEADING:3 TRAILING:3 AVGQUAL:20 MINLEN:48` |
+
+Each of the 17 HiFi and NoEP input filenames matched a completed command in the archived trimming log. The WT archive contains several trial commands. For all nine WT libraries, the pair count recorded at the start of target demultiplexing matched the run without a sliding window, and the number of admitted reads matched the separate WT target-count table. The selected steps are saved per library in `run.json` and `results/sample_inventory.tsv`. Configurations created before historical trimming was added retain their original steps when resumed.
+
+Only paired survivors enter target assignment. Reads are assigned using the published 23-base constant with up to five no-calls and a recognized target barcode. The 16-base pBC is recorded before removing it from R1 and from the end of R2.
 
 For each sample and target, the worker passes both mates to CRISPResso2 2.2.13, which uses FLASH to merge them. Target batches share an amplicon, guide and fixed merge parameters across their families. Every read retains its original pBC. The worker reconstructs family allele abundances using the aligned sequences and cut-site calls. Representative-allele ties follow the v2.2.13 allele table order. Dedud applies the pinned Maxi annotation and cross-target identity check to edited alleles. Per-target counts are checked against CRISPResso’s aligned and modified totals. [Original batch command](https://github.com/pellinlab/ABSOLVE-seq/blob/271355dfe40cf46b952e82b88dd4521f23f9feb4/absolveseq/2_demultiplex_by_plasmidBarcode.py#L89-L100)
 
 ## Inspect the results
 
-Panel output includes 8,216 target/strategy/library count rows and 632 modeled contrasts in `results/`. For each treatment, manuscript mode averages the fitted logits for D3734, D3742 and D3908 with weight 1/3 each, then applies the inverse logit. It subtracts the NoEP rate from the edited treatment rate. In `donor_weights.tsv`, `marginal_weight` is the weight used for prediction and `family_row_weight` is the observed share of pBC-family rows. The fast panel uses the observed shares. Both modes use a one-sided treatment-coefficient Wald test and BH correction within each 79-target strategy/editor group. A hit requires Δ greater than 0.1 percentage points and q below 0.05. With a fast baseline, `results/call_changes.tsv` labels contrasts as concordant, resolved, persistent or new.
+Panel output includes 8,216 target/strategy/library count rows and 632 modeled contrasts in `results/`. For each treatment, manuscript mode averages the fitted logits for D3734, D3742 and D3908 with weight 1/3 each, then applies the inverse logit. It subtracts the NoEP rate from the edited treatment rate. In `donor_weights.tsv`, `marginal_weight` is the weight used for prediction and `family_row_weight` is the observed share of pBC-family rows. The fast panel uses the observed shares. Both modes use a one-sided treatment-coefficient Wald test and BH correction within each 79-target strategy/editor group. A hit requires Δ greater than 0.1 percentage points and q below 0.05. With a previous panel as the baseline, `results/call_changes.tsv` labels contrasts as concordant, resolved, persistent or new. Its legacy `fast_*` columns contain the values from the supplied baseline.
 
 Each completed library stage and target writes its output atomically. A failed alignment task can be retried for its original array index with the same run configuration. Consult the stage logs and submit the final aggregation after all affected indices complete.
 
 ### Refit an existing manuscript panel from counts
 
-Run the following in the repository root with R and brglm2 available. Use a new destination directory and the workbook extracts from the original run. This recomputes all four strategies, both editors, treatment margins, and p and q values from the saved counts.
+Run the following in the repository root with R and brglm2 available. Use a new destination directory and the workbook extracts from the original run. This recomputes all four strategies, both editors, treatment margins, and p and q values from the saved counts. To apply a change to trimming, launch a fresh manuscript panel from the FASTQs.
 
 ```sh
 mkdir runs/equal-donor-refit
@@ -44,18 +53,19 @@ Rscript panel_report/manuscript_model.R runs/equal-donor-refit data/submitted_mo
 
 ## Luminary validation
 
-The paired-end replay used 52 checksum-verified FASTQs, 26 original libraries and 79 targets. Four D3734/T1 families at two targets matched a separate per-family CRISPResso2 replay in both retained indel reads and retained total reads. The initial family-weighted panel agreed with Supplementary Tables 2 through 5 on 626 of 632 calls.
+The historical-trimming replay started from 52 checksum-verified FASTQs, realigned all 26 libraries across 79 targets, and exported 8,216 count rows. For every library, all five Trimmomatic counts matched its historical log for input pairs, paired survivors, R1-only survivors, R2-only survivors and dropped pairs. The WT target-admission totals also matched the archived downstream counts for all nine libraries.
 
-The equal-donor refit reused the same 8,216 count rows. An independent check reconstructed all 632 treatment contrasts from the previous donor-specific logits and checked the submitted rates and BH q values against the four workbooks. All one-sided p and BH q values matched the previous paired-end panel exactly. The fast-mode regression check reproduced its archived panel and model-field tables byte for byte.
+An independent check compared the new equal-donor margins and BH q values with Supplementary Tables 2 through 5. Agreement rose from 627 to **628 of 632 calls** (99.37%). One of the five previously discordant calls resolved, four persisted and none appeared among the 627 previously concordant calls. All 316 HiFi calls agreed, as did all Dedud and Dedud+Dedup calls for both editors.
 
-One contrast, Unfiltered HiFi at `1617_OT_0356_ALT`, moved from Δ 0.099694 to 0.103867 percentage points (submitted 0.106626) with q 5.10 × 10⁻¹⁰. This restored the submitted hit. No previously concordant call became discordant. The five remaining differences are listed below. Rates are rounded for display, and calls use full precision.
+At `1617_OT_0041_REF` (Dedup, HiFi), six previously admitted singleton pBC families dropped out during historical trimming. The HiFi edited representatives fell from 55/18,825 to 49/18,229 families. The public Dedup allele tables contained 48/18,290. The two reads from the separately traced tied family still passed. The modeled Δ fell from 0.119431 to 0.092321 percentage points and q rose from 0.013139 to 0.068430. Both the replay and the submitted table (Δ 0.085360, q 0.101886) classified the site below the joint hit threshold.
 
-| Strategy | Editor | Target | Equal-donor Δ (pp) | Submitted Δ (pp) | Hit in |
-| --- | --- | --- | ---: | ---: | --- |
-| Unfiltered | WT | `1450_OT_0163_ALT` | 0.088032 | 0.110287 | Submitted |
-| Unfiltered | WT | `1450_OT_0176_ALT` | 0.088096 | 0.130761 | Submitted |
-| Dedup | WT | `1450_OT_0142_ALT` | 0.060436 | 0.110040 | Submitted |
-| Dedup | WT | `1450_OT_0210_ALT` | 0.061957 | 0.118504 | Submitted |
-| Dedup | HiFi | `1617_OT_0041_REF` | 0.119431 | 0.085360 | Equal-donor replay |
+All four remaining discrepancies were WT hits in the submitted tables. Values below are rounded for display.
 
-The final panel agreed on 627 of 632 calls, including all 316 Dedud and Dedud+Dedup contrasts. Agreement here refers to the joint Δ and q thresholds.
+| Strategy | Target | Replay Δ (pp) | Submitted Δ (pp) | Replay q | Submitted q |
+| --- | --- | ---: | ---: | ---: | ---: |
+| Unfiltered | `1450_OT_0163_ALT` | 0.088129 | 0.110287 | 0 | 0 |
+| Unfiltered | `1450_OT_0176_ALT` | 0.088283 | 0.130761 | 2.43 × 10⁻⁹ | 0 |
+| Dedup | `1450_OT_0142_ALT` | 0.057495 | 0.110040 | 0.444715 | 0.028716 |
+| Dedup | `1450_OT_0210_ALT` | 0.061067 | 0.118504 | 0.091502 | 0.000254 |
+
+The two Unfiltered contrasts crossed only the Δ threshold. The two Dedup contrasts crossed both thresholds. WT library count rows matched the previous replay exactly. The shared model also uses the newly trimmed NoEP and HiFi counts.

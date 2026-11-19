@@ -7,7 +7,7 @@ import subprocess
 import sys
 from tempfile import TemporaryDirectory
 
-from panel_report.manuscript_reads import ROOT, STRATEGIES, digest, save, table
+from panel_report.manuscript_reads import GITHUB_TRIM_STEPS, HISTORICAL_TRIM_STEPS, ROOT, STRATEGIES, digest, save, table
 from settings import DATA, MANIFEST, PUBLIC, PUBLISHED, RUNS
 
 ARM = {"WTCas9":"WT","HiFiCas9":"HiFi","noEP":"NoEP"}
@@ -61,13 +61,18 @@ def finish(config):
     with TemporaryDirectory(dir=base) as tmp:
         stage=Path(tmp)/"results";stage.mkdir()
         save(stage/"library_counts.tsv",rows)
-        save(stage/"sample_inventory.tsv",[{k:s[k] for k in ("sample_name","donor","replicate","arm","sha256_r1","sha256_r2")} for s in libs])
+        inventory=[]
+        for sample in libs:
+            entry={k:sample[k] for k in ("sample_name","donor","replicate","arm","sha256_r1","sha256_r2")}
+            entry["trim_steps"]=" ".join(sample.get("trim_steps", GITHUB_TRIM_STEPS))
+            inventory.append(entry)
+        save(stage/"sample_inventory.tsv",inventory)
         receipt=dict(read_mode="manuscript",crispresso_version="2.2.13",trimmomatic_version="0.36",
                      image_sha256=digest(cfg["image"]),jar_sha256=digest(cfg["jar"]),adapters_sha256=digest(cfg["adapters"]),
                      libraries=len(libs),targets=len(targets),input_config_sha256=digest(config),
                      worker_sha256=digest(PANEL/"manuscript_reads.py"),model_sha256=digest(PANEL/"manuscript_model.R"))
         if len(libs)==26:
-            refs=Path(cfg["refs"])
+            refs=Path(cfg["refs"]).resolve(strict=True)
             receipt["donor_margin"]="equal-donor"
             command=["Rscript",str(PANEL/"manuscript_model.R"),str(stage),str(refs),receipt["donor_margin"]]
             if cfg.get("stats_image"):
@@ -128,7 +133,8 @@ def start(args):
     for r in table(PUBLIC/"NovaSeq3_sample_info.csv",","):
         d,rep,arm=r["donor_id"],r["replicate"],ARM[r["cas_type"]]
         if not args.manuscript_panel and (d!=args.donor or rep!=args.replicate or arm=="WT"): continue
-        libs.append(dict(manifest[f"{arm}_pool_{d}_{rep}"],donor=d,replicate=rep,arm=arm))
+        libs.append(dict(manifest[f"{arm}_pool_{d}_{rep}"],donor=d,replicate=rep,arm=arm,
+                         trim_steps=HISTORICAL_TRIM_STEPS[arm]))
     if len(libs)!=(26 if args.manuscript_panel else 2) or len({s["sample_name"] for s in libs})!=len(libs):
         raise ValueError("Incomplete or duplicated manuscript design")
     from maxi_qc import PUBLISHED_SHA256

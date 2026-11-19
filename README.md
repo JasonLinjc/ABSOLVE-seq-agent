@@ -77,7 +77,7 @@ The manuscript panel fits a Firth binomial regression with treatment and donor. 
 | `library_counts.tsv` | Per-library counts before and after cross-target filtering |
 | `donor_weights.tsv`, `sample_inventory.tsv`, `provenance.json` | Marginalization weights, library inventory and source hashes |
 
-On Luminary, the equal-donor manuscript panel agreed with the submitted tables on **627 of 632 calls**. Refitting the paired-end counts resolved one of the six earlier discrepancies and introduced none. All 316 Dedud and Dedud+Dedup calls agreed. The fast panel reproduced its earlier 608 agreements. See the [validation and five remaining contrasts](docs/manuscript-reads.md#luminary-validation) and the [count-level audit](docs/manuscript-discordance.md).
+The historical-trimming manuscript panel agreed with the submitted tables on **628 of 632 calls** on Luminary. All 26 libraries matched their archived trimming counts. The fresh replay restored agreement for `1617_OT_0041_REF` (Dedup, HiFi), leaving four WT discrepancies and introducing none. See the [full-panel validation](docs/manuscript-reads.md#luminary-validation) and the [count-level audit](docs/manuscript-discordance.md).
 
 ## Local inputs and caches
 
