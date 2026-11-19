@@ -28,7 +28,7 @@ python paired.py --list
 sbatch paired.sbatch --donor D3734 --replicate T1
 ```
 
-In Codex, open the repository and use the [absolve-seq skill](.agents/skills/absolve-seq/SKILL.md). For example, ask “用 manuscript 默认方法分析 D3734/T1，导出四种策略的 indel rate 和 Δindel rate。”
+In Codex, open the repository and use the [absolve-seq skill](.agents/skills/absolve-seq/SKILL.md). For example, ask “Analyze D3734/T1 with the default manuscript method. Export the NoEP and HiFi indel rates and their difference for each of the four counting strategies.”
 
 ## Paired results
 

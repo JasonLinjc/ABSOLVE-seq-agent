@@ -1,0 +1,23 @@
+name: English repository text
+
+on: [push, pull_request]
+
+permissions:
+  contents: read
+
+jobs:
+  check-text:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check tracked text for Chinese characters
+        shell: bash
+        run: |
+          export LC_ALL=C.UTF-8
+          if git grep -nIP '\p{Han}|[\x{3002}\x{FF0C}\x{FF1A}\x{FF1B}\x{FF01}\x{FF1F}]'; then
+            echo 'Use English for repository text and report labels.'
+            exit 1
+          else
+            status=$?
+            if [ "$status" -ne 1 ]; then exit "$status"; fi
+          fi

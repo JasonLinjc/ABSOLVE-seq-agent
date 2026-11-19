@@ -1,36 +1,36 @@
-<!doctype html><html lang="zh-CN"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>ABSOLVE-seq 配对证据报告</title>
+<!doctype html><html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>ABSOLVE-seq paired analysis report</title>
 <style>
 *{box-sizing:border-box}body{margin:0;background:#f5f6f2;color:#17342f;font:15px/1.5 "Instrument Sans",system-ui,sans-serif}main{max-width:1250px;margin:auto;padding:36px 30px 54px}h1{font-size:clamp(26px,4vw,42px);margin:0;letter-spacing:-.04em}h2{font-size:20px;margin:26px 0 8px}p{margin:.4em 0 1em;color:#415951}section{margin-top:20px}header{border-bottom:2px solid #376959;padding-bottom:14px}label{font-weight:600}select{display:block;min-width:175px;margin-top:4px;border:1px solid #759488;background:white;padding:8px;border-radius:4px;color:inherit;font:inherit}nav{display:flex;gap:18px;flex-wrap:wrap;padding:16px 0}.wrap{overflow:auto;border:1px solid #cbdbd1;border-radius:5px;background:#fff}table{border-collapse:collapse;width:100%;font-size:14px;font-variant-numeric:tabular-nums}th,td{padding:8px 10px;text-align:right;white-space:nowrap}th{background:#e4eee6;color:#24483c}tbody tr+tr{border-top:1px solid #e7eee8}th:first-child,td:first-child{text-align:left}tbody tr:hover{background:#f0f5f0}.small{font-size:13px;margin-top:8px}footer{margin-top:30px;border-top:1px solid #b8cbbb;padding-top:10px;color:#4c6258;font-size:13px}button{font:inherit;color:#234f42;background:#fff;border:1px solid #afc3b5;border-radius:4px;padding:4px 9px;cursor:pointer}button:hover{background:#e7f0e8}summary{cursor:pointer;font-weight:600}details{margin:20px 0}
 </style>
-<main><header><h1>ABSOLVE-seq 配对证据报告</h1><p id="scope"></p></header>
-<nav><label>Target<select id="t"></select></label><label>计数策略<select id="s"></select></label></nav>
-<section><h2>编辑效应与配对方向</h2><div class="wrap" id="effect"></div><p class="small">Δ 为相对 NoEP 的百分点差。区间为 Δ 的双侧 95% 置信区间。q 来自处理系数的单侧 Wald 检验，在同一策略、同一编辑条件的 79 个 target 内作 BH 校正。</p></section>
-<section><h2>各 donor 的 reads 与 pBC 家族</h2><div class="wrap" id="evidence"></div><p class="small" id="rule"></p></section>
-<section id="families"><h2>重点家族的跨样本核查</h2><div class="wrap" id="familytable"></div><p class="small" id="familyhint"></p></section>
-<details><summary>查看所选策略的全部位点</summary><p class="small">按 WT 的 Δ 从高到低排列。选择位点可查看其 donor 证据。</p><div class="wrap" id="panel"></div></details>
-<footer>每个条件先在 donor 内合计重复计数，Firth 二项模型包含 donor 与处理条件。模型在概率尺度对 donor 等权平均。家族数按各文库内的代表等位序列计算，再按 donor 汇总。</footer></main>
+<main><header><h1>ABSOLVE-seq paired analysis report</h1><p id="scope"></p></header>
+<nav><label>Target<select id="t"></select></label><label>Counting strategy<select id="s"></select></label></nav>
+<section><h2>Editing effects and direction across pairs</h2><div class="wrap" id="effect"></div><p class="small">Δ is the difference in indel rate between the editor and NoEP, in percentage points (pp). Intervals are two-sided 95% confidence intervals for Δ. The q values use a one-sided Wald test of the treatment coefficient with Benjamini–Hochberg correction across 79 targets for each editor and counting strategy.</p></section>
+<section><h2>Read and pBC family counts by donor</h2><div class="wrap" id="evidence"></div><p class="small" id="rule"></p></section>
+<section id="families"><h2>Selected pBC families across samples</h2><div class="wrap" id="familytable"></div><p class="small" id="familyhint"></p></section>
+<details><summary>View all targets for this strategy</summary><p class="small">Targets are sorted by WT Δ, highest first. Select a target to see its counts by donor.</p><div class="wrap" id="panel"></div></details>
+<footer>Replicate counts are pooled within each donor and condition. The Firth binomial model includes donor and treatment. This report averages fitted probabilities equally across donors. Family counts use one representative allele per family in each library and are then summed by donor.</footer></main>
 <script>
 const data=/*DATA*/;
 const q=id=>document.getElementById(id), ts=q('t'),ss=q('s');
 const targets=[...new Set(data.panel.map(r=>r.target))].sort(), strategies=[...new Set(data.panel.map(r=>r.strategy))];
 for(const x of targets)ts.add(new Option(x,x));for(const x of strategies)ss.add(new Option(x,x));
 ts.value=targets.includes('1450_OT_0071_REF')?'1450_OT_0071_REF':targets[0];
-const donors=new Set(data.donor.map(r=>r.donor));q('scope').textContent=targets.length+' 个 target · '+Math.max(...data.panel.map(r=>+r.pairs_valid))+' 组匹配重复 · '+donors.size+' 位 donor · manuscript pBC 定义';
+const donors=new Set(data.donor.map(r=>r.donor));q('scope').textContent=targets.length+' targets · '+Math.max(...data.panel.map(r=>+r.pairs_valid))+' matched replicate pairs · '+donors.size+' donors · manuscript pBC definition';
 function f(n){return Number(n).toFixed(4)}
-function pv(n){return +n===0?'低于输出精度':+n<.001?Number(n).toExponential(2):Number(n).toFixed(4)}
+function pv(n){return +n===0?'Below reporting precision':+n<.001?Number(n).toExponential(2):Number(n).toFixed(4)}
 function table(id,heads,rows){const t=document.createElement('table'),h=t.createTHead().insertRow();for(const name of heads){let c=document.createElement('th');c.textContent=name;h.appendChild(c)}
 const b=t.createTBody();for(const row of rows){const r=b.insertRow();for(const value of row){const c=r.insertCell();if(value instanceof Node)c.appendChild(value);else c.textContent=value}}q(id).replaceChildren(t)}
 const count=(r,p,k)=>r[p+'_indel_'+k]+' / '+r[p+'_total_'+k];
 function update(){const t=ts.value,s=ss.value,scope=data.panel.filter(r=>r.strategy===s),br=scope.filter(r=>r.target===t),ds=data.donor.filter(r=>r.strategy===s&&r.target===t);
-const head=['比较','Δ (pp)','95% CI (pp)','q','正 / 有效配对','正向 donor'];
-const ref='manuscript_delta_pp' in br[0];if(ref)head.push('补表 Δ (pp)','补表 q');
-table('effect',head,br.map(r=>[r.editor+' − NoEP',f(r.delta_pp),f(r.ci95_low_pp)+' 至 '+f(r.ci95_high_pp),pv(r.q_bh),r.pairs_positive+' / '+r.pairs_valid,r.donors_positive+' / '+donors.size,...(ref?[f(r.manuscript_delta_pp),pv(r.manuscript_q_bh)]:[])]));
-table('evidence',['Donor','条件','正 / 有效配对','编辑组 indel / 总 reads','NoEP indel / 总 reads','编辑组 indel / 总家族','NoEP indel / 总家族'],ds.map(r=>[r.donor,r.editor,r.pairs_positive+' / '+r.pairs_valid,count(r,'edited','reads'),count(r,'noep','reads'),count(r,'edited','families'),count(r,'noep','families')]));
-q('rule').textContent=(['Dedud','Dedud+Dedup'].includes(s)?'reads 采用 Dedud，家族采用 Dedud+Dedup。':'reads 采用 Unfiltered，家族采用 Dedup。')+'同一 donor 的 NoEP 计数用于两个比较。';
+const head=['Comparison','Δ (pp)','95% CI (pp)','q','Positive / valid pairs','Positive / total donors'];
+const ref='manuscript_delta_pp' in br[0];if(ref)head.push('Submitted Δ (pp)','Submitted q');
+table('effect',head,br.map(r=>[r.editor+' − NoEP',f(r.delta_pp),f(r.ci95_low_pp)+' to '+f(r.ci95_high_pp),pv(r.q_bh),r.pairs_positive+' / '+r.pairs_valid,r.donors_positive+' / '+donors.size,...(ref?[f(r.manuscript_delta_pp),pv(r.manuscript_q_bh)]:[])]));
+table('evidence',['Donor','Condition','Positive / valid pairs','Editor reads with indels / total','NoEP reads with indels / total','Editor families with indels / total','NoEP families with indels / total'],ds.map(r=>[r.donor,r.editor,r.pairs_positive+' / '+r.pairs_valid,count(r,'edited','reads'),count(r,'noep','reads'),count(r,'edited','families'),count(r,'noep','families')]));
+q('rule').textContent=(['Dedud','Dedud+Dedup'].includes(s)?'Read counts use Dedud. Family counts use Dedud+Dedup.':'Read counts use Unfiltered. Family counts use Dedup.')+' Both editor comparisons use the same NoEP counts for each donor.';
 const trace=data.trace.filter(r=>r.target===t);q('families').hidden=!trace.length;
-if(trace.length){const observed=trace.filter(r=>+r.aligned_reads>0);table('familytable',['Donor','重复','条件','匿名 pBC','indel / 比对 reads','代表等位序列的切点事件','事件标识'],observed.map(r=>[r.donor,r.replicate,r.condition,r.family,r.cut_indel_reads+' / '+r.aligned_reads,r.top_event,r.top_event_id]));q('familyhint').textContent='按 Dedud 选取重点家族，在 '+new Set(trace.map(r=>[r.donor,r.replicate,r.condition].join('/'))).size+' 个文库的该 target 比对读段中查找；表中仅列有观测的文库。51|52 为从 0 起计的扩增子参考坐标。';}
+if(trace.length){const observed=trace.filter(r=>+r.aligned_reads>0);table('familytable',['Donor','Replicate','Condition','Anonymized pBC','Reads with indels / aligned reads','Cut-site event in representative allele','Event ID'],observed.map(r=>[r.donor,r.replicate,r.condition,r.family,r.cut_indel_reads+' / '+r.aligned_reads,r.top_event,r.top_event_id]));q('familyhint').textContent='Families selected using Dedud were traced in reads aligned to this target across '+new Set(trace.map(r=>[r.donor,r.replicate,r.condition].join('/'))).size+' libraries. The table lists libraries where the family was observed. The notation 51|52 marks the boundary between positions 51 and 52 in the zero-based amplicon reference.';}
 const wt=scope.filter(r=>r.editor==='WT').sort((a,b)=>b.delta_pp-a.delta_pp);
 const hi=new Map(scope.filter(r=>r.editor==='HiFi').map(r=>[r.target,r]));
-table('panel',['Target','WT Δ (pp)','WT q','WT 正向配对','HiFi Δ (pp)','HiFi q','HiFi 正向配对'],wt.map(r=>{const v=hi.get(r.target),button=document.createElement('button');button.textContent=r.target;button.onclick=()=>{ts.value=r.target;update();window.scrollTo(0,0)};return [button,f(r.delta_pp),pv(r.q_bh),r.pairs_positive,f(v.delta_pp),pv(v.q_bh),v.pairs_positive]}));}
+table('panel',['Target','WT Δ (pp)','WT q','Positive WT pairs','HiFi Δ (pp)','HiFi q','Positive HiFi pairs'],wt.map(r=>{const v=hi.get(r.target),button=document.createElement('button');button.textContent=r.target;button.onclick=()=>{ts.value=r.target;update();window.scrollTo(0,0)};return [button,f(r.delta_pp),pv(r.q_bh),r.pairs_positive,f(v.delta_pp),pv(v.q_bh),v.pairs_positive]}));}
 ts.onchange=ss.onchange=update;update();
 </script></html>
