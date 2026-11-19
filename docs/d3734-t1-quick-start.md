@@ -2,6 +2,8 @@
 
 This walkthrough runs the original D3734/T1 NoEP (LV_S3) and HiFi (LV_S1) libraries through all 79 targets. Each output row includes both indel rates and their paired difference (HiFi minus NoEP). The manuscript pBC rule and cross-target filter are the defaults.
 
+For a prebuilt environment, use the [container instructions](container.md). The published SIF completed this walkthrough on Luminary with the full public ENA downloads.
+
 ## 1. Get the agent and create an environment
 
 On a Linux Slurm cluster, choose a shared working directory visible to the login and compute nodes. The login node needs access to GitHub and the Conda channels. Use a new checkout and an empty environment prefix.
@@ -103,7 +105,7 @@ sacct -j "$job_id" --format=JobID,State,ExitCode,Elapsed,MaxRSS
 
 ## 5. Verify the result
 
-Check both the table layout and its content. Both input routes should produce 316 rows. The final checksum command compares your result with the independently verified **laboratory FASTQ** run using the manuscript defaults and the v0.1.1 export format.
+Check both the table layout and its content. The original laboratory FASTQs and the four public ENA FASTQs produced the same 316-row table with the manuscript defaults. The checksum below applies to both input routes.
 
 ```bash
 table="$run_dir/results/paired_target_rates.tsv"
@@ -131,7 +133,7 @@ Read `NoEP_rate_pct` and `HiFi_rate_pct` as percentages. The `delta_HiFi_minus_N
 
 ### Verified on Luminary
 
-For the public ENA files, the FASTQ parser verified the first 1,000 read pairs in each run. Both mates matched the corresponding laboratory records in sequence and quality at every tested position. The paired workflow's preparation step retained 585 of these NoEP pairs and 712 HiFi pairs. Full-run counts below come from the laboratory FASTQs.
+Container release `container-v0.1.0` ran the complete public ENA pair and the complete laboratory pair in separate Slurm jobs with `--fresh`. The four ENA FASTQs passed their published MD5 checks. Each run produced 79 fresh alignments per library and matched the independently verified 316-row table byte for byte. Counts in the table below apply to both sources. [Container acceptance](container.md#acceptance-on-luminary)
 
 The full laboratory FASTQ run used analysis release `v0.1.1` (`526d368`), CRISPResso2 2.3.4, six allocated CPUs and 18 GiB of requested memory. The paired analysis took 9 min 3 s. The run directory occupied 705 MiB. All 316 rows matched the archived paired table byte for byte. An independent calculation from the exported counts and denominators also reproduced both rates and every paired difference to within 1e-12.
 
