@@ -14,7 +14,7 @@ jobs:
         shell: bash
         run: |
           export LC_ALL=C.UTF-8
-          if git grep -nIP '\p{Han}|[\x{3002}\x{FF0C}\x{FF1A}\x{FF1B}\x{FF01}\x{FF1F}]'; then
+          if git grep -nIP '[\x{3400}-\x{4DBF}\x{4E00}-\x{9FFF}\x{F900}-\x{FAFF}\x{20000}-\x{2FA1F}\x{30000}-\x{323AF}\x{3002}\x{FF0C}\x{FF1A}\x{FF1B}\x{FF01}\x{FF1F}]'; then
             echo 'Use English for repository text and report labels.'
             exit 1
           else
