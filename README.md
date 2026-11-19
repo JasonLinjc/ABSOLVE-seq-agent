@@ -6,6 +6,8 @@ The analysis is based on the [upstream ABSOLVE-seq repository](https://github.co
 
 ## Quick start
 
+[Run D3734/T1 from the original FASTQs](docs/d3734-t1-quick-start.md) for a worked example with a fresh software environment, reference indexing, Slurm submission and a checksum for the full 316-row output.
+
 Clone this repository and run commands from its root. The analysis runs on a Linux Slurm cluster with a shared filesystem. Activate the environment **before** submitting jobs. Supply your site's partition, account or wall time through the usual `sbatch` options.
 
 ```sh
