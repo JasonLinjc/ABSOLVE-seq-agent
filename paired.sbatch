@@ -4,6 +4,21 @@
 #SBATCH --mem=18G
 #SBATCH --time=04:00:00
 set -eo pipefail
+# Manuscript mode orchestrates two software environments from the Slurm host.
+panel=0
+read_mode=
+previous=
+for arg in "$@"; do
+    case "$arg" in
+        --manuscript-panel) panel=1 ;;
+        --read-mode=*) read_mode=${arg#*=} ;;
+    esac
+    if [[ "$previous" == --read-mode ]]; then read_mode=$arg; fi
+    previous=$arg
+done
+if [[ "$read_mode" == manuscript || ( "$panel" == 1 && -z "$read_mode" ) ]]; then
+    exec "${ABSOLVE_HOST_PYTHON:-python3}" -u "$SLURM_SUBMIT_DIR/paired.py" "$@"
+fi
 if [[ -n "${ABSOLVE_IMAGE:-}" ]]; then
     export APPTAINERENV_ABSOLVE_DATA="${ABSOLVE_DATA:-$SLURM_SUBMIT_DIR/data}"
     export APPTAINERENV_ABSOLVE_RUNS="${ABSOLVE_RUNS:-$SLURM_SUBMIT_DIR/runs}"
@@ -15,6 +30,6 @@ if [[ -n "${ABSOLVE_IMAGE:-}" ]]; then
         fi
     done
     exec apptainer exec --cleanenv --bind "$SLURM_SUBMIT_DIR" "$ABSOLVE_IMAGE" \
-        python -u /opt/absolve/paired.py "$@"
+        python -u "$SLURM_SUBMIT_DIR/paired.py" "$@"
 fi
 exec python -u "${SLURM_SUBMIT_DIR}/paired.py" "$@"

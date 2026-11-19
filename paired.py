@@ -133,7 +133,27 @@ def main():
     parser.add_argument('--min-exact-reads', type=int, help='Reconstructed Maxi methods only (default 1).')
     parser.add_argument('--output', type=Path, help='New run directory on Luminary (default runs/paired_JOBID).')
     parser.add_argument('--fresh', action='store_true', help='Prepare and align full FASTQs again.')
+    parser.add_argument('--read-mode', choices=['fast','manuscript'], help='Read processing mode. Pairs default to fast and manuscript panels default to manuscript.')
+    parser.add_argument('--baseline-panel', type=Path, help='Earlier panel_comparison.tsv for tracking resolved, persistent and new disagreements.')
+    parser.add_argument('--finish-manuscript', type=Path, help=argparse.SUPPRESS)
     args = parser.parse_args()
+    if args.finish_manuscript:
+        from panel_report.manuscript_run import finish
+        finish(args.finish_manuscript.resolve())
+        return
+    mode = args.read_mode or ('manuscript' if args.manuscript_panel else 'fast')
+    if args.baseline_panel and not (args.manuscript_panel and mode=='manuscript'):
+        parser.error('--baseline-panel requires a manuscript read-mode panel')
+    if mode == 'manuscript' and not args.list:
+        if args.maxi_method != DEFAULT_METHOD or args.min_exact_reads is not None or args.target_filter == 'pbc-only':
+            parser.error('Manuscript reads use the published Maxi annotation and cross-target filtering.')
+        if args.manuscript_panel and (args.donor or args.replicate):
+            parser.error('The manuscript panel covers the entire submitted design.')
+        if not args.manuscript_panel and not (args.donor and args.replicate):
+            parser.error('Choose --donor and --replicate, or --manuscript-panel.')
+        from panel_report.manuscript_run import start
+        start(args)
+        return
     if args.manuscript_panel:
         if args.list or args.donor or args.replicate or args.maxi_method != DEFAULT_METHOD or args.min_exact_reads is not None or args.fresh or args.target_filter == 'pbc-only':
             parser.error('--manuscript-panel uses the full original design, published Maxi annotations and manuscript target filter.')

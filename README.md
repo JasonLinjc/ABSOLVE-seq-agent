@@ -60,16 +60,16 @@ Set `ABSOLVE_MAXI_MERGED` to the merged reference directory and `ABSOLVE_MAXI_PO
 
 ## Manuscript comparison
 
-Provide the submitted files `SupplementaryTable2.xlsx` through `SupplementaryTable5.xlsx` and all 26 original libraries. The sample design includes the WT and NoEP libraries for D3734/T3, which has no matched HiFi library.
+For original paired-end processing, configure Trimmomatic 0.36 and the CRISPResso2 2.2.13 image as described in the [manuscript read-mode guide](docs/manuscript-reads.md). Provide the submitted files `SupplementaryTable2.xlsx` through `SupplementaryTable5.xlsx` and all 26 original libraries. The sample design includes the WT and NoEP libraries for D3734/T3, which has no matched HiFi library.
 
 ```sh
 python panel_report/references.py /path/to/submitted/workbooks data/submitted_model_reference --full-model
-sbatch --cpus-per-task=24 --mem=48G paired.sbatch --manuscript-panel
+python paired.py --manuscript-panel --read-mode manuscript --output runs/manuscript-replay
 ```
 
 The model uses Firth binomial regression with treatment and donor, the observed donor frequencies among eligible pBC-family rows for treatment margins on the logit scale, and a one-sided Wald test with BH correction across 79 targets per editor and strategy. The primary comparison uses Δ greater than 0.1 percentage points and BH q below 0.05.
 
-| Output under `runs/manuscript_JOBID/` | Contents |
+| Output under the manuscript run’s `results/` directory | Contents |
 | --- | --- |
 | `comparison_summary.tsv` | Threshold agreement for each strategy and editor |
 | `panel_comparison.tsv` | 632 comparisons with agent and submitted rates, differences, p and q |
@@ -77,7 +77,7 @@ The model uses Firth binomial regression with treatment and donor, the observed 
 | `library_counts.tsv` | Per-library counts before and after cross-target filtering |
 | `donor_weights.tsv`, `sample_inventory.tsv`, `provenance.json` | Marginalization weights, library inventory and source hashes |
 
-The validated 26-library run agreed with the submitted tables on 608 of 632 calls. To generate a target-by-target breakdown of the 24 discrepancies and compare observed counts with manuscript-inferred counts, follow the [manuscript discordance audit](docs/manuscript-discordance.md).
+On Luminary, the paired-end replay agreed with the submitted tables on 626 of 632 calls, compared with 608 for fast mode. It resolved 21 of the original 24 discrepancies and introduced three new ones. All 316 Dedud and Dedud+Dedup calls agreed. See the [paired-end validation](docs/manuscript-reads.md#luminary-validation) for the six remaining contrasts and the [discordance audit](docs/manuscript-discordance.md) for count-level checks.
 
 ## Local inputs and caches
 
