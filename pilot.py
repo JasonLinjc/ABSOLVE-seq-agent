@@ -27,6 +27,22 @@ def one(rows):
     return item
 
 
+def public_library(sample):
+    accession = sample.get('run_accession')
+    if not accession:
+        return None
+    catalog = Path(__file__).parent / 'examples' / 'd3734_t1_ena.tsv'
+    with catalog.open() as handle:
+        run = next((r for r in csv.DictReader(handle, delimiter='\t')
+                    if r['run_accession'] == accession and r['sample_name'] == sample['sample_name']), None)
+    if run is None:
+        raise ValueError(f"Unknown public run/sample combination: {accession} / {sample['sample_name']}")
+    for mate in ('r1', 'r2'):
+        if Path(sample[mate]).name != Path(run[mate + '_url']).name:
+            raise ValueError(f'Unexpected {mate} filename for {accession}: {sample[mate]}')
+    return run['library_id']
+
+
 def fastq(path):
     with gzip.open(path, 'rt') as handle:
         for header in handle:
@@ -44,7 +60,7 @@ def run(args):
         sample = one(r for r in csv.DictReader(handle, delimiter='\t') if r['sample_name'] == args.sample and r['status'] == 'matched')
     if sample['dataset'] not in ('HiFi', 'NoEP'):
         raise ValueError('This pilot supports original LV_S-numbered HiFi and NoEP inputs.')
-    lv = re.match(r'(LV_S\d+)_', Path(sample['r1']).name).group(1)
+    lv = public_library(sample) or re.match(r'(LV_S\d+)_', Path(sample['r1']).name).group(1)
     metadata = one(r for r in table(PUBLIC / 'NovaSeq3_sample_info.csv') if r['LV_ID'] == lv)
     condition = {'noEP':'NoEP', 'HiFiCas9':'HiFi'}[metadata['cas_type']]
     if sample['sample_name'] != '_'.join([condition,'pool',metadata['donor_id'],metadata['replicate']]):

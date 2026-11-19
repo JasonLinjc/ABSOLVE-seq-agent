@@ -1,4 +1,4 @@
-# Run D3734/T1 from the original FASTQs
+# Run D3734/T1 from paired FASTQs
 
 This walkthrough runs the original D3734/T1 NoEP (LV_S3) and HiFi (LV_S1) libraries through all 79 targets. Each output row includes both indel rates and their paired difference (HiFi minus NoEP). The manuscript pBC rule and cross-target filter are the defaults.
 
@@ -40,7 +40,31 @@ python setup_references.py
 
 The setup script checks the pinned sample and target tables and the SHA-256 of the published pBC annotation. It writes a fresh index in `data/references/`.
 
-## 3. Identify the four input files
+## 3. Get the four input files
+
+### Public test data from SRA
+
+The D3734/T1 pair is part of ABSOLVE-seq study SRP722226, BioProject PRJNA1503690. These two runs contain all the reads needed for the 79-target paired analysis. The four compressed ENA files total 1.58 GB. [NCBI study](https://trace.ncbi.nlm.nih.gov/Traces/?view=study&acc=SRP722226) · [ENA file report](https://www.ebi.ac.uk/ena/portal/api/filereport?accession=SRP722226&result=read_run&fields=run_accession,library_name,fastq_ftp,fastq_md5,fastq_bytes)
+
+| Library | SRA run | Read pairs |
+| --- | --- | ---: |
+| `NoEP_pool_D3734_T1` | [SRR39887646](https://www.ebi.ac.uk/ena/browser/view/SRR39887646) | 10,084,551 |
+| `HiFi_pool_D3734_T1` | [SRR39887695](https://www.ebi.ac.uk/ena/browser/view/SRR39887695) | 9,868,448 |
+
+From the repository root on a networked node, download both mates of each run. Keep their ENA filenames. The manifest helper checks each compressed file against its published MD5 and records its SHA-256 for subsequent runs. [Download URLs and checksums](../examples/d3734_t1_ena.tsv)
+
+```bash
+export FASTQ_ROOT="$PWD/data/sra/SRP722226"
+mkdir -p "$FASTQ_ROOT"
+awk -F '\t' 'NR > 1 { print $4; print $6 }' examples/d3734_t1_ena.tsv |
+    (cd "$FASTQ_ROOT" && xargs -n 1 -P 4 curl -fL --retry 3 -C - -O)
+python examples/d3734_t1_manifest.py --ena "$FASTQ_ROOT" data/sample_manifest.tsv
+python paired.py --list
+```
+
+Pair discovery should show `D3734 T1 NoEP_pool_D3734_T1 HiFi_pool_D3734_T1`. Continue with step 4.
+
+### Existing laboratory FASTQs
 
 Set `FASTQ_ROOT` to the directory containing the two condition folders. Keep the original filenames. Each pattern below must match one file.
 
@@ -55,7 +79,7 @@ python examples/d3734_t1_manifest.py "$FASTQ_ROOT" data/sample_manifest.tsv
 python paired.py --list
 ```
 
-The example hashes the four compressed files and writes a two-row manifest. Compare its four SHA-256 values with your input inventory. Pair discovery should list `D3734`, `T1`, `NoEP_pool_D3734_T1` and `HiFi_pool_D3734_T1` together.
+The example hashes the four compressed files and writes a two-row manifest. Compare its four SHA-256 values with your laboratory inventory.
 
 ## 4. Submit the full pair
 
@@ -76,7 +100,7 @@ sacct -j "$job_id" --format=JobID,State,ExitCode,Elapsed,MaxRSS
 
 ## 5. Verify the result
 
-Check both the table layout and its content. The SHA-256 below is the fingerprint of the independently verified D3734/T1 table for the original four FASTQs, the manuscript defaults and the v0.1.1 export format.
+Check both the table layout and its content. Both input routes should produce 316 rows. The final checksum command compares your result with the independently verified **laboratory FASTQ** run using the manuscript defaults and the v0.1.1 export format.
 
 ```bash
 table="$run_dir/results/paired_target_rates.tsv"
@@ -104,7 +128,9 @@ Read `NoEP_rate_pct` and `HiFi_rate_pct` as percentages. The `delta_HiFi_minus_N
 
 ### Verified on Luminary
 
-The fresh run used analysis release `v0.1.1` (`526d368`), CRISPResso2 2.3.4, six allocated CPUs and 18 GiB of requested memory. The paired analysis took 9 min 3 s. The run directory occupied 705 MiB. All 316 rows matched the archived paired table byte for byte. An independent calculation from the exported counts and denominators also reproduced both rates and every paired difference to within 1e-12.
+For the public ENA files, the FASTQ parser verified the first 1,000 read pairs in each run. Both mates matched the corresponding laboratory records in sequence and quality at every tested position. The paired workflow's preparation step retained 585 of these NoEP pairs and 712 HiFi pairs. Full-run counts below come from the laboratory FASTQs.
+
+The full laboratory FASTQ run used analysis release `v0.1.1` (`526d368`), CRISPResso2 2.3.4, six allocated CPUs and 18 GiB of requested memory. The paired analysis took 9 min 3 s. The run directory occupied 705 MiB. All 316 rows matched the archived paired table byte for byte. An independent calculation from the exported counts and denominators also reproduced both rates and every paired difference to within 1e-12.
 
 | Library | Original read pairs | Pairs after preparation | Fresh target alignments |
 | --- | ---: | ---: | ---: |
@@ -115,7 +141,7 @@ The fresh run used analysis release `v0.1.1` (`526d368`), CRISPResso2 2.3.4, six
 
 On Luminary, linking the environment on the shared filesystem was slow. The acceptance run installed the Linux packages on a compute node's local `/tmp` and ran the analysis in that allocation. The shared working directory held the FASTQs, reference index and final output.
 
-After cloning the agent in step 1, run the Git commands in step 2 on the login node to fetch the upstream checkout. Defer `python setup_references.py` until the environment is active. Stage the locked archives in a shared cache and request an allocation from the agent repository root.
+After cloning the agent in step 1, run the Git commands in step 2 on the login node to fetch the upstream checkout. If using the public runs, also download the four files from step 3 on the login node. Defer reference indexing and manifest creation until the environment is active. Stage the locked archives in a shared cache and request an allocation from the agent repository root.
 
 ```bash
 export CONDA_PKGS_DIRS="$PWD/data/conda-pkgs"

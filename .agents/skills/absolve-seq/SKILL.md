@@ -7,6 +7,8 @@ description: Analyze original ABSOLVE-seq pooled reporter FASTQs on Slurm. Selec
 
 Work from the repository root in the environment described in the README. Use the user's configured manifest, reference inputs and Slurm account.
 
+For a public test dataset, follow the [D3734/T1 quick start](../../../docs/d3734-t1-quick-start.md#public-test-data-from-sra). Download both mates of NoEP `SRR39887646` and HiFi `SRR39887695` from study `SRP722226`. Use the example's `--ena` manifest option to verify the four files before submitting the pair with `--fresh`.
+
 1. For a donor/replicate request, run `python paired.py --list` and select the matching complete NoEP/HiFi pair. Submit `sbatch paired.sbatch --donor DONOR --replicate REPLICATE`. Use the requested Maxi method, with `manuscript` as the default.
 2. For a manuscript-wide comparison, confirm that the four workbook extracts and 26 libraries are available. Use `sbatch --cpus-per-task=24 --mem=48G paired.sbatch --manuscript-panel`.
 3. Inspect the scheduler's terminal state and the run output. For paired analyses verify 316 unique target/strategy rows in `results/paired_target_rates.tsv`. For the full panel verify 632 unique target/strategy/editor comparisons in `panel_comparison.tsv`.

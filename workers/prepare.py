@@ -11,7 +11,7 @@ root = Path.cwd() if (Path.cwd()/"pair.json").is_file() else root
 pair = json.loads((root/"pair.json").read_text()) if (root/"pair.json").is_file() else {"donor":"D3734","replicate":"T1"}
 sys.path.insert(0, str(agent))
 from settings import MANIFEST, REFERENCES
-from pilot import FROZEN, PUBLIC, one, table
+from pilot import FROZEN, PUBLIC, one, public_library, table
 sys.path.insert(0, str(FROZEN/'src'))
 import prepare_crispresso as prep
 import barcode_core as bc
@@ -24,6 +24,9 @@ cas_type = {'NoEP':'noEP','HiFi':'HiFiCas9','WT':'WTCas9'}[condition]
 meta = one(r for r in table(PUBLIC/'NovaSeq3_sample_info.csv')
            if (r['donor_id'],r['replicate'],r['cas_type'])==(donor,replicate,cas_type))
 sample = row['sample_name'] if condition == 'WT' else meta['LV_ID']
+archive_library = public_library(row)
+if archive_library and archive_library != sample:
+    raise ValueError('Public run and reference sample table disagree: ' + row['sample_name'])
 work=root/condition
 work.mkdir()
 record={'pool_id':sample}
@@ -32,7 +35,7 @@ for mate in ('r1','r2'):
     name = Path(path).name
     if condition == 'WT':
         assert re.fullmatch(r'Nola_EP031022_\d+_LVpool_wtCas9_'+donor+'_'+replicate+'_R'+mate[-1]+r'\.fastq\.gz', name)
-    else:
+    elif archive_library is None:
         assert name.startswith(sample+'_CKDL')
     assert bc.sha256(path)==row['sha256_'+mate]
     record[mate]=path

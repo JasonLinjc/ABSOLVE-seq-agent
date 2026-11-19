@@ -6,7 +6,7 @@ The analysis is based on the [upstream ABSOLVE-seq repository](https://github.co
 
 ## Quick start
 
-[Run D3734/T1 from the original FASTQs](docs/d3734-t1-quick-start.md) for a worked example with a fresh software environment, reference indexing, Slurm submission and a checksum for the full 316-row output.
+Try the agent with public ABSOLVE-seq data from [SRA study SRP722226](https://trace.ncbi.nlm.nih.gov/Traces/?view=study&acc=SRP722226) (BioProject PRJNA1503690). The D3734/T1 example uses just two paired-end runs, NoEP `SRR39887646` and HiFi `SRR39887695`. Follow the [D3734/T1 quick start](docs/d3734-t1-quick-start.md) to download the four FASTQs, verify their archive checksums and export the 316-row comparison.
 
 Clone this repository and run commands from its root. The analysis runs on a Linux Slurm cluster with a shared filesystem. Activate the environment **before** submitting jobs. Supply your site's partition, account or wall time through the usual `sbatch` options.
 
@@ -17,7 +17,7 @@ python paired.py --help
 ABSOLVE_MANIFEST=examples/manifest.example.tsv python paired.py --list
 ```
 
-The example manifest demonstrates pair discovery. For analysis, provide a tab-delimited manifest at `data/sample_manifest.tsv` with absolute R1/R2 paths, their SHA-256 values, and the original sample names and filenames. See the [manifest template](examples/manifest.example.tsv). The workflow checks file identity before processing. If you have the laboratory inventory and SRA submission workbook, generate the manifest with `python resolve_inputs.py INVENTORY.tsv METADATA.xlsx data/sample_manifest.tsv`.
+The example manifest demonstrates pair discovery. For analysis, provide a tab-delimited manifest at `data/sample_manifest.tsv` with absolute R1/R2 paths, their SHA-256 values and the original sample names. The quick start generates this manifest from either the public D3734/T1 files in their ENA filenames or the laboratory files in their original filenames. See the [manifest template](examples/manifest.example.tsv). The workflow checks file identity before processing. If you have the laboratory inventory and SRA submission workbook, generate the manifest with `python resolve_inputs.py INVENTORY.tsv METADATA.xlsx data/sample_manifest.tsv`.
 
 Fetch the public sample table, target definitions and published Maxi annotation from the pinned revision. Indexing writes target-specific files into a new `data/references/` directory.
 

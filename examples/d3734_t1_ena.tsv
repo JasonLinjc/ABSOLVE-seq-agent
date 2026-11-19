@@ -1,0 +1,3 @@
+sample_name	library_id	run_accession	r1_url	md5_r1	r2_url	md5_r2
+NoEP_pool_D3734_T1	LV_S3	SRR39887646	https://ftp.sra.ebi.ac.uk/vol1/fastq/SRR398/046/SRR39887646/SRR39887646_1.fastq.gz	97768aceacb12ec55a35c3d9066df9b2	https://ftp.sra.ebi.ac.uk/vol1/fastq/SRR398/046/SRR39887646/SRR39887646_2.fastq.gz	f6aa126ac1869627e47873eece931cfd
+HiFi_pool_D3734_T1	LV_S1	SRR39887695	https://ftp.sra.ebi.ac.uk/vol1/fastq/SRR398/095/SRR39887695/SRR39887695_1.fastq.gz	bac7f39e31cd035c6fa947cef9a53d0d	https://ftp.sra.ebi.ac.uk/vol1/fastq/SRR398/095/SRR39887695/SRR39887695_2.fastq.gz	e906b41555d34c9b60d59f2fbe5656c6
