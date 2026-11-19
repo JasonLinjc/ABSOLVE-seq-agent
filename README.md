@@ -77,6 +77,8 @@ The model uses Firth binomial regression with treatment and donor, the observed 
 | `library_counts.tsv` | Per-library counts before and after cross-target filtering |
 | `donor_weights.tsv`, `sample_inventory.tsv`, `provenance.json` | Marginalization weights, library inventory and source hashes |
 
+The validated 26-library run agreed with the submitted tables on 608 of 632 calls. To generate a target-by-target breakdown of the 24 discrepancies and compare observed counts with manuscript-inferred counts, follow the [manuscript discordance audit](docs/manuscript-discordance.md).
+
 ## Local inputs and caches
 
 `ABSOLVE_DATA` overrides the default `data/` directory. `ABSOLVE_MANIFEST` selects an individual manifest. `ABSOLVE_CACHE` can point to a compatible historical deployment containing paired or WT alignment provenance. With fresh inputs the agent prepares and aligns libraries with CRISPResso2. Allow sufficient cluster scratch and wall time for your FASTQs. On a single pair, `--fresh` forces realignment. `Rscript` must find `brglm2` through the active environment or `R_LIBS_USER`.
