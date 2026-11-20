@@ -1,5 +1,5 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="660" height="615" viewBox="0 0 660 615" role="img" aria-labelledby="title desc">
-  <title id="title">From FASTQs to paired or manuscript results</title>
+  <title id="title">FASTQ-to-report workflow</title>
   <desc id="desc">Choose a matched pair or the full study. The target barcode (tBC) assigns each read to a target. Within each sample and target, reads with the same plasmid barcode (pBC) form a family. The pair produces 316 differences. The panel fits 632 contrasts. The agent checks coverage and returns the report and tables. Each run simulates conditional power from its counts and exports a figure and Excel source data.</desc>
   <defs>
     <marker id="arrow" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="6" markerHeight="6" orient="auto">
@@ -7,7 +7,10 @@
     </marker>
   </defs>
   <style>
-    .stage, .output { fill: #fae888; stroke: #211f20; stroke-width: 2; }
+    .stage, .output { fill: #f7e6ab; stroke: #211f20; stroke-width: 2; }
+    .input { fill: #d9eaf5; }
+    .environment { fill: #e5ead3; }
+    .output { fill: #f4ddcf; }
     .task { fill: white; stroke: #211f20; stroke-width: 2; }
     .flow { fill: none; stroke: #211f20; stroke-width: 1.8; marker-end: url(#arrow); }
     text { font-family: Arial, Helvetica, sans-serif; font-size: 15px; fill: #191819; text-anchor: middle; }
@@ -16,7 +19,7 @@
 
   <rect width="660" height="615" rx="8" fill="white"/>
   <g aria-label="Choose a comparison in chat">
-    <rect class="stage" x="8" y="6" width="644" height="79" rx="10"/>
+    <rect class="stage input" x="8" y="6" width="644" height="79" rx="10"/>
     <rect class="task" x="20" y="11" width="292" height="47" rx="13"/>
     <text x="166" y="30">One donor and replicate</text>
     <text x="166" y="50">Matched NoEP and HiFi</text>
@@ -28,7 +31,7 @@
   <path class="flow" d="M166 86 v12"/>
   <path class="flow" d="M490 86 v12"/>
   <g aria-label="Check FASTQs, manifest and references, then run locally or on Slurm">
-    <rect class="stage" x="8" y="101" width="644" height="79" rx="10"/>
+    <rect class="stage environment" x="8" y="101" width="644" height="79" rx="10"/>
     <rect class="task" x="20" y="106" width="292" height="47" rx="13"/>
     <text x="166" y="125">Pair default: fast mode</text>
     <text x="166" y="145">Single-end alignment input</text>
@@ -50,7 +53,7 @@
     <path class="flow" d="M397 224 h17"/>
     <rect class="task" x="417" y="201" width="223" height="47" rx="13"/>
     <text x="528.5" y="220">Plasmid barcode (pBC)</text>
-    <text x="528.5" y="240">Group matching reads</text>
+    <text x="528.5" y="240">Group reads by pBC</text>
     <text x="330" y="268">Count indels across 79 targets under four strategies</text>
   </g>
   <path class="flow" d="M166 276 v12"/>
@@ -82,7 +85,7 @@
     <text x="330" y="503">Verify tables and return report.md</text>
   <path class="flow" d="M330 515 v12"/>
   <g aria-label="Return the Dedud figure, PDF and Excel source data">
-    <rect class="stage" x="8" y="530" width="644" height="79" rx="10"/>
+    <rect class="stage output" x="8" y="530" width="644" height="79" rx="10"/>
     <rect class="task" x="20" y="535" width="292" height="47" rx="13"/>
     <text x="166" y="554">Matched pair</text>
     <text x="166" y="574">HiFi–NoEP effects and power</text>

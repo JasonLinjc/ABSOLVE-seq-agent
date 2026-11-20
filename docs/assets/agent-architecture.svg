@@ -8,7 +8,12 @@
   </defs>
   <style>
     .stage,.box { stroke:#211f20; stroke-width:2; }
-    .stage { fill:#fae888; }
+    .input { fill:#d9eaf5; }
+    .skills { fill:#e8dff3; }
+    .data { fill:#d7ebe5; }
+    .environment { fill:#e5ead3; }
+    .workflow { fill:#f7e6ab; }
+    .output { fill:#f4ddcf; }
     .box { fill:white; }
     .flow { fill:none; stroke:#211f20; stroke-width:1.8; marker-end:url(#arrow); }
     text { font:15px Arial,Helvetica,sans-serif; fill:#191819; text-anchor:middle; }
@@ -17,14 +22,14 @@
   </style>
   <rect width="660" height="545" rx="8" fill="white"/>
   <g aria-label="Input">
-    <rect class="stage" x="8" y="6" width="314" height="71" rx="10"/>
+    <rect class="stage input" x="8" y="6" width="314" height="71" rx="10"/>
     <text class="label" x="165" y="25">Input</text>
     <rect class="box" x="17" y="32" width="296" height="37" rx="10"/>
     <text x="165" y="56">Chat request in Codex or Claude Code</text>
   </g>
   <path class="flow" d="M165 78 v12"/>
   <g aria-label="Skills and tool access">
-    <rect class="stage" x="8" y="93" width="314" height="107" rx="10"/>
+    <rect class="stage skills" x="8" y="93" width="314" height="107" rx="10"/>
     <text class="label" x="165" y="114">Skills</text>
     <rect class="box" x="17" y="121" width="296" height="49" rx="10"/>
     <text x="165" y="141">absolve-seq · analysis</text>
@@ -32,7 +37,7 @@
     <text x="165" y="190">CLI access · no MCP server required</text>
   </g>
   <g aria-label="Data">
-    <rect class="stage" x="338" y="6" width="314" height="194" rx="10"/>
+    <rect class="stage data" x="338" y="6" width="314" height="194" rx="10"/>
     <text class="label" x="495" y="27">Data</text>
     <rect class="box" x="347" y="34" width="296" height="67" rx="10"/>
     <text x="495" y="60">FASTQs and sample manifest</text>
@@ -45,7 +50,7 @@
   <path class="flow" d="M165 201 v12"/>
   <path class="flow" d="M495 201 v12"/>
   <g aria-label="Environment">
-    <rect class="stage" x="8" y="217" width="644" height="73" rx="10"/>
+    <rect class="stage environment" x="8" y="217" width="644" height="73" rx="10"/>
     <text class="label" x="330" y="237">Environment</text>
     <rect class="box" x="17" y="244" width="297" height="39" rx="10"/>
     <text x="165.5" y="269">Conda, Docker or Apptainer</text>
@@ -53,12 +58,12 @@
     <text x="495" y="269">Run locally or submit to Slurm</text>
   </g>
   <path class="flow" d="M330 291 v12"/>
-  <g aria-label="Workflow">
-    <rect class="stage" x="8" y="307" width="644" height="116" rx="10"/>
-    <text class="label" x="330" y="328">Workflow · paired.py</text>
+  <g aria-label="Analysis workflow">
+    <rect class="stage workflow" x="8" y="307" width="644" height="116" rx="10"/>
+    <text class="label" x="330" y="328">Analysis workflow · paired.py</text>
     <rect class="box" x="17" y="338" width="297" height="55" rx="10"/>
-    <text x="165.5" y="361">tBC assigns reads to targets</text>
-    <text x="165.5" y="382">pBC groups reads into families</text>
+    <text x="165.5" y="361">Assign reads to targets by tBC</text>
+    <text x="165.5" y="382">Group reads by pBC</text>
     <path class="flow" d="M316 365 h27"/>
     <rect class="box" x="347" y="338" width="296" height="55" rx="10"/>
     <text x="495" y="361">Estimate editing effects</text>
@@ -67,7 +72,7 @@
   </g>
   <path class="flow" d="M330 424 v12"/>
   <g aria-label="Output">
-    <rect class="stage" x="8" y="440" width="644" height="97" rx="10"/>
+    <rect class="stage output" x="8" y="440" width="644" height="97" rx="10"/>
     <text class="label" x="330" y="462">Output</text>
     <rect class="box" x="17" y="471" width="297" height="56" rx="10"/>
     <text x="165.5" y="495">report.md</text>

@@ -70,6 +70,8 @@ For a real run, follow the [reference, manifest and FASTQ setup](docs/d3734-t1-q
 
 ## How the agent works
 
+### Agent architecture
+
 <p align="center">
   <img src="docs/assets/agent-architecture.svg" width="660" alt="A chat request selects the analysis or figure skill in Codex or Claude Code. The skills use the CLI directly. The software environment and sequencing inputs feed a local or Slurm workflow that returns a report, effect and power tables, and a figure with Excel source data." />
 </p>
@@ -81,7 +83,7 @@ Conda, Docker or Apptainer provides the analysis software. The agent runs the wo
 **Choose your comparison in chat.** For one donor and replicate, give the agent your FASTQ folder and sample sheet, or ask for the public D3734/T1 example. It matches HiFi with its NoEP control and asks which pair to use if several match. To reproduce the manuscript panel, supply the 26 study libraries and submitted Supplementary Tables 2–5.
 
 <details>
-<summary><strong>See the analysis steps for a matched pair and the full panel</strong></summary>
+<summary><strong>FASTQ-to-report workflow</strong></summary>
 
 <p align="center">
   <img src="docs/assets/paired-workflow.svg" width="660" alt="The agent selects a matched pair or the full manuscript panel, checks inputs, assigns reads to targets by target barcode (tBC), aligns them with CRISPResso2, groups reads by plasmid barcode (pBC) and counts indels four ways. It verifies 316 paired results or 632 panel comparisons and returns the report and tables. Each run simulates detection power and exports a Dedud figure and its Excel data." />
