@@ -70,27 +70,36 @@ For a real run, follow the [reference, manifest and FASTQ setup](docs/d3734-t1-q
 
 ## How the agent works
 
-Tell the agent which samples you want to compare and where your FASTQs and sample sheet are, or ask it to use the public D3734/T1 example. It checks the read pairs and references, matches samples by donor and replicate, and asks you to choose if the comparison is ambiguous. You can select how the Maxi plasmid pool defines a qualifying barcode (pBC). The default follows the manuscript.
+**Starting with FASTQs?** Give the agent your FASTQ folder and sample sheet, or ask it to run the public D3734/T1 example. For a paired analysis, it finds the HiFi sample and its NoEP control from the same donor and replicate. If several pairs match, it asks which one to run.
 
 ```mermaid
 flowchart TD
-    reads["FASTQs and sample sheet"] --> align["Prepare reads and call indels with CRISPResso2"]
-    align --> counts["Count reads and pBC families under four strategies"]
-    counts --> pair["Compare HiFi with its matched NoEP control"]
-    counts --> panel["Fit WT and HiFi effects across donors"]
-    frozen["Frozen library counts"] --> panel
-    pair --> report["Verify the tables and deliver the report"]
-    panel --> report
+    inputs["Check samples, FASTQ mates and target references"]
+    reads["Align reads and identify insertions and deletions"]
+    rates["Calculate indel rates under four counting strategies"]
+    report["Check the results and return the report and tables"]
+    inputs --> reads --> rates --> report
 ```
 
-The agent runs locally or on Slurm, waits for the analysis to finish, and checks that every expected comparison appears once. For a recognized benchmark with matching inputs and settings, it also verifies the result tables against their recorded SHA-256 checksums.
+The agent runs the analysis locally or on Slurm and waits for it to finish. It uses the manuscript barcode rule by default. The four strategies show how the rates change when reads are grouped by plasmid barcode, filtered using the Maxi pool, or both. [How the four strategies count reads and barcode families](#paired-results)
 
-| Your comparison | What to open |
+| What you want to do | What to open when the run finishes |
 | --- | --- |
-| 🧬 **One donor and replicate** | Open `results/report.md` for QC and a summary. In `paired_target_rates.tsv`, each of the **316 rows** gives the HiFi and NoEP counts, both indel rates, and their difference in percentage points for one target and strategy. |
-| 📋 **Full manuscript panel** | Supply all 26 libraries and submitted Supplementary Tables 2–5, or start from frozen `library_counts.tsv` and the submitted references. Open `report.md` in the results directory. Its `panel_comparison.tsv` covers **632 comparisons** across 79 targets, four strategies, and two editors, with adjusted q-values and agreement with the submitted calls. |
+| 🧬 **Compare one HiFi sample with its NoEP control** | Start with `results/report.md` for quality checks. In `paired_target_rates.tsv`, each row shows both indel counts, denominators and rates, plus **HiFi minus NoEP** in percentage points. The agent checks for **316 rows** (79 targets × 4 strategies). |
+| 📋 **Reproduce the full manuscript comparison** | Provide all 26 libraries and submitted Supplementary Tables 2–5. Open `report.md` for agreement with the manuscript and `panel_comparison.tsv` for **632 comparisons** (WT and HiFi, each versus NoEP), including adjusted q-values. |
 
-📊 **To reproduce Figure 3b**, ask for the submitted estimates or your panel estimates and provide Supplementary Table 2 for power. The agent returns the PDF and PNG with `Figure3b_source_data.xlsx`, which contains the 158 plotted target–editor rows. [Figure 3b inputs and outputs](docs/manuscript-figures.md)
+For a run that matches a published agent benchmark, the agent also checks the output tables against the recorded SHA-256 checksums.
+
+<details>
+<summary><strong>Already have counts from a previous panel run?</strong></summary>
+
+`library_counts.tsv` saves one row per sequencing library, target and counting strategy. The `indel` column counts reads or barcode families with an indel, and `denominator` counts all reads or families included under that strategy. The full panel has 26 × 79 × 4 = 8,216 rows.
+
+You can give the agent this table and the submitted references to rerun the statistical model. This skips FASTQ alignment and reuses the barcode filters applied in the earlier run. To test a different barcode rule, regenerate the counts first. [Refit a panel from saved counts](docs/historical-maxi.md#refit-existing-counts)
+
+</details>
+
+📊 **Need Figure 3b?** Ask for the figure using either the submitted estimates or your panel results, and provide Supplementary Table 2 for power. The agent returns the PDF, PNG and `Figure3b_source_data.xlsx` with the 158 plotted values (79 targets × 2 editors). [Figure 3b inputs and outputs](docs/manuscript-figures.md)
 
 ## Example conversations
 
@@ -109,7 +118,7 @@ The first prompt above runs the whole example. To guide it step by step, send th
 
 > I have all 26 libraries, their manifest and submitted Supplementary Tables 2–5. Check the historical software versions, run the manuscript workflow and summarize agreement for WT and HiFi by strategy. Draw Figure 3b from the fitted Dedud estimates, use Supplementary Table 2 for power, and link the report, PDF and Excel source data.
 
-If you already have frozen counts, ask the agent to start with a [count refit](docs/historical-maxi.md#refit-existing-counts) and identify that starting point in the report.
+If you already have a complete `library_counts.tsv` from a previous panel run, ask the agent to start with a [count refit](docs/historical-maxi.md#refit-existing-counts) and identify that starting point in the report.
 
 ## Quick start
 
@@ -150,7 +159,7 @@ The manuscript cross-target filter requires edited alleles to match the assigned
 
 Ask for **Figure 3b from the submitted workbook** to redraw the submitted estimates, or **Figure 3b from my panel refit** to use the agent's estimates. Both use candidate-specific power from Supplementary Table 2. The Excel workbook and plotted TSV contain one Dedud row per target and editor. [Figure commands and verification](docs/manuscript-figures.md)
 
-The separate benchmark profiles cover a D3734/T1 fast pair, a manuscript-read pair with historical Maxi membership, and a frozen-count refit. Run the profile that matches your inputs and settings:
+The separate benchmark profiles cover a D3734/T1 fast pair, a manuscript-read pair with historical Maxi membership, and a panel refit from saved counts. Run the profile that matches your inputs and settings:
 
 ```bash
 python verify_results.py pair-fast runs/paired-fast/results
@@ -172,7 +181,7 @@ The manuscript panel fits a Firth binomial regression with treatment and donor, 
 | Validation starting point | Agreement with submitted primary calls |
 | --- | --- |
 | Historical-trimming FASTQ replay | 628/632 (four WT differences). [Count-level audit](docs/manuscript-discordance.md) |
-| Frozen encounter-order counts, equal-donor refit | 632/632. [Refit validation and numerical differences](docs/historical-maxi.md#luminary-acceptance) |
+| Saved encounter-order counts, equal-donor refit | 632/632. [Refit validation and numerical differences](docs/historical-maxi.md#luminary-acceptance) |
 
 ## Local inputs and caches
 
