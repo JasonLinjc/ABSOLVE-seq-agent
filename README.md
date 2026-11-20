@@ -23,9 +23,11 @@
 
 **New to the agent?** Open an empty project folder in a signed-in Codex or Claude Code session on a machine with Git, internet access and either Conda/Mamba or a supported container runtime. Paste this message to set up the project **and run the public example**:
 
-> Set up https://github.com/JasonLinjc/ABSOLVE-seq-agent in this empty folder. Follow the public D3734/T1 quick start, prepare the fast-mode environment and references, and download the paired NoEP and HiFi FASTQs. Run all 79 targets from FASTQ with `--fresh` and the default filters, verify the results against the public benchmark, and give me the report, power estimates, figure and Excel source data.
+> Set up https://github.com/JasonLinjc/ABSOLVE-seq-agent in this empty folder. Follow the public D3734/T1 quick start, prepare the fast-mode environment and references, and download the paired NoEP and HiFi FASTQs. Run all 79 targets with `--fresh` and the default filters. Wait for completion, run the `pair-fast` and `power` checks in the analysis environment, and give me the report, effect and power tables, figure and Excel source data.
 
-This example uses four compressed FASTQs (1.58 GB) from [SRA study SRP722226](https://trace.ncbi.nlm.nih.gov/Traces/?view=study&acc=SRP722226). A completed run produces **316 target/strategy comparisons**. Open `results/report.md` for read retention and a four-strategy summary, or `results/paired_target_rates.tsv` for the counts behind any target.
+This example uses four compressed FASTQs (1.58 GB) from [SRA study SRP722226](https://trace.ncbi.nlm.nih.gov/Traces/?view=study&acc=SRP722226). A completed run produces **316 target/strategy comparisons**. Open `results/report.md` for read retention and a four-strategy summary, or `results/paired_target_rates.tsv` for the counts behind any target. [Clean-checkout acceptance results](docs/d3734-t1-quick-start.md#verified-on-luminary)
+
+**Using a cluster from your laptop?** Include its SSH host and an empty shared project directory in the same message. The agent can use a login shell to find Slurm and stage public downloads from a networked machine if cluster downloads are slow. It builds the reference index and verifies the four FASTQs in the new checkout before submitting the pair. [Cluster setup and transfer](docs/container.md#stage-public-inputs-from-a-networked-machine)
 
 **Already have original-study FASTQs?** Once the project is set up, give the agent the paths visible on the machine that will run the analysis:
 

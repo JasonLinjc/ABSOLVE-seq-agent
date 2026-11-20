@@ -15,7 +15,7 @@ Both jobs processed 10,084,551 NoEP read pairs and 9,868,448 HiFi read pairs. Al
 
 ## Apptainer on Slurm
 
-Use a shared checkout visible to the login and compute nodes. Use a current checkout for the power and figure steps. The versioned SIF supplies the scientific environment.
+Use a shared checkout visible to the login and compute nodes. For a scripted SSH session, start a login shell (for example, `ssh CLUSTER 'bash -lc "command -v sbatch && command -v apptainer"'`). On Luminary, the login profile adds Slurm to the command path. Use a current checkout for the power and figure steps. The versioned SIF supplies the scientific environment.
 
 ```bash
 git clone https://github.com/JasonLinjc/ABSOLVE-seq-agent.git
@@ -43,11 +43,31 @@ apptainer exec --cleanenv --bind "$PWD" "$ABSOLVE_IMAGE" python "$PWD/setup_refe
 apptainer exec --cleanenv --bind "$PWD" "$ABSOLVE_IMAGE" python "$PWD/examples/d3734_t1_manifest.py" \
     --ena "$PWD/data/sra/SRP722226" "$PWD/data/sample_manifest.tsv"
 apptainer exec --cleanenv --bind "$PWD" "$ABSOLVE_IMAGE" python "$PWD/paired.py" --list
-sbatch --partition=cpu1,cpu2 paired.sbatch --donor D3734 --replicate T1 --fresh \
-    --output "$PWD/runs/container-D3734-T1"
+job_id=$(sbatch --parsable --partition=cpu1,cpu2 paired.sbatch --donor D3734 --replicate T1 --fresh \
+    --output "$PWD/runs/container-D3734-T1")
+sacct -j "$job_id" --format=JobID,State,ExitCode,Elapsed
 ```
 
 Set the partition for your cluster. At the tagged release, the Slurm wrapper executes the code shipped inside the SIF. The current wrapper runs the shared checkout with the same container runtime. Use the result checks in [step 5](d3734-t1-quick-start.md#5-read-the-report-and-verify-the-result). For the original paired-end workflow, use the current checkout and the host-side [manuscript submission command](manuscript-reads.md). The locked image supplies R for the final model fit.
+
+Wait for the job to reach Slurm state `COMPLETED` with exit code `0:0`. In the shared checkout, run both checks with the same image as the job. This also works when the login node has no Python plotting or Excel packages.
+
+```bash
+results="$PWD/runs/container-D3734-T1/results"
+apptainer exec --cleanenv --bind "$PWD" "$ABSOLVE_IMAGE" python "$PWD/verify_results.py" pair-fast "$results"
+apptainer exec --cleanenv --bind "$PWD" "$ABSOLVE_IMAGE" python "$PWD/verify_results.py" power "$results"
+```
+
+### Stage public inputs from a networked machine
+
+If the cluster has slow external access, use a networked workstation for the downloads. Use the same agent revision on both machines. On the workstation, follow the download commands above for the SIF and `SHA256SUMS`, and the [paired quick start](d3734-t1-quick-start.md) for the pinned upstream checkout and the four public FASTQs. From the workstation checkout, replace the destination below with the SSH host and absolute path of the new cluster checkout.
+
+```bash
+destination=CLUSTER:/shared/path/to/ABSOLVE-seq-agent/
+rsync -aP --relative data/containers/ data/upstream/test/data/ data/sra/SRP722226/ "$destination"
+```
+
+Back in the cluster checkout, verify the SIF against `SHA256SUMS`, set the image and data environment variables above, then run the reference builder and the `--ena` manifest helper there. Building the manifest on the cluster records paths visible to the job and verifies the ENA MD5 of each transferred mate. Submit the documented `--fresh` command and verify the results in the image.
 
 ## Docker
 

@@ -62,12 +62,12 @@ For the paired quick start, download both mates of the NoEP and HiFi runs from t
 export FASTQ_ROOT="$PWD/data/sra/SRP722226"
 mkdir -p "$FASTQ_ROOT"
 awk -F '\t' 'NR > 1 { print $4; print $6 }' examples/d3734_t1_ena.tsv |
-    (cd "$FASTQ_ROOT" && xargs -n 1 -P 4 curl -fL --retry 3 -C - -O)
+    (cd "$FASTQ_ROOT" && xargs -n 1 -P 4 curl -fL --retry 3 --retry-all-errors -C - -O)
 python examples/d3734_t1_manifest.py --ena "$FASTQ_ROOT" data/sample_manifest.tsv
 python paired.py --list
 ```
 
-Pair discovery should show `D3734 T1 NoEP_pool_D3734_T1 HiFi_pool_D3734_T1`. Continue with step 4.
+If a connection drops partway through a file, keep the partial file. From `$FASTQ_ROOT`, rerun `curl -fL --retry 3 --retry-all-errors -C - -O "$mate_url"` with that mate’s URL from the download table, then run the manifest command. The helper verifies all four MD5 values before writing the manifest. Pair discovery should show `D3734 T1 NoEP_pool_D3734_T1 HiFi_pool_D3734_T1`. Continue with step 4.
 
 ### Existing laboratory FASTQs
 
@@ -146,6 +146,15 @@ printf '%s  %s\n' 0b0465ecc5aa244cc2a10654e153dbe8467322cbedd4f5bfc7280605801898
 Read `NoEP_rate_pct` and `HiFi_rate_pct` as percentages. The `delta_HiFi_minus_NoEP_pp` column subtracts NoEP from HiFi and is measured in percentage points. A zero denominator leaves the corresponding rate and difference blank.
 
 ### Verified on Luminary
+
+A clean-checkout run on 2026-11-21 tested the [one-message workflow](../README.md#start-with-one-message) at agent revision `681f213`. All four ENA FASTQs were downloaded on a networked workstation, transferred to Luminary, and verified from the cluster manifest builder. The reference index was built in the new checkout. Slurm job `21298427` used the published Apptainer image and `--fresh`, completed in 10 min 13 s (analysis only), and produced 79 new alignments per arm.
+
+| Check | Result |
+| --- | --- |
+| Paired effects | All 316 rows matched the accepted SHA-256. Recalculation from the counts reproduced every arm rate and paired difference within 1e-12. |
+| Power | All 632 estimates were available. The power TSV matched the earlier public-pair run byte for byte (SHA-256 `e140f49224fd0d59a40f3a0257ffa5bad62e385c8cf858787c576ca2c0f3357b`). |
+| Report and figure | All report links resolved. The PDF contained the 79 target labels, the PNG decoded successfully, and the 79 rows in the Excel sheet matched the Dedud plotting table. |
+
 
 Container release `container-v0.1.0` ran the complete public ENA pair and the complete laboratory pair in separate Slurm jobs with `--fresh`. The four ENA FASTQs passed their published MD5 checks. Each run produced 79 fresh alignments per library and matched the independently verified 316-row table byte for byte. Counts in the table below apply to both sources. [Container acceptance](container.md#acceptance-on-luminary)
 
