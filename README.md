@@ -68,35 +68,54 @@ A paired run reports HiFi minus NoEP for each of 79 targets under the Unfiltered
 
 ## Example conversations
 
-### Run a public sample and inspect one target
+### From paired FASTQs to a report
 
-> **User** — I have a workstation and four cores. Run the public D3734/T1 NoEP and HiFi FASTQs from scratch with the default Maxi rule. Verify all four strategies.
->
-> **Agent** — I'll use fast read processing, the published manuscript pBC annotation and four local workers. I'll check the 316-row `paired_target_rates.tsv` against the `pair-fast` benchmark.
->
-> **User** — For `1617_OT_0040_ALT`, is the difference still positive after Dedud+Dedup? Show the counts behind the rates.
->
-> **Agent** — Yes. In the verified D3734/T1 example, NoEP has 0 edited families out of 1,619 (0.00%) and HiFi has 9 out of 675 (1.33%). HiFi minus NoEP is **+1.33 percentage points** for this pair.
+Use the messages below in order in one Codex or Claude Code chat. This walkthrough uses the public D3734/T1 NoEP and HiFi libraries. For your own original-study libraries, give the agent the FASTQ directory and sample manifest, identify the donor and replicate, and substitute a new output directory.
 
-The [public-data quick start](docs/d3734-t1-quick-start.md) gives the accessions, file checks and commands for this conversation.
+**1. Identify the inputs and prepare the workspace**
 
-### Change the pBC rule for the same pair
+> **User** — I want to analyze the public D3734/T1 pair on my workstation. Follow the public-data quick start. Set up the analysis environment, download the four FASTQs into `data/sra/SRP722226/`, verify their checksums and prepare the references. Show me which R1 and R2 belong to each condition before starting alignment.
 
-> **User** — I have QC results for all three Maxi pools. Repeat D3734/T1 with `two-pools` and compare it with the default run. Did the Dedud estimate change for `1617_OT_0040_ALT`?
+The agent should identify NoEP as `SRR39887646` and HiFi as `SRR39887695`, check each compressed file against its ENA MD5, and write the absolute paths and SHA-256 values to `data/sample_manifest.tsv`. With the real manifest selected, `python paired.py --list` should show D3734/T1 as a complete pair. [Public-data quick start](docs/d3734-t1-quick-start.md)
+
+**2. Run the comparison**
+
+> **User** — Run that pair from FASTQ across all 79 targets. Use fast read processing, the default manuscript Maxi pBC rule and all four counting strategies. Use four local workers, write to `runs/D3734-T1`, and wait for completion.
+
+On a Slurm cluster, replace “use four local workers” with “submit to my configured Slurm partition.” The target-level result is `runs/D3734-T1/results/paired_target_rates.tsv`.
+
+**3. Check the run and interpret a target**
+
+> **User** — Compare the raw and prepared read-pair counts in each arm. Confirm there is one row for every target and strategy, flag any undefined rates, and run the public D3734/T1 benchmark. Then show me the counts behind the Dedud+Dedup result for `1617_OT_0040_ALT`.
+
+The public benchmark checks the complete table with `python verify_results.py pair-fast runs/D3734-T1/results`. A reference answer for these public inputs is:
+
+> **Agent** — All 316 target/strategy rows match the benchmark. For `1617_OT_0040_ALT`, NoEP has 0 edited families out of 1,619 (0.00%) and HiFi has 9 out of 675 (1.33%). The paired difference is **+1.33 percentage points**. This estimate describes D3734/T1.
+
+For another donor, replicate or pBC rule, use the run's own counts, denominators and coverage checks. The `pair-fast` reference digest is specific to the documented D3734/T1 settings.
+
+**4. Write the report**
+
+> **User** — Write an English Markdown report to `runs/D3734-T1/report.md` using the completed run. Identify the samples and analysis settings. Summarize read retention by arm, compare the four strategies, and include the numerator, denominator, rate and HiFi-minus-NoEP difference for the focal target. Mark zero-denominator rates as undefined. Link the supporting files and state which checks passed.
+
+The final message asks the chat agent to author the narrative. The fast workflow supplies the evidence:
+
+| File relative to `runs/D3734-T1/` | What to use it for |
+| --- | --- |
+| `pair.json` | Sample identities, input hashes, target filter and Maxi rule |
+| `results/qc.json` | Raw and prepared pairs by arm and reasons reads were excluded |
+| `results/strategy_summary.tsv` | Pooled rates and median target differences for each strategy |
+| `results/paired_target_rates.tsv` | Target-level indel counts, denominators, rates and differences |
+
+### From the full cohort to a manuscript report
+
+Use this path when the report needs WT and HiFi comparisons across donors, BH-adjusted q-values or Figure 3b.
+
+> **User** — I have the 26 original libraries, their manifest and submitted Supplementary Tables 2–5. Check the inputs and historical software versions, run the 79-target manuscript workflow into `runs/panel`, and compare the 632 editor/target/strategy calls with the supplements.
 >
-> **Agent** — I'll keep the donor, replicate and read mode fixed and write the new run to a separate directory. For that target I'll report the edited counts and denominators in each arm, then compare the two HiFi-minus-NoEP estimates.
+> **User** — Write `runs/panel/report.md` from the finished results. Summarize concordant and discordant calls by editor and strategy, with Δ and q for each discrepancy. Draw Figure 3b from this run's Dedud estimates using Supplementary Table 2 for power. Link the comparison tables, run provenance, PDF and 158-row Excel source table in the report.
 
-### Refit the manuscript panel and export Figure 3b
-
-> **User** — I have the frozen 26-library `library_counts.tsv` and submitted Supplementary Tables 2–5. Refit the manuscript model and tell me how many WT and HiFi calls agree with the supplements.
->
-> **Agent** — I'll check the 8,216 count records, fit the equal-donor model and compare the 632 calls by editor and strategy.
->
-> **User** — Draw Figure 3b from that refit and give me the underlying Excel table.
->
-> **Agent** — I'll use the refitted Dedud estimates and the power values from Supplementary Table 2. The PDF and PNG will share a 158-row source table, one row per target and editor, exported as Excel and TSV alongside input hashes.
-
-See the [count-refit instructions](docs/historical-maxi.md#refit-existing-counts) and the [Figure 3b commands](docs/manuscript-figures.md). To redraw the submitted estimates directly, ask “Reproduce Figure 3b from Supplementary Table 2 and export its Excel source data.”
+If you already have the frozen 8,216-row `library_counts.tsv`, ask the agent to start with a count refit and identify that starting point in the report. [Manuscript workflow](docs/manuscript-reads.md) · [Count refit](docs/historical-maxi.md#refit-existing-counts) · [Figure 3b and its Excel table](docs/manuscript-figures.md)
 
 ## Quick start
 
