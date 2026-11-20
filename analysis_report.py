@@ -40,7 +40,7 @@ def paired_report(folder, mode):
         raise ValueError("Inconsistent pair or filter settings")
     donor, rep, maxi, target_filter = settings.pop()
     lines = [f"# ABSOLVE-seq paired analysis: {donor} / {rep}", "",
-             f"Read mode: {mode}. Maxi pBC rule: {maxi}. Target filter: {target_filter}.",
+             f"Read mode: {mode}. Plasmid barcode rule: {maxi}. Target filter: {target_filter}.",
              "The table contains 316 unique comparisons across 79 targets and four strategies.",
              "Differences are HiFi minus NoEP in percentage points (pp)."]
     if (folder / "qc.json").is_file():

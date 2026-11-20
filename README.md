@@ -76,7 +76,7 @@ For a real run, follow the [reference, manifest and FASTQ setup](docs/d3734-t1-q
   <img src="docs/assets/paired-workflow.svg" width="660" alt="The agent selects a matched pair or the full manuscript panel, checks inputs, assigns reads to targets, aligns them with CRISPResso2 and counts indels four ways. It verifies 316 paired results or 632 panel comparisons and returns the report and tables. Each run simulates detection power and exports a Dedud figure and its Excel data." />
 </p>
 
-**From reads to counts.** The agent runs locally or on Slurm. A pair defaults to fast read processing. The manuscript panel defaults to historical trimming and paired-end alignment. Both use the target barcode to assign reads and the plasmid barcode (pBC) to group reads into families. Unfiltered counts reads, Dedup counts one representative allele per family, and Dedud applies the selected Maxi pBC rule and, by default, a cross-target identity check. Dedud+Dedup combines filtering and family counting. The published manuscript Maxi annotation is the default in both read modes. [Counting strategies](#paired-results) · [Read modes](docs/manuscript-reads.md)
+**From reads to counts.** The agent runs locally or on Slurm. A pair defaults to fast read processing. The manuscript panel defaults to historical trimming and paired-end alignment. Both use the target barcode to assign reads and the plasmid barcode (pBC) to group reads into families. Unfiltered counts reads, Dedup counts one representative allele per family, and Dedud applies the selected plasmid barcode rule and, by default, a cross-target identity check. Dedud+Dedup combines filtering and family counting. The published plasmid barcode annotation from the Maxi pool is the default in both read modes. [Counting strategies](#paired-results) · [Read modes](docs/manuscript-reads.md)
 
 | What you want to do | What to open when the run finishes |
 | --- | --- |
@@ -105,7 +105,7 @@ You can give the agent this table and the submitted references to rerun the stat
 The first prompt above runs the whole example. To guide it step by step, send these messages in the same chat:
 
 1. **Identify inputs.** “Show me which mates belong to NoEP and HiFi for public D3734/T1. Verify their archive checksums and build my sample manifest.”
-2. **Run the pair.** “Use four local workers, fast read processing and the manuscript Maxi pBC rule. Save all four strategies under `runs/D3734-T1` and wait for completion.”
+2. **Run the pair.** “Use four local workers, fast read processing and the manuscript plasmid barcode rule. Save all four strategies under `runs/D3734-T1` and wait for completion.”
 3. **Check a result.** “Compare raw and prepared read pairs in the two arms. Does `1617_OT_0040_ALT` still have a positive difference after Dedud+Dedup? Show the counts.”
 4. **Open the report.** “Give me the report, figure, target table and power estimates. Flag undefined rates and tell me whether the D3734/T1 benchmark passed.”
 
@@ -139,10 +139,10 @@ Each row gives the NoEP and HiFi numerators, denominators, rates (%) and differe
 | --- | --- |
 | Unfiltered | All aligned reads |
 | Dedup | One representative allele per sample, target and pBC family |
-| Dedud | Reads with a qualifying Maxi pBC that pass cross-target filtering |
+| Dedud | Reads with a qualifying plasmid barcode that pass cross-target filtering |
 | Dedud+Dedup | One representative allele per retained family after filtering |
 
-The default `--maxi-method manuscript` uses the published plasmid-barcode (pBC) annotation. The historical method rebuilds membership from six original Maxi FASTQs. [Historical Maxi reference and validation](docs/historical-maxi.md)
+The default `--maxi-method manuscript` uses the published plasmid barcode (pBC) annotation. The historical method rebuilds membership from six original Maxi FASTQs. [Historical Maxi reference and validation](docs/historical-maxi.md)
 
 <details>
 <summary><strong>Compare pBC definitions or change the target filter</strong></summary>

@@ -1,6 +1,6 @@
 ---
 name: absolve-seq
-description: Analyze original ABSOLVE-seq pooled reporter FASTQs end to end and deliver a report locally or on Slurm. Select a matched donor and replicate, compare Maxi pBC criteria, export four indel-rate strategies, simulate detection power, deliver the report and figure, or reproduce manuscript treatment margins across the 79-target panel.
+description: Analyze original ABSOLVE-seq pooled reporter FASTQs end to end and deliver a report locally or on Slurm. Select a matched donor and replicate, compare plasmid barcode filtering criteria, export four indel-rate strategies, simulate detection power, deliver the report and figure, or reproduce manuscript treatment margins across the 79-target panel.
 ---
 
 # ABSOLVE-seq analysis
