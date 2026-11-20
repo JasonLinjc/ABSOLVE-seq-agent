@@ -71,10 +71,12 @@ For a real run, follow the [reference, manifest and FASTQ setup](docs/d3734-t1-q
 ## How the agent works
 
 <p align="center">
-  <img src="docs/assets/agent-architecture.svg" width="660" alt="A chat request selects the analysis or figure skill in Codex or Claude Code. The skills use the CLI directly. Sequencing data and references feed a local or Slurm workflow that returns a report, effect and power tables, and a figure with Excel source data." />
+  <img src="docs/assets/agent-architecture.svg" width="660" alt="A chat request selects the analysis or figure skill in Codex or Claude Code. The skills use the CLI directly. The software environment and sequencing inputs feed a local or Slurm workflow that returns a report, effect and power tables, and a figure with Excel source data." />
 </p>
 
 The two skills guide Codex and Claude Code through the repository's command-line tools. The analysis skill runs `paired.py` for a matched pair or a full panel. The figure skill also supports historical Figure 3b redraws. This workflow runs without an MCP server.
+
+Conda, Docker or Apptainer provides the analysis software. The agent runs the workflow on a workstation or submits jobs to Slurm. Manuscript read processing uses the historical Trimmomatic and CRISPResso2 versions. [Analysis environment](docs/container.md) · [Manuscript runtime](docs/manuscript-reads.md)
 
 **Choose your comparison in chat.** For one donor and replicate, give the agent your FASTQ folder and sample sheet, or ask for the public D3734/T1 example. It matches HiFi with its NoEP control and asks which pair to use if several match. To reproduce the manuscript panel, supply the 26 study libraries and submitted Supplementary Tables 2–5.
 

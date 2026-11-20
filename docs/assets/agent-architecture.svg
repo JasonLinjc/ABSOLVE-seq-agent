@@ -1,6 +1,6 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="660" height="455" viewBox="0 0 660 455" role="img" aria-labelledby="title desc">
+<svg xmlns="http://www.w3.org/2000/svg" width="660" height="545" viewBox="0 0 660 545" role="img" aria-labelledby="title desc">
   <title id="title">ABSOLVE-seq agent architecture</title>
-  <desc id="desc">A chat request in Codex or Claude Code selects a repository skill. The skills invoke command-line tools without requiring an MCP server. Sequencing data and study references feed the local or Slurm workflow. It verifies editing effects and simulated power, then delivers a report, tables, figures and Excel source data.</desc>
+  <desc id="desc">A chat request in Codex or Claude Code selects a repository skill. The skills invoke command-line tools without requiring an MCP server. The workflow uses sequencing data and study references. Conda or a container provides the software, and execution runs locally or on Slurm. It verifies editing effects and simulated power, then delivers a report, tables, figures and Excel source data.</desc>
   <defs>
     <marker id="arrow" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="6" markerHeight="6" orient="auto">
       <path d="M0 0 L8 4 L0 8 Z" fill="#211f20"/>
@@ -15,7 +15,7 @@
     .label { font-weight:bold; }
     @media (max-width:480px) { text { font-size:17px; } }
   </style>
-  <rect width="660" height="455" rx="8" fill="white"/>
+  <rect width="660" height="545" rx="8" fill="white"/>
   <g aria-label="Input">
     <rect class="stage" x="8" y="6" width="314" height="71" rx="10"/>
     <text class="label" x="165" y="25">Input</text>
@@ -44,27 +44,36 @@
   </g>
   <path class="flow" d="M165 201 v12"/>
   <path class="flow" d="M495 201 v12"/>
-  <g aria-label="Workflow">
-    <rect class="stage" x="8" y="217" width="644" height="116" rx="10"/>
-    <text class="label" x="330" y="238">Workflow · paired.py · local or Slurm</text>
-    <rect class="box" x="17" y="248" width="297" height="55" rx="10"/>
-    <text x="165.5" y="271">tBC assigns reads to targets</text>
-    <text x="165.5" y="292">pBC groups reads into families</text>
-    <path class="flow" d="M316 275 h27"/>
-    <rect class="box" x="347" y="248" width="296" height="55" rx="10"/>
-    <text x="495" y="271">Estimate editing effects</text>
-    <text x="495" y="292">and simulate detection power</text>
-    <text x="330" y="324">A saved-count refit starts at effect estimation</text>
+  <g aria-label="Environment">
+    <rect class="stage" x="8" y="217" width="644" height="73" rx="10"/>
+    <text class="label" x="330" y="237">Environment</text>
+    <rect class="box" x="17" y="244" width="297" height="39" rx="10"/>
+    <text x="165.5" y="269">Conda, Docker or Apptainer</text>
+    <rect class="box" x="347" y="244" width="296" height="39" rx="10"/>
+    <text x="495" y="269">Run locally or submit to Slurm</text>
   </g>
-  <path class="flow" d="M330 334 v12"/>
+  <path class="flow" d="M330 291 v12"/>
+  <g aria-label="Workflow">
+    <rect class="stage" x="8" y="307" width="644" height="116" rx="10"/>
+    <text class="label" x="330" y="328">Workflow · paired.py</text>
+    <rect class="box" x="17" y="338" width="297" height="55" rx="10"/>
+    <text x="165.5" y="361">tBC assigns reads to targets</text>
+    <text x="165.5" y="382">pBC groups reads into families</text>
+    <path class="flow" d="M316 365 h27"/>
+    <rect class="box" x="347" y="338" width="296" height="55" rx="10"/>
+    <text x="495" y="361">Estimate editing effects</text>
+    <text x="495" y="382">and simulate detection power</text>
+    <text x="330" y="414">A saved-count refit starts at effect estimation</text>
+  </g>
+  <path class="flow" d="M330 424 v12"/>
   <g aria-label="Output">
-    <rect class="stage" x="8" y="350" width="644" height="97" rx="10"/>
-    <text class="label" x="330" y="372">Output</text>
-    <rect class="box" x="17" y="381" width="297" height="56" rx="10"/>
-    <text x="165.5" y="405">report.md</text>
-    <text x="165.5" y="426">Effect and power tables (TSV)</text>
-    <rect class="box" x="347" y="381" width="296" height="56" rx="10"/>
-    <text x="495" y="405">Paired figure or panel Figure 3b</text>
-    <text x="495" y="426">PDF, PNG and Excel source data</text>
+    <rect class="stage" x="8" y="440" width="644" height="97" rx="10"/>
+    <text class="label" x="330" y="462">Output</text>
+    <rect class="box" x="17" y="471" width="297" height="56" rx="10"/>
+    <text x="165.5" y="495">report.md</text>
+    <text x="165.5" y="516">Effect and power tables (TSV)</text>
+    <rect class="box" x="347" y="471" width="296" height="56" rx="10"/>
+    <text x="495" y="495">Paired figure or panel Figure 3b</text>
+    <text x="495" y="516">PDF, PNG and Excel source data</text>
   </g>
 </svg>
