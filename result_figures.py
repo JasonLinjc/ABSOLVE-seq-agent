@@ -63,14 +63,17 @@ def pair_figure(folder, power):
     sheet.column_dimensions["B"].width = 25
     book.save(dest / "paired_effect_power.xlsx")
     x = np.arange(1, len(source) + 1)
-    fig, (effect_ax, power_ax) = plt.subplots(2, figsize=(9, 5.6), sharex=True, layout="constrained")
+    fig, (effect_ax, power_ax) = plt.subplots(2, figsize=(18.5, 7), sharex=True, layout="constrained")
     effect_ax.axhline(0, color="#aab3b8", linewidth=0.8)
     effect_ax.scatter(x, [r["delta_pp"] for r in source], s=15, color="#175c75")
     effect_ax.set_yscale("symlog", linthresh=0.1)
     effect_ax.set_ylabel("HiFi − NoEP (pp)\nSymmetric log scale")
     for column, effect, color, marker in (("power001", "0.01 pp", "#137f78", "o"), ("power01", "0.1 pp", "#b65d23", "x")):
         power_ax.scatter(x, [r[column] for r in source], color=color, s=18, marker=marker, label=effect)
-    power_ax.set(ylim=(-0.05, 1.12), ylabel="Detection probability", xlabel="Target index in the source table")
+    power_ax.set(ylim=(-0.05, 1.12), xlim=(0.5, len(source) + 0.5),
+                 ylabel="Detection probability", xlabel="Target")
+    power_ax.set_xticks(x, [r["target"] for r in source], rotation=90, fontsize=8)
+    power_ax.tick_params(axis="x", length=3)
     power_ax.legend(title="Assumed effect", loc="upper right", ncol=2)
     fig.suptitle(f"{rows[0]['donor']} / {rows[0]['replicate']}   |   Dedud paired effects and conditional power")
     fig.savefig(dest / "paired_effect_power.png", dpi=180)
