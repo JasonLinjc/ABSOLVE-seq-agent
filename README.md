@@ -72,14 +72,9 @@ For a real run, follow the [reference, manifest and FASTQ setup](docs/d3734-t1-q
 
 **Starting with FASTQs?** Give the agent your FASTQ folder and sample sheet, or ask it to run the public D3734/T1 example. For a paired analysis, it finds the HiFi sample and its NoEP control from the same donor and replicate. If several pairs match, it asks which one to run.
 
-```mermaid
-flowchart TD
-    inputs["Check samples, FASTQ mates and target references"]
-    reads["Align reads and identify insertions and deletions"]
-    rates["Calculate indel rates under four counting strategies"]
-    report["Check the results and return the report and tables"]
-    inputs --> reads --> rates --> report
-```
+<p align="center">
+  <img src="docs/assets/paired-workflow.svg" width="660" alt="Paired analysis workflow. The agent matches HiFi and NoEP samples, prepares and aligns the reads, compares indel rates under four strategies, and verifies the tables before returning the report." />
+</p>
 
 The agent runs the analysis locally or on Slurm and waits for it to finish. It uses the manuscript barcode rule by default. The four strategies show how the rates change when reads are grouped by plasmid barcode, filtered using the Maxi pool, or both. [How the four strategies count reads and barcode families](#paired-results)
 
