@@ -9,7 +9,7 @@
 
 <p align="center">
   Analyze the original 79-target reporter panel by talking to Codex or Claude Code.<br />
-  Run on a workstation or Slurm. Open the report and follow each result back to its counts.
+  Run on a workstation or Slurm. Get editing effects, simulated detection power, a report and a figure.
 </p>
 
 <p align="center">
@@ -23,13 +23,13 @@
 
 **New to the agent?** Open an empty project folder in a signed-in Codex or Claude Code session on a machine with Git and internet access. Paste this message to set up the project **and run the public example**:
 
-> Set up https://github.com/JasonLinjc/ABSOLVE-seq-agent in this empty folder. Follow the public D3734/T1 quick start, prepare the fast-mode environment and references, and download the paired NoEP and HiFi FASTQs. Run all 79 targets with the defaults, verify the results against the public benchmark, and give me the report and result table.
+> Set up https://github.com/JasonLinjc/ABSOLVE-seq-agent in this empty folder. Follow the public D3734/T1 quick start, prepare the fast-mode environment and references, and download the paired NoEP and HiFi FASTQs. Run all 79 targets with the defaults, verify the results against the public benchmark, and give me the report, power estimates, figure and Excel source data.
 
 This example uses four compressed FASTQs (1.58 GB) from [SRA study SRP722226](https://trace.ncbi.nlm.nih.gov/Traces/?view=study&acc=SRP722226). A completed run produces **316 target/strategy comparisons**. Open `results/report.md` for read retention and a four-strategy summary, or `results/paired_target_rates.tsv` for the counts behind any target.
 
 **Already have original-study FASTQs?** Once the project is set up, give the agent the paths visible on the machine that will run the analysis:
 
-> My FASTQs are in `/path/to/fastqs` and my sample sheet is at `/path/to/sample-sheet`. Find matched HiFi and NoEP samples. If more than one donor/replicate pair is available, ask me which to use. Run the selected pair with the study defaults and return the report, QC and target-level rates.
+> My FASTQs are in `/path/to/fastqs` and my sample sheet is at `/path/to/sample-sheet`. Find matched HiFi and NoEP samples. If more than one donor/replicate pair is available, ask me which to use. Run the selected pair with the study defaults and return the report, target-level rates, estimated power and figure.
 
 ## Set up in Codex or Claude Code
 
@@ -73,7 +73,7 @@ For a real run, follow the [reference, manifest and FASTQ setup](docs/d3734-t1-q
 **Choose your comparison in chat.** For one donor and replicate, give the agent your FASTQ folder and sample sheet, or ask for the public D3734/T1 example. It matches HiFi with its NoEP control and asks which pair to use if several match. To reproduce the manuscript panel, supply the 26 study libraries and submitted Supplementary Tables 2–5.
 
 <p align="center">
-  <img src="docs/assets/paired-workflow.svg" width="660" alt="The agent selects a matched pair or the full manuscript panel, checks inputs, assigns reads to targets, aligns them with CRISPResso2 and counts indels four ways. It verifies 316 paired results or 632 panel comparisons and returns the report and tables. Optional Figure 3b combines Dedud effect estimates with published simulation power." />
+  <img src="docs/assets/paired-workflow.svg" width="660" alt="The agent selects a matched pair or the full manuscript panel, checks inputs, assigns reads to targets, aligns them with CRISPResso2 and counts indels four ways. It verifies 316 paired results or 632 panel comparisons and returns the report and tables. Each run simulates detection power and exports a Dedud figure and its Excel data." />
 </p>
 
 **From reads to counts.** The agent runs locally or on Slurm. A pair defaults to fast read processing. The manuscript panel defaults to historical trimming and paired-end alignment. Both use the target barcode to assign reads and the plasmid barcode (pBC) to group reads into families. Unfiltered counts reads, Dedup counts one representative allele per family, and Dedud applies the selected Maxi pBC rule and, by default, a cross-target identity check. Dedud+Dedup combines filtering and family counting. The published manuscript Maxi annotation is the default in both read modes. [Counting strategies](#paired-results) · [Read modes](docs/manuscript-reads.md)
@@ -96,7 +96,7 @@ You can give the agent this table and the submitted references to rerun the stat
 
 </details>
 
-📊 **Where does statistical power come from?** Figure 3b pairs each Dedud effect estimate with the manuscript’s simulated probability of detecting an effect of **0.01 or 0.1 percentage points** for that target and editor. Both the submitted-estimate and panel-refit options read these probabilities from Supplementary Table 2. A refit updates the effect estimates and q-values while reusing the published power values. You can inspect them in the `power001` and `power01` columns of `Figure3b_source_data.xlsx`. [Figure 3b inputs and outputs](docs/manuscript-figures.md)
+📊 **How likely is this design to detect a small increase in editing?** The agent simulates 1,000 experiments per target and strategy at increases of **0.01 and 0.1 percentage points**, using the observed sequencing depths and estimated NoEP background. Power is the fraction of simulated one-sided tests with nominal *p* < 0.05. The report links `power_estimates.tsv`, Monte Carlo intervals, a Dedud figure (PDF and PNG), and Excel source data. A matched pair gets a HiFi–NoEP figure. A full panel gets **Figure 3b with newly estimated power**. [Simulation method, assumptions and outputs](docs/power.md)
 
 ## Example conversations
 
@@ -107,13 +107,13 @@ The first prompt above runs the whole example. To guide it step by step, send th
 1. **Identify inputs.** “Show me which mates belong to NoEP and HiFi for public D3734/T1. Verify their archive checksums and build my sample manifest.”
 2. **Run the pair.** “Use four local workers, fast read processing and the manuscript Maxi pBC rule. Save all four strategies under `runs/D3734-T1` and wait for completion.”
 3. **Check a result.** “Compare raw and prepared read pairs in the two arms. Does `1617_OT_0040_ALT` still have a positive difference after Dedud+Dedup? Show the counts.”
-4. **Open the report.** “Give me the report and target table. Flag undefined rates and tell me whether the D3734/T1 benchmark passed.”
+4. **Open the report.** “Give me the report, figure, target table and power estimates. Flag undefined rates and tell me whether the D3734/T1 benchmark passed.”
 
 **What a verified answer looks like.** For that target in the public pair, NoEP has **0/1,619** edited pBC families and HiFi has **9/675**. The rates are 0.00% and 1.33%, giving **+1.33 percentage points** for HiFi minus NoEP. You can check both counts in `paired_target_rates.tsv`.
 
 ### From the full cohort to a manuscript report
 
-> I have all 26 libraries, their manifest and submitted Supplementary Tables 2–5. Check the historical software versions, run the manuscript workflow and summarize agreement for WT and HiFi by strategy. Draw Figure 3b from the fitted Dedud estimates, use Supplementary Table 2 for power, and link the report, PDF and Excel source data.
+> I have all 26 libraries, their manifest and submitted Supplementary Tables 2–5. Check the historical software versions, run the manuscript workflow and summarize agreement for WT and HiFi by strategy. Estimate power from my counts, draw Figure 3b from the fitted Dedud estimates and simulated power, and return the report, PDF and Excel source data.
 
 If you already have a complete `library_counts.tsv` from a previous panel run, ask the agent to start with a [count refit](docs/historical-maxi.md#refit-existing-counts) and identify that starting point in the report.
 
@@ -126,6 +126,7 @@ With inputs ready, run the public pair on a workstation:
 ```bash
 python paired.py --donor D3734 --replicate T1 --threads 4 --fresh --output runs/D3734-T1
 python verify_results.py pair-fast runs/D3734-T1/results
+python verify_results.py power runs/D3734-T1/results
 ```
 
 Local execution defaults to one worker. Use `--executor local` to select local execution on a host with Slurm tools installed. On a cluster, submit `sbatch paired.sbatch --donor D3734 --replicate T1` from the repository root in the analysis environment.
@@ -154,7 +155,7 @@ The manuscript cross-target filter requires edited alleles to match the assigned
 
 ## Figure 3b and reproducibility
 
-Ask for **Figure 3b from the submitted workbook** to redraw the submitted estimates, or **Figure 3b from my panel refit** to use the agent's estimates. Both use candidate-specific power from Supplementary Table 2. The Excel workbook and plotted TSV contain one Dedud row per target and editor. [Figure commands and verification](docs/manuscript-figures.md)
+The panel workflow writes `figures/Figure3b.pdf` and `figures/Figure3b_source_data.xlsx` using its fitted effects and freshly simulated power. To reproduce the published graphic, ask for **Figure 3b with submitted power**. The redraw can use submitted or refitted effects while retaining the original Supplementary Table 2 power values. Both versions export 158 plotted target/editor rows and record the power source. [Figure commands and verification](docs/manuscript-figures.md)
 
 The separate benchmark profiles cover a D3734/T1 fast pair, a manuscript-read pair with historical Maxi membership, and a panel refit from saved counts. Run the profile that matches your inputs and settings:
 

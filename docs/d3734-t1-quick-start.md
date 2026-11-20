@@ -113,7 +113,10 @@ The job verifies both mates for each library, prepares all input pairs, and runs
 sacct -j "$job_id" --format=JobID,State,ExitCode,Elapsed,MaxRSS
 ```
 
-## 5. Verify the result
+## 5. Read the report and verify the result
+
+Open `$run_dir/results/report.md` for QC, observed editing effects and estimated detection power. Its Dedud figure, PDF and Excel workbook are under `results/figures/`. The four-strategy power table has 632 rows (79 targets × 4 strategies × 2 effect sizes). [Power method](power.md)
+
 
 Check both the table layout and its content. The original laboratory FASTQs and the four public ENA FASTQs produced the same 316-row table with the manuscript defaults. The checksum below applies to both input routes.
 

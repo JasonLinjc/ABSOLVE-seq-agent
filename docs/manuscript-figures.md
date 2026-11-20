@@ -1,6 +1,6 @@
 # Reproduce Figure 3b and its source data
 
-Figure 3b shows the Dedud analysis for 79 targets and two editors, WT SpCas9 and HiFi, each compared with NoEP. Run from the repository root with the [locked analysis environment](container.md). Both commands require the original submitted `SupplementaryTable2.xlsx` in the directory passed to `--tables`.
+Figure 3b shows the Dedud analysis for 79 targets and two editors, WT SpCas9 and HiFi, each compared with NoEP. Run from the repository root with the [locked analysis environment](container.md). The two historical redraw commands below require the original submitted `SupplementaryTable2.xlsx` in the directory passed to `--tables`.
 
 On Linux x86-64, install the exact environment from this checkout and run its scripts. If using an older released container, bind this checkout and run the plotting script from the mounted repository path.
 
@@ -8,6 +8,10 @@ On Linux x86-64, install the exact environment from this checkout and run its sc
 conda create --yes --name absolve-figure3b --file docs/environment-linux-64.lock
 conda activate absolve-figure3b
 ```
+
+## Open the figure from a new analysis
+
+A completed panel analysis or saved-count refit automatically writes `figures/Figure3b.pdf`, PNG, Excel, plotted TSV and provenance beside the report. Its power values come from the count-based simulation performed during that run. For a single matched pair, open `figures/paired_effect_power.pdf` and `paired_effect_power.xlsx`. [Simulation assumptions](power.md)
 
 ## Draw the submitted estimates
 
@@ -17,7 +21,7 @@ python "$plot" 3b --tables submitted-workbooks --out figures/3b-submitted
 python verify_results.py figure3b-submitted figures/3b-submitted
 ```
 
-## Draw the agent refit
+## Draw refitted effects with submitted power
 
 Refit the [26-library count table](historical-maxi.md#refit-existing-counts) or supply the directory containing its `panel_comparison.tsv` and `model_field_comparison.tsv`. Use a new output directory for each draw.
 

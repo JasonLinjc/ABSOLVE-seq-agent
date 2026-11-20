@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="660" height="795" viewBox="0 0 660 795" role="img" aria-labelledby="title desc">
   <title id="title">From FASTQs to paired or manuscript results</title>
-  <desc id="desc">Choose a matched pair or the full study. Both routes use the target and plasmid barcodes and count indels under four strategies. The pair produces 316 differences. The panel fits 632 contrasts. The agent checks coverage and returns the report and tables. Optional Figure 3b combines Dedud estimates with the submitted simulation power for each editor and target.</desc>
+  <desc id="desc">Choose a matched pair or the full study. Both routes use the target and plasmid barcodes and count indels under four strategies. The pair produces 316 differences. The panel fits 632 contrasts. The agent checks coverage and returns the report and tables. Each run simulates conditional power from its counts and exports a figure and Excel source data.</desc>
   <defs>
     <marker id="arrow" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="6" markerHeight="6" orient="auto">
       <path d="M0 0 L8 4 L0 8 Z" fill="#211f20"/>
@@ -66,28 +66,29 @@
   </g>
   <path class="flow" d="M166 473 v18"/>
   <path class="flow" d="M490 473 v18"/>
-  <g aria-label="Verify coverage and write the report">
+  <g aria-label="Simulate power at 0.01 and 0.1 percentage points">
     <rect class="stage" x="8" y="496" width="644" height="98" rx="10"/>
     <rect class="task" x="20" y="504" width="292" height="60" rx="13"/>
-    <text x="166" y="529">316 target / strategy rows</text>
-    <text x="166" y="551">Check counts and rates</text>
+    <text x="166" y="529">Two-group binomial simulation</text>
+    <text x="166" y="551">Use observed pair depths</text>
     <rect class="task" x="344" y="504" width="292" height="60" rx="13"/>
-    <text x="490" y="529">632 panel comparisons</text>
-    <text x="490" y="551">Check calls against supplements</text>
-    <text x="330" y="587">Verify coverage and write the report</text>
+    <text x="490" y="529">Three-donor simulation</text>
+    <text x="490" y="551">Refit donor-adjusted models</text>
+    <text x="330" y="587">Simulate power at 0.01 and 0.1 percentage points</text>
   </g>
   <path class="flow" d="M330 595 v18"/>
   <rect class="output" x="126" y="619" width="408" height="48" rx="13"/>
-    <text x="330" y="649">Return report.md and supporting tables</text>
-  <g aria-label="Optional Figure 3b and Excel source data">
+    <text x="330" y="649">Verify tables and return report.md</text>
+  <path class="flow" d="M330 668 v13"/>
+  <g aria-label="Return the Dedud figure, PDF and Excel source data">
     <rect class="stage" x="8" y="685" width="644" height="101" rx="10"/>
     <rect class="task" x="20" y="694" width="292" height="60" rx="13"/>
-    <text x="166" y="720">Dedud effect estimates</text>
-    <text x="166" y="742">Submitted workbook or panel fit</text>
-    <path d="M322 724 h12 M328 718 v12" fill="none" stroke="#211f20" stroke-width="2"/>
+    <text x="166" y="720">Matched pair</text>
+    <text x="166" y="742">HiFi–NoEP effects and power</text>
+
     <rect class="task" x="344" y="694" width="292" height="60" rx="13"/>
-    <text x="490" y="720">Published simulation power</text>
-    <text x="490" y="742">Supplementary Table 2</text>
-    <text x="330" y="776">Optional Figure 3b and Excel source data</text>
+    <text x="490" y="720">Full manuscript panel</text>
+    <text x="490" y="742">Figure 3b with simulated power</text>
+    <text x="330" y="776">Return the Dedud figure, PDF and Excel source data</text>
   </g>
 </svg>

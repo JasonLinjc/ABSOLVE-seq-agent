@@ -173,7 +173,10 @@ def editing_plot(rows):
                 record = lookup[r["target"],editor]
                 for y,value in enumerate([record["q_bh"]<.05, record["power001"], record["delta_pp"]>.01,
                                           record["power01"], record["delta_pp"]>.1]):
-                    color = POWER(value) if y in (1,3) else COLORS[editor] if value else "white"
+                    if y in (1, 3):
+                        color = "#ededed" if value is None else POWER(value)
+                    else:
+                        color = COLORS[editor] if value else "white"
                     vertices = ([(i-.5,y),(i-.5,y+1),(i+.5,y+1)] if editor=="HiFi"
                                 else [(i-.5,y),(i+.5,y),(i+.5,y+1)])
                     ax.add_patch(Polygon(vertices, facecolor=color,edgecolor=".15",linewidth=.32))
@@ -242,9 +245,14 @@ def main():
     if args.out.exists():
         raise FileExistsError(args.out)
     rows, sources = load_panel(args)
+    save_figure(args.out, rows, sources, "agent refit" if args.results else "submitted workbook",
+                "submitted candidate-specific simulations")
+
+
+def save_figure(output, rows, sources, estimates, power):
     fig = editing_plot(rows)
-    args.out.parent.mkdir(parents=True, exist_ok=True)
-    with TemporaryDirectory(dir=args.out.parent) as tmp:
+    output.parent.mkdir(parents=True, exist_ok=True)
+    with TemporaryDirectory(dir=output.parent) as tmp:
         dest = Path(tmp) / "result"
         dest.mkdir()
         fig.savefig(dest / "Figure3b.pdf", metadata={"CreationDate": None})
@@ -257,11 +265,11 @@ def main():
             writer.writerows(rows)
         receipt = dict(figure="3b", targets=79, rows=len(rows), input_sha256=sources,
                        plotted_data_sha256=digest(data),
-                       estimates="agent refit" if args.results else "submitted workbook",
-                       power="submitted candidate-specific simulations", coordinate_order="submitted Figure 3b")
+                       estimates=estimates,
+                       power=power, coordinate_order="submitted Figure 3b")
         write_workbook(dest / "Figure3b_source_data.xlsx", rows, receipt)
         (dest / "provenance.json").write_text(json.dumps(receipt, indent=2) + "\n")
-        dest.rename(args.out)
+        dest.rename(output)
 
 
 if __name__ == "__main__":

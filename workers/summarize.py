@@ -9,7 +9,7 @@ from tempfile import TemporaryDirectory
 
 root=Path(__file__).resolve().parent
 sys.path.insert(0, str(root.parent))
-from analysis_report import write_report
+from analysis_report import complete_report
 pair={'donor':'D3734','replicate':'T1'}
 if (Path.cwd()/'pair.json').is_file():
     root=Path.cwd()
@@ -77,6 +77,6 @@ with TemporaryDirectory(dir=root) as temporary:
     write('paired_target_rates.tsv',rows)
     write('strategy_summary.tsv',summary)
     (out/'qc.json').write_text(json.dumps(qc,indent=2)+'\n')
-    write_report(out, 'fast', run_config='pair.json' if (root/'pair.json').is_file() else None)
+    complete_report(out, 'fast', run_config='pair.json' if (root/'pair.json').is_file() else None)
     out.rename(root/'results')
 print(len(rows),'sample-paired target/strategy rows')

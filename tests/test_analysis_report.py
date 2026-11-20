@@ -7,6 +7,7 @@ import tempfile
 import unittest
 
 from analysis_report import STRATEGIES, write_report
+from verify_results import verify
 
 
 def write_table(path, rows):
@@ -89,3 +90,11 @@ class RunReportTest(unittest.TestCase):
             self.assertIn("D1 / T1", report)
             self.assertIn("[Run configuration](../pair.json)", report)
             self.assertTrue((run / "results/paired_target_rates.tsv").is_file())
+            verify("power", run / "results")
+            self.assertIn("paired_effect_power.pdf", report)
+            table = run / "results/power_estimates.tsv"
+            rows = list(csv.DictReader(table.read_text().splitlines(), delimiter="\t"))
+            rows[0]["power"] = "2"
+            write_table(table, rows)
+            with self.assertRaisesRegex(ValueError, "Invalid power estimate"):
+                verify("power", run / "results")

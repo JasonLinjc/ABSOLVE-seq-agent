@@ -115,8 +115,46 @@ def write_report(folder: Path, mode, *, panel=False, run_config=None):
                for name, digest in reference.items()):
             lines += ["", f"Benchmark: all reference tables in `{profile}` match the accepted SHA-256 digests."]
             break
+    if (folder / "power_provenance.json").is_file():
+        power = read_table(folder / "power_estimates.tsv")
+        receipt = json.loads((folder / "power_provenance.json").read_text())
+        stem = "Figure3b" if panel else "paired_effect_power"
+        book = "Figure3b_source_data" if panel else stem
+        lines += ["", "## Estimated detection power", "",
+                  f"Each simulated comparison uses the observed denominators and {receipt['baseline']} background. "
+                  f"Power is the fraction of {receipt['simulations']:,} binomial simulations passing a one-sided "
+                  f"Wald test at nominal α = {receipt['alpha']}. The assumed increases are 0.01 and 0.1 percentage points. "
+                  "This measures conditional detection power before multiple-testing correction. "
+                  "The TSV gives a 95% Monte Carlo interval and a reason for any unavailable estimate.",
+                  "", "| Strategy | Editor | Assumed increase (pp) | Median power | Targets with estimates |",
+                  "| --- | --- | ---: | ---: | ---: |"]
+        for strategy in STRATEGIES:
+            for editor in (("HiFi", "WT") if panel else ("HiFi",)):
+                for effect in receipt["effects_pp"]:
+                    values = [float(r["power"]) for r in power if r["strategy"] == strategy and r["editor"] == editor
+                              and float(r["effect_pp"]) == effect and r["status"] == "estimated"]
+                    med = f"{median(values):.1%}" if values else "undefined"
+                    lines.append(f"| {strategy} | {editor} | {effect} | {med} | {len(values)} / 79 |")
+        lines += ["", f"![Dedud effects and count-based power](figures/{stem}.png)", "",
+                  f"[Figure PDF](figures/{stem}.pdf) · [Excel source data](figures/{book}.xlsx)"]
+        files.extend(["power_estimates.tsv", "power_provenance.json", "figures/plotted_data.tsv"])
     lines += ["", "## Supporting files", ""]
     lines.extend(f"- [{name}]({name})" for name in files if (folder / name).is_file())
     if run_config:
         lines.append(f"- [Run configuration](../{run_config})")
     (folder / "report.md").write_text("\n".join(lines) + "\n", encoding="utf-8")
+
+
+def complete_report(folder, mode, *, panel=False, run_config=None, image=None):
+    """Generate power, figure and source data inside the caller's staging directory."""
+    import subprocess
+    import sys
+    script = Path(__file__).with_name("power_analysis.py").resolve()
+    command = [sys.executable, str(script), str(folder.resolve())]
+    if panel:
+        command.append("--panel")
+    if image:
+        binds = ",".join(str(p) for p in (script.parent, folder.resolve()))
+        command = ["apptainer", "exec", "--cleanenv", "--bind", binds, image, "python", *command[1:]]
+    subprocess.run(command, check=True)
+    write_report(folder, mode, panel=panel, run_config=run_config)

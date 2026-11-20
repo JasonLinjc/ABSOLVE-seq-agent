@@ -1,6 +1,6 @@
 ---
 name: absolve-seq
-description: Analyze original ABSOLVE-seq pooled reporter FASTQs end to end and deliver a report locally or on Slurm. Select a matched donor and replicate, compare Maxi pBC criteria, export four indel-rate strategies, or reproduce manuscript treatment margins across the 79-target panel.
+description: Analyze original ABSOLVE-seq pooled reporter FASTQs end to end and deliver a report locally or on Slurm. Select a matched donor and replicate, compare Maxi pBC criteria, export four indel-rate strategies, simulate detection power, deliver the report and figure, or reproduce manuscript treatment margins across the 79-target panel.
 ---
 
 # ABSOLVE-seq analysis
@@ -20,4 +20,4 @@ To rebuild the historical membership from original Maxi pool FASTQs, follow the 
 
 For a FASTQ-to-report request, carry the run through setup, sample matching, analysis, verification and delivery. Use the paths supplied by the user or the linked public example. Resolve the environment, references and manifest first. If donor or arm identity is ambiguous, ask the user which comparison to run. Once the inputs are resolved, continue through the remaining steps in the same conversation.
 
-For Slurm, wait for the final aggregation job to succeed. Open `report.md` beside the completed tables and check its supporting links before handing it back. For an exact study benchmark, run the matching `verify_results.py` profile and state its outcome separately from structural checks. Return the report path, a short interpretation and the underlying tables. On failure, identify the failed stage and log. If Figure 3b is requested, follow the [figure skill](../absolve-seq-figures/SKILL.md), verify the figure inputs, and link the generated PDF and Excel source table in the report.
+For Slurm, wait for the final aggregation job to succeed. Run `python verify_results.py power RESULTS` and check the linked outputs in `report.md`, including `power_estimates.tsv` and `power_provenance.json`. Describe the assumed effects, simulation count and nominal significance level. Report a missing denominator as unavailable. Return the report, effect and power tables, and links to the Dedud PDF and Excel. The pair produces a single-donor figure. The panel produces Figure 3b with newly simulated power. For a matching study benchmark, run the appropriate `verify_results.py` profile. If the user explicitly requests a historical redraw using submitted power, follow the [figure skill](../absolve-seq-figures/SKILL.md). On failure, identify the stage and log.

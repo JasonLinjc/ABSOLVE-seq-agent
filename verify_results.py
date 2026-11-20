@@ -30,34 +30,36 @@ BASELINES = {
 }
 
 
+def check_plot_sheet(sheet, rows):
+    cells = iter(sheet.values)
+    headers = tuple(rows[0])
+    numeric = {"order", "delta_pp", "lower_pp", "upper_pp", "q_bh", "power001", "power01"}
+    if next(cells, None) != headers:
+        raise ValueError("Excel source columns differ from TSV")
+    for row_num, row in enumerate(rows, 2):
+        values = next(cells, ())
+        if len(values) != len(headers):
+            raise ValueError(f"Missing or incomplete Excel row {row_num}")
+        for key, cell in zip(headers, values):
+            expected = row[key]
+            if key in numeric and expected != "":
+                matches = type(cell) in (int, float) and math.isclose(cell, float(expected), rel_tol=2e-15)
+            elif key == "positive_control":
+                matches = type(cell) is bool and cell == (expected == "True")
+            else:
+                matches = (cell if cell is not None else "") == expected
+            if not matches:
+                raise ValueError(f"Excel row {row_num}, {key}: expected {expected}, found {cell}")
+    if next(cells, None) is not None:
+        raise ValueError("Extra rows in the Figure 3b Excel table")
+
+
 def check_excel(folder, rows, receipt):
     from openpyxl import load_workbook
 
     book = load_workbook(folder / "Figure3b_source_data.xlsx", read_only=True)
-    numeric = {"delta_pp", "lower_pp", "upper_pp", "q_bh", "power001", "power01"}
     try:
-        data = iter(book["Figure 3b"].values)
-        headers = tuple(rows[0])
-        if next(data, None) != headers:
-            raise ValueError("Figure 3b Excel columns differ from the TSV")
-        for row_num, row in enumerate(rows, 2):
-            cells = next(data, ())
-            if len(cells) != len(headers):
-                raise ValueError(f"Missing or incomplete Excel row {row_num}")
-            for key, cell in zip(headers, cells):
-                value = row[key]
-                if key in numeric:
-                    matches = type(cell) in (float, int) and math.isclose(cell, float(value), rel_tol=2e-15)
-                elif key == "positive_control":
-                    matches = type(cell) is bool and cell == (value == "True")
-                elif key == "order":
-                    matches = type(cell) is int and cell == int(value)
-                else:
-                    matches = cell == value
-                if not matches:
-                    raise ValueError(f"Excel row {row_num}, {key}: expected {value}, found {cell}")
-        if next(data, None) is not None:
-            raise ValueError("Extra rows in the Figure 3b Excel table")
+        check_plot_sheet(book["Figure 3b"], rows)
         notes = dict(list(book["Notes"].values)[1:])
         expected = {"estimates": receipt["estimates"], "power": receipt["power"],
                     "plotted_data.tsv SHA-256": receipt["plotted_data_sha256"]}
@@ -69,7 +71,76 @@ def check_excel(folder, rows, receipt):
         book.close()
 
 
+def verify_power(folder):
+    from analysis_report import check_coverage, read_table
+    from openpyxl import load_workbook
+
+    receipt = json.loads((folder / "power_provenance.json").read_text())
+    panel = (folder / PANEL).is_file()
+    sources = {PANEL, FIELDS, COUNTS} if panel else {PAIR}
+    if set(receipt["input_sha256"]) != sources:
+        raise ValueError("Power input inventory differs from the analysis design")
+    for name, expected in receipt["input_sha256"].items():
+        if hashlib.sha256((folder / name).read_bytes()).hexdigest() != expected:
+            raise ValueError("Power input digest mismatch: " + name)
+    rates = read_table(folder / (PANEL if panel else PAIR))
+    check_coverage(rates, panel)
+    effects = tuple(receipt["effects_pp"])
+    if effects != (0.01, 0.1) or receipt["alpha"] != 0.05 or receipt["simulations"] <= 0:
+        raise ValueError("Unexpected power simulation settings")
+    keys = {(r["target"], r["strategy"], r.get("editor", "HiFi"), effect) for r in rates for effect in effects}
+    rows = read_table(folder / "power_estimates.tsv")
+    powers = {}
+    for r in rows:
+        key = r["target"], r["strategy"], r["editor"], float(r["effect_pp"])
+        if r["status"] == "estimated":
+            n, hits = int(r["simulations"]), int(r["detections"])
+            p = float(r["power"])
+            if not (n == receipt["simulations"] and 0 <= hits <= n and p == hits / n
+                    and 0 <= float(r["mc_low95"]) <= p <= float(r["mc_high95"]) <= 1):
+                raise ValueError(f"Invalid power estimate for {key}")
+        elif (r["status"] in {"zero denominator", "effect exceeds probability range"} and r["simulations"] == "0"
+              and all(r[col] == "" for col in ("power", "detections", "mc_low95", "mc_high95"))):
+            p = None
+        else:
+            raise ValueError(f"Invalid simulation status for {key}")
+        powers[key] = p
+    if set(powers) != keys or len(rows) != len(keys):
+        raise ValueError("Power table lacks complete unique coverage")
+
+    figures = folder / "figures"
+    plotted = read_table(figures / PLOT)
+    deltas = {(r["target"], r.get("editor", "HiFi")): r["delta_pp"] if panel else r["delta_HiFi_minus_NoEP_pp"]
+              for r in rates if r["strategy"] == "Dedud"}
+    if len(plotted) != len(deltas) or {(r["target"], r["editor"]) for r in plotted} != set(deltas):
+        raise ValueError("Incomplete plotted target/editor records")
+    for r in plotted:
+        if r["strategy"] != "Dedud":
+            raise ValueError("Unexpected plotted strategy")
+        expected = [deltas[r["target"], r["editor"]]] + [powers[r["target"], "Dedud", r["editor"], e] for e in effects]
+        for col, val in zip(("delta_pp", "power001", "power01"), expected):
+            actual = r[col]
+            if val is None or val == "":
+                matches = actual == ""
+            else:
+                matches = actual != "" and math.isclose(float(actual), float(val), rel_tol=1e-12, abs_tol=1e-12)
+            if not matches:
+                raise ValueError("Plotted value differs from run tables: " + col)
+    stem = "Figure3b" if panel else "paired_effect_power"
+    workbook = figures / (("Figure3b_source_data" if panel else stem) + ".xlsx")
+    book = load_workbook(workbook, read_only=True, data_only=True)
+    try:
+        check_plot_sheet(book.worksheets[0], plotted)
+    finally:
+        book.close()
+    if not (figures / (stem + ".pdf")).read_bytes().startswith(b"%PDF-") or not (
+            figures / (stem + ".png")).read_bytes().startswith(b"\x89PNG\r\n\x1a\n"):
+        raise ValueError("Missing or invalid PDF/PNG figure")
+
+
 def verify(profile, folder):
+    if profile == "power":
+        return verify_power(folder)
     for filename, expected in BASELINES[profile].items():
         actual = hashlib.sha256((folder / filename).read_bytes()).hexdigest()
         if actual != expected:
@@ -94,7 +165,7 @@ def verify(profile, folder):
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("profile", choices=BASELINES)
+    parser.add_argument("profile", choices=[*BASELINES, "power"])
     parser.add_argument("directory", type=Path, help="Directory containing the exported tables")
     args = parser.parse_args()
     try:

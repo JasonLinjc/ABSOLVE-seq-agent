@@ -5,6 +5,8 @@ description: Reproduce ABSOLVE-seq manuscript Figure 3b and export its Excel sou
 
 # Reproduce Figure 3b
 
-Use the [Figure 3b guide](../../../docs/manuscript-figures.md) from the repository root. The submitted redraw requires Supplementary Table 2. To use an agent refit, also supply its complete model output directory. A matched two-library run supplies paired rates rather than the three-donor model estimates required here.
+For an end-to-end request, use the count-based figures automatically generated alongside `report.md`. Return the PDF, workbook, power estimates and provenance. For a panel fit this is Figure 3b. A single pair has a separate observed-effect and conditional-power figure.
+
+For an explicit historical redraw with published power, use the [Figure 3b guide](../../../docs/manuscript-figures.md) from the repository root. The submitted redraw requires Supplementary Table 2. To use an agent refit, also supply its complete model output directory. A matched two-library run supplies paired rates rather than the three-donor model estimates required here.
 
 Run the corresponding verification command in the guide when reproducing the study benchmark. Return the figure, Excel source data and provenance. Identify the estimate source and the submitted simulations used for power. The Excel and TSV tables contain the same 158 plotted target/editor records in manuscript order.

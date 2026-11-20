@@ -15,10 +15,10 @@ Both jobs processed 10,084,551 NoEP read pairs and 9,868,448 HiFi read pairs. Al
 
 ## Apptainer on Slurm
 
-Use a shared checkout visible to the login and compute nodes. For a new checkout matching this release, run the following commands.
+Use a shared checkout visible to the login and compute nodes. Use a current checkout for the power and figure steps. The versioned SIF supplies the scientific environment.
 
 ```bash
-git clone --branch container-v0.1.0 https://github.com/JasonLinjc/ABSOLVE-seq-agent.git
+git clone https://github.com/JasonLinjc/ABSOLVE-seq-agent.git
 cd ABSOLVE-seq-agent
 ```
 
@@ -39,10 +39,10 @@ apptainer exec --cleanenv "$ABSOLVE_IMAGE" CRISPResso --version
 Use the Git and download commands in the [D3734/T1 quick start](d3734-t1-quick-start.md) for the upstream checkout and the four ENA FASTQs. If starting with a fresh reference directory and manifest, run the following commands from the shared checkout. Bind other input or output directories at the same absolute paths when they are outside the checkout. For example, set `APPTAINER_BINDPATH=/shared/fastqs:/shared/fastqs:ro` for external reads.
 
 ```bash
-apptainer exec --cleanenv --bind "$PWD" "$ABSOLVE_IMAGE" python /opt/absolve/setup_references.py
-apptainer exec --cleanenv --bind "$PWD" "$ABSOLVE_IMAGE" python /opt/absolve/examples/d3734_t1_manifest.py \
+apptainer exec --cleanenv --bind "$PWD" "$ABSOLVE_IMAGE" python "$PWD/setup_references.py"
+apptainer exec --cleanenv --bind "$PWD" "$ABSOLVE_IMAGE" python "$PWD/examples/d3734_t1_manifest.py" \
     --ena "$PWD/data/sra/SRP722226" "$PWD/data/sample_manifest.tsv"
-apptainer exec --cleanenv --bind "$PWD" "$ABSOLVE_IMAGE" python /opt/absolve/paired.py --list
+apptainer exec --cleanenv --bind "$PWD" "$ABSOLVE_IMAGE" python "$PWD/paired.py" --list
 sbatch --partition=cpu1,cpu2 paired.sbatch --donor D3734 --replicate T1 --fresh \
     --output "$PWD/runs/container-D3734-T1"
 ```
