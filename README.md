@@ -70,20 +70,20 @@ For a real run, follow the [reference, manifest and FASTQ setup](docs/d3734-t1-q
 
 ## How the agent works
 
-**Starting with FASTQs?** Give the agent your FASTQ folder and sample sheet, or ask it to run the public D3734/T1 example. For a paired analysis, it finds the HiFi sample and its NoEP control from the same donor and replicate. If several pairs match, it asks which one to run.
+**Choose your comparison in chat.** For one donor and replicate, give the agent your FASTQ folder and sample sheet, or ask for the public D3734/T1 example. It matches HiFi with its NoEP control and asks which pair to use if several match. To reproduce the manuscript panel, supply the 26 study libraries and submitted Supplementary Tables 2–5.
 
 <p align="center">
-  <img src="docs/assets/paired-workflow.svg" width="660" alt="Paired analysis workflow. The agent matches HiFi and NoEP samples, prepares and aligns the reads, compares indel rates under four strategies, and verifies the tables before returning the report." />
+  <img src="docs/assets/paired-workflow.svg" width="660" alt="The agent selects a matched pair or the full manuscript panel, checks inputs, assigns reads to targets, aligns them with CRISPResso2 and counts indels four ways. It verifies 316 paired results or 632 panel comparisons and returns the report and tables." />
 </p>
 
-The agent runs the analysis locally or on Slurm and waits for it to finish. It uses the manuscript barcode rule by default. The four strategies show how the rates change when reads are grouped by plasmid barcode, filtered using the Maxi pool, or both. [How the four strategies count reads and barcode families](#paired-results)
+**From reads to counts.** The agent runs locally or on Slurm. A pair defaults to fast read processing. The manuscript panel defaults to historical trimming and paired-end alignment. Both use the target barcode to assign reads and the plasmid barcode (pBC) to group reads into families. Unfiltered counts reads, Dedup counts one representative allele per family, and Dedud applies the selected Maxi pBC rule and, by default, a cross-target identity check. Dedud+Dedup combines filtering and family counting. The published manuscript Maxi annotation is the default in both read modes. [Counting strategies](#paired-results) · [Read modes](docs/manuscript-reads.md)
 
 | What you want to do | What to open when the run finishes |
 | --- | --- |
 | 🧬 **Compare one HiFi sample with its NoEP control** | Start with `results/report.md` for quality checks. In `paired_target_rates.tsv`, each row shows both indel counts, denominators and rates, plus **HiFi minus NoEP** in percentage points. The agent checks for **316 rows** (79 targets × 4 strategies). |
-| 📋 **Reproduce the full manuscript comparison** | Provide all 26 libraries and submitted Supplementary Tables 2–5. Open `report.md` for agreement with the manuscript and `panel_comparison.tsv` for **632 comparisons** (WT and HiFi, each versus NoEP), including adjusted q-values. |
+| 📋 **Reproduce the full manuscript comparison** | Provide all 26 libraries and submitted Supplementary Tables 2–5. Open `report.md` for agreement with the manuscript and `panel_comparison.tsv` for **632 comparisons** (WT and HiFi, each versus NoEP), with equal donor weights on the logit scale and BH-adjusted q-values for each editor and strategy. |
 
-For a run that matches a published agent benchmark, the agent also checks the output tables against the recorded SHA-256 checksums.
+The agent waits for the local run or final Slurm job to finish and checks that each expected comparison appears once. If the inputs and settings match a benchmark profile, it also runs the SHA-256 check on the exported tables before returning the report.
 
 <details>
 <summary><strong>Already have counts from a previous panel run?</strong></summary>

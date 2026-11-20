@@ -1,6 +1,6 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="660" height="562" viewBox="0 0 660 562" role="img" aria-labelledby="title desc">
-  <title id="title">From paired FASTQs to an ABSOLVE-seq report</title>
-  <desc id="desc">Four stages show the inputs, sample and read preparation, indel analysis and verification. The matched HiFi and NoEP comparison ends with a report and target-level rates.</desc>
+<svg xmlns="http://www.w3.org/2000/svg" width="660" height="675" viewBox="0 0 660 675" role="img" aria-labelledby="title desc">
+  <title id="title">From FASTQs to paired or manuscript results</title>
+  <desc id="desc">Choose a matched pair or the full study. Both routes use the target and plasmid barcodes and count indels under four strategies. The pair produces 316 differences. The panel fits 632 contrasts. The agent checks coverage and returns the report and tables.</desc>
   <defs>
     <marker id="arrow" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="6" markerHeight="6" orient="auto">
       <path d="M0 0 L8 4 L0 8 Z" fill="#211f20"/>
@@ -12,70 +12,71 @@
     .flow { fill: none; stroke: #211f20; stroke-width: 1.8; marker-end: url(#arrow); }
     text { font-family: Arial, Helvetica, sans-serif; font-size: 19px; fill: #191819; text-anchor: middle; }
   </style>
-  <rect width="660" height="562" rx="8" fill="white"/>
-  <g aria-label="Inputs">
-    <rect class="stage" x="8" y="8" width="644" height="103" rx="10"/>
-    <rect class="task" x="20" y="17" width="188" height="64" rx="13"/>
-    <text x="114" y="44">Paired-end</text>
-    <text x="114" y="66">FASTQs</text>
-    <rect class="task" x="236" y="17" width="188" height="64" rx="13"/>
-    <text x="330" y="44">Sample</text>
-    <text x="330" y="66">sheet</text>
-    <rect class="task" x="452" y="17" width="188" height="64" rx="13"/>
-    <text x="546" y="44">Target and barcode</text>
-    <text x="546" y="66">references</text>
-    <text x="330" y="103">Inputs</text>
+
+  <rect width="660" height="675" rx="8" fill="white"/>
+  <g aria-label="Choose a comparison in chat">
+    <rect class="stage" x="8" y="8" width="644" height="98" rx="10"/>
+    <rect class="task" x="20" y="16" width="292" height="60" rx="13"/>
+    <text x="166" y="41">One donor and replicate</text>
+    <text x="166" y="63">Matched NoEP and HiFi</text>
+    <rect class="task" x="344" y="16" width="292" height="60" rx="13"/>
+    <text x="490" y="41">Full manuscript panel</text>
+    <text x="490" y="63">26 libraries and Tables 2–5</text>
+    <text x="330" y="99">Choose a comparison in chat</text>
   </g>
-  <path class="flow" d="M330 112 v16"/>
-  <g aria-label="Sample and read preparation">
-    <rect class="stage" x="8" y="131" width="644" height="103" rx="10"/>
-    <rect class="task" x="20" y="140" width="188" height="64" rx="13"/>
-    <text x="114" y="167">Match samples by</text>
-    <text x="114" y="189">donor and replicate</text>
-    <path class="flow" d="M209 172 h24"/>
-    <rect class="task" x="236" y="140" width="188" height="64" rx="13"/>
-    <text x="330" y="167">Check read pairs</text>
-    <text x="330" y="189">and references</text>
-    <path class="flow" d="M425 172 h24"/>
-    <rect class="task" x="452" y="140" width="188" height="64" rx="13"/>
-    <text x="546" y="167">Prepare reads</text>
-    <text x="546" y="189">for alignment</text>
-    <text x="330" y="226">Sample and read preparation</text>
+  <path class="flow" d="M166 107 v18"/>
+  <path class="flow" d="M490 107 v18"/>
+  <g aria-label="Check FASTQs, manifest and references, then run locally or on Slurm">
+    <rect class="stage" x="8" y="130" width="644" height="98" rx="10"/>
+    <rect class="task" x="20" y="138" width="292" height="60" rx="13"/>
+    <text x="166" y="163">Pair default: fast mode</text>
+    <text x="166" y="185">Single-end alignment input</text>
+    <rect class="task" x="344" y="138" width="292" height="60" rx="13"/>
+    <text x="490" y="163">Panel default: manuscript mode</text>
+    <text x="490" y="185">Trim paired reads per library</text>
+    <text x="330" y="221">Check FASTQs, manifest and references, then run locally or on Slurm</text>
   </g>
-  <path class="flow" d="M330 235 v16"/>
-  <g aria-label="Barcode and indel analysis">
-    <rect class="stage" x="8" y="254" width="644" height="103" rx="10"/>
-    <rect class="task" x="20" y="263" width="188" height="64" rx="13"/>
-    <text x="114" y="290">Align reads with</text>
-    <text x="114" y="312">CRISPResso2</text>
-    <path class="flow" d="M209 295 h24"/>
-    <rect class="task" x="236" y="263" width="188" height="64" rx="13"/>
-    <text x="330" y="290">Count indels under</text>
-    <text x="330" y="312">four strategies</text>
-    <path class="flow" d="M425 295 h24"/>
-    <rect class="task" x="452" y="263" width="188" height="64" rx="13"/>
-    <text x="546" y="290">Calculate rates for</text>
-    <text x="546" y="312">HiFi and NoEP</text>
-    <text x="330" y="349">Barcode and indel analysis</text>
+  <path class="flow" d="M330 229 v18"/>
+  <g aria-label="Analyze 79 targets with the selected Maxi barcode rule">
+    <rect class="stage" x="8" y="252" width="644" height="98" rx="10"/>
+    <rect class="task" x="20" y="260" width="188" height="60" rx="13"/>
+    <text x="114" y="285">Assign targets and</text>
+    <text x="114" y="307">extract barcodes</text>
+    <path class="flow" d="M209 290 h24"/>
+    <rect class="task" x="236" y="260" width="188" height="60" rx="13"/>
+    <text x="330" y="285">Align reads with</text>
+    <text x="330" y="307">CRISPResso2</text>
+    <path class="flow" d="M425 290 h24"/>
+    <rect class="task" x="452" y="260" width="188" height="60" rx="13"/>
+    <text x="546" y="285">Count indels under</text>
+    <text x="546" y="307">four strategies</text>
+    <text x="330" y="343">Analyze 79 targets with the selected Maxi barcode rule</text>
   </g>
-  <path class="flow" d="M330 358 v16"/>
-  <g aria-label="Comparison and verification">
-    <rect class="stage" x="8" y="377" width="644" height="103" rx="10"/>
-    <rect class="task" x="20" y="386" width="188" height="64" rx="13"/>
-    <text x="114" y="413">Subtract NoEP rates</text>
-    <text x="114" y="435">from HiFi rates</text>
-    <path class="flow" d="M209 418 h24"/>
-    <rect class="task" x="236" y="386" width="188" height="64" rx="13"/>
-    <text x="330" y="413">Check target and</text>
-    <text x="330" y="435">strategy coverage</text>
-    <path class="flow" d="M425 418 h24"/>
-    <rect class="task" x="452" y="386" width="188" height="64" rx="13"/>
-    <text x="546" y="413">Verify checksums</text>
-    <text x="546" y="435">for benchmark runs</text>
-    <text x="330" y="472">Comparison and verification</text>
+  <path class="flow" d="M166 351 v18"/>
+  <path class="flow" d="M490 351 v18"/>
+  <g aria-label="Summarize the selected comparison">
+    <rect class="stage" x="8" y="374" width="644" height="98" rx="10"/>
+    <rect class="task" x="20" y="382" width="292" height="60" rx="13"/>
+    <text x="166" y="407">Matched pair</text>
+    <text x="166" y="429">HiFi rate minus NoEP rate</text>
+    <rect class="task" x="344" y="382" width="292" height="60" rx="13"/>
+    <text x="490" y="407">Manuscript panel</text>
+    <text x="490" y="429">Fit WT and HiFi versus NoEP</text>
+    <text x="330" y="465">Summarize the selected comparison</text>
   </g>
-  <path class="flow" d="M330 481 v16"/>
-  <rect class="output" x="191" y="500" width="278" height="54" rx="13"/>
-    <text x="330" y="523">Analysis report and</text>
-    <text x="330" y="545">target-level results</text>
+  <path class="flow" d="M166 473 v18"/>
+  <path class="flow" d="M490 473 v18"/>
+  <g aria-label="Verify coverage and write the report">
+    <rect class="stage" x="8" y="496" width="644" height="98" rx="10"/>
+    <rect class="task" x="20" y="504" width="292" height="60" rx="13"/>
+    <text x="166" y="529">316 target / strategy rows</text>
+    <text x="166" y="551">Check counts and rates</text>
+    <rect class="task" x="344" y="504" width="292" height="60" rx="13"/>
+    <text x="490" y="529">632 panel comparisons</text>
+    <text x="490" y="551">Check calls against supplements</text>
+    <text x="330" y="587">Verify coverage and write the report</text>
+  </g>
+  <path class="flow" d="M330 595 v18"/>
+  <rect class="output" x="126" y="619" width="408" height="48" rx="13"/>
+    <text x="330" y="649">Return report.md and supporting tables</text>
 </svg>
