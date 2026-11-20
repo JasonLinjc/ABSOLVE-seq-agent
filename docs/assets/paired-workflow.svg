@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="660" height="615" viewBox="0 0 660 615" role="img" aria-labelledby="title desc">
   <title id="title">FASTQ-to-report workflow</title>
-  <desc id="desc">Choose a matched pair or the full study. The target barcode (tBC) assigns each read to a target. Within each sample and target, reads with the same plasmid barcode (pBC) form a family. The pair produces 316 differences. The panel fits 632 contrasts. The agent checks coverage and returns the report and tables. Each run simulates conditional power from its counts and exports a figure and Excel source data.</desc>
+  <desc id="desc">Choose a matched pair or the full study. The target barcode (tBC) assigns each read to a target. Within each sample and target, reads with the same plasmid barcode (pBC) form a family. The pair produces 316 differences. The panel fits 632 contrasts. Each run simulates conditional power from its counts, renders the Dedud figure and Excel source data, verifies the outputs and returns the report.</desc>
   <defs>
     <marker id="arrow" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="6" markerHeight="6" orient="auto">
       <path d="M0 0 L8 4 L0 8 Z" fill="#211f20"/>
@@ -82,9 +82,9 @@
   </g>
   <path class="flow" d="M330 466 v12"/>
   <rect class="output" x="126" y="481" width="408" height="33" rx="13"/>
-    <text x="330" y="503">Verify tables and return report.md</text>
+    <text x="330" y="503">Render the Dedud figure from run estimates</text>
   <path class="flow" d="M330 515 v12"/>
-  <g aria-label="Return the Dedud figure, PDF and Excel source data">
+  <g aria-label="Verify outputs and return report.md with PDF, PNG and Excel">
     <rect class="stage output" x="8" y="530" width="644" height="79" rx="10"/>
     <rect class="task" x="20" y="535" width="292" height="47" rx="13"/>
     <text x="166" y="554">Matched pair</text>
@@ -93,6 +93,6 @@
     <rect class="task" x="344" y="535" width="292" height="47" rx="13"/>
     <text x="490" y="554">Full manuscript panel</text>
     <text x="490" y="574">Figure 3b with simulated power</text>
-    <text x="330" y="602">Return the Dedud figure, PDF and Excel source data</text>
+    <text x="330" y="602">Verify outputs and return report.md with PDF, PNG and Excel</text>
   </g>
 </svg>

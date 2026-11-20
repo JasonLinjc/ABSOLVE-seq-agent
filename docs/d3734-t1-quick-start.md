@@ -2,7 +2,7 @@
 
 This walkthrough runs the original D3734/T1 NoEP (LV_S3) and HiFi (LV_S1) libraries through all 79 targets. Each output row includes both indel rates and their paired difference (HiFi minus NoEP). The manuscript pBC rule and cross-target filter are the defaults.
 
-For a prebuilt environment, use the [container instructions](container.md). The published SIF completed this walkthrough on Luminary with the full public ENA downloads.
+For a prebuilt environment, use the [container instructions](container.md). The published SIF reproduced the paired rate table on Luminary with the full public ENA downloads. Use the current checkout for the report, power estimates and figure.
 
 ## 1. Get the agent and create an environment
 
@@ -88,12 +88,13 @@ The example hashes the four compressed files and writes a two-row manifest. Comp
 
 ## 4. Run the full pair
 
-On a machine without Slurm, the CLI runs the pair locally and returns after the result table has been written. Use a new output directory.
+The local command returns after it writes the report, tables, figure and Excel workbook. Use a new output directory.
 
 ```bash
 run_dir="$PWD/runs/acceptance"
-python paired.py --donor D3734 --replicate T1 --threads 4 --fresh --output "$run_dir"
+python paired.py --executor local --donor D3734 --replicate T1 --threads 4 --fresh --output "$run_dir"
 python verify_results.py pair-fast "$run_dir/results"
+python verify_results.py power "$run_dir/results"
 ```
 
 ### Slurm submission

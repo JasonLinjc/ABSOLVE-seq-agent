@@ -47,7 +47,7 @@ sbatch --partition=cpu1,cpu2 paired.sbatch --donor D3734 --replicate T1 --fresh 
     --output "$PWD/runs/container-D3734-T1"
 ```
 
-Set the partition for your cluster. At the tagged release, the Slurm wrapper executes the code shipped inside the SIF. The current wrapper runs the shared checkout with the same container runtime. Use the result checks in [step 5](d3734-t1-quick-start.md#5-verify-the-result). For the original paired-end workflow, use the current checkout and the host-side [manuscript submission command](manuscript-reads.md). The locked image supplies R for the final model fit.
+Set the partition for your cluster. At the tagged release, the Slurm wrapper executes the code shipped inside the SIF. The current wrapper runs the shared checkout with the same container runtime. Use the result checks in [step 5](d3734-t1-quick-start.md#5-read-the-report-and-verify-the-result). For the original paired-end workflow, use the current checkout and the host-side [manuscript submission command](manuscript-reads.md). The locked image supplies R for the final model fit.
 
 ## Docker
 

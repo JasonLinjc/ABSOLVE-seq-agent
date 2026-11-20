@@ -22,7 +22,7 @@ For a single complete donor/replicate pair, run `python paired.py --donor D3734 
 
 ## Run locally
 
-With no Slurm allocation or `sbatch`, the same Python commands process each library on this machine and return after aggregation. Use `--threads N` to set the trimming and target alignment concurrency within one library. Libraries run sequentially. Allocate working space for trimmed FASTQs and per-target alignments across all requested libraries.
+When neither a Slurm allocation nor `sbatch` is available, the same Python commands process each library on this machine and return after aggregation. Use `--threads N` to set the trimming and target alignment concurrency within one library. Libraries run sequentially. Allocate working space for trimmed FASTQs and per-target alignments across all requested libraries.
 
 For the image route, keep the JAR and image settings above. For a native run, use the following environment with the original JAR, a working CRISPResso2 2.2.13 executable, and FLASH on PATH. For a full panel, also configure R with brglm2 and prepare the submitted reference extracts. The workflow checks the historical tool versions.
 
@@ -50,7 +50,7 @@ Each of the 17 HiFi and NoEP input filenames matched a completed command in the 
 
 Only paired survivors enter target assignment. Reads are assigned using the published 23-base constant with up to five no-calls and a recognized target barcode. The 16-base pBC is recorded before removing it from R1 and from the end of R2.
 
-For each sample and target, the worker passes both mates to CRISPResso2 2.2.13, which uses FLASH to merge them. Target batches share an amplicon, guide and fixed merge parameters across their families. Every read retains its original pBC. The worker reconstructs family allele abundances using the aligned sequences and cut-site calls. Representative-allele ties follow the v2.2.13 allele table order. Dedud applies the pinned Maxi annotation and cross-target identity check to edited alleles. Per-target counts are checked against CRISPResso’s aligned and modified totals. [Original batch command](https://github.com/pellinlab/ABSOLVE-seq/blob/271355dfe40cf46b952e82b88dd4521f23f9feb4/absolveseq/2_demultiplex_by_plasmidBarcode.py#L89-L100)
+For each sample and target, the worker passes both mates to CRISPResso2 2.2.13, which uses FLASH to merge them. Target batches share an amplicon, guide and fixed merge parameters across their families. Every read retains its original pBC. The worker reconstructs family allele abundances using the aligned sequences and cut-site calls. Representative-allele ties follow the v2.2.13 allele table order. Dedud selects pBCs from the configured reference (the published Maxi annotation by default), then applies the cross-target identity check to edited alleles. Per-target counts are checked against CRISPResso’s aligned and modified totals. [Original batch command](https://github.com/pellinlab/ABSOLVE-seq/blob/271355dfe40cf46b952e82b88dd4521f23f9feb4/absolveseq/2_demultiplex_by_plasmidBarcode.py#L89-L100)
 
 ## Inspect the results
 
