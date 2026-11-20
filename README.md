@@ -78,42 +78,17 @@ For a real run, follow the [reference, manifest and FASTQ setup](docs/d3734-t1-q
   <img src="docs/assets/agent-architecture.svg" width="660" alt="A chat request selects the analysis or figure skill in Codex or Claude Code. The skills use the CLI directly. The software environment and sequencing inputs feed a local or Slurm workflow that returns a report, effect and power tables, and a figure with Excel source data." />
 </p>
 
-The two skills guide Codex and Claude Code through the repository's command-line tools. The analysis skill runs `paired.py` for a matched pair or a full panel. The figure skill also supports historical Figure 3b redraws. This workflow runs without an MCP server.
+Give the agent the FASTQ folder and sample sheet for your NoEP and HiFi libraries, or ask for the public D3734/T1 example. It matches samples by donor and replicate and asks which pair to use if several match.
 
-Conda, Docker or Apptainer provides the analysis software. The agent runs the workflow on a workstation or submits jobs to Slurm. Manuscript read processing uses the historical Trimmomatic and CRISPResso2 versions. [Analysis environment](docs/container.md) · [Manuscript runtime](docs/manuscript-reads.md)
+The analysis skill runs `paired.py` locally or on Slurm. The public setup indexes the target barcodes, reference amplicons, guides and plasmid barcode annotations used to process the reads. Codex and Claude Code call the CLI directly. [Analysis environment](docs/container.md)
 
-**Choose your comparison in chat.** For one donor and replicate, give the agent your FASTQ folder and sample sheet, or ask for the public D3734/T1 example. It matches HiFi with its NoEP control and asks which pair to use if several match. To reproduce the manuscript panel, supply the 26 study libraries and submitted Supplementary Tables 2–5.
+**From reads to counts.** A matched pair defaults to fast read processing. The agent uses the **target barcode (tBC)** to assign reads to a target before alignment. Within each sample and target, reads with the same **plasmid barcode (pBC)** form one family. Unfiltered counts reads, Dedup counts one representative allele per family, and Dedud applies the selected plasmid barcode rule and, by default, a cross-target identity check. Dedud+Dedup combines filtering and family counting. The published plasmid barcode annotation from the Maxi pool is the default in both read modes. [Counting strategies](#paired-results) · [Read modes](docs/manuscript-reads.md)
 
-<details>
-<summary><strong>FASTQ-to-report workflow</strong></summary>
+**Editing effect.** For each target and strategy, the agent divides the indel count by the denominator in each sample, then subtracts the NoEP rate from the HiFi rate. Open `results/paired_target_rates.tsv` for the counts, rates and difference in percentage points. The table has **316 rows** (79 targets × 4 strategies).
 
-<p align="center">
-  <img src="docs/assets/paired-workflow.svg" width="660" alt="The agent selects a matched pair or the full manuscript panel, checks inputs, assigns reads to targets by target barcode (tBC), aligns them with CRISPResso2, groups reads by plasmid barcode (pBC) and counts indels four ways. It estimates 316 paired differences or 632 panel contrasts, simulates power, exports the Dedud figure and Excel data, then checks the outputs and returns the report." />
-</p>
+**Detection power.** Using the observed depths and estimated NoEP background, the agent simulates 1,000 experiments at each of two assumed increases, **0.01 and 0.1 percentage points**. Power is the fraction of simulated one-sided tests with nominal *p* < 0.05. Open `results/power_estimates.tsv` for the 632 target/strategy/effect combinations, their status and Monte Carlo intervals. [Simulation method](docs/power.md)
 
-</details>
-
-**From reads to counts.** The agent runs locally or on Slurm. A pair defaults to fast read processing. The manuscript panel defaults to historical trimming and paired-end alignment. Both modes use the **target barcode (tBC)** to assign reads to a target before alignment. Within each sample and target, reads with the same **plasmid barcode (pBC)** form one family. Unfiltered counts reads, Dedup counts one representative allele per family, and Dedud applies the selected plasmid barcode rule and, by default, a cross-target identity check. Dedud+Dedup combines filtering and family counting. The published plasmid barcode annotation from the Maxi pool is the default in both read modes. [Counting strategies](#paired-results) · [Read modes](docs/manuscript-reads.md)
-
-| What you want to do | What to open when the run finishes |
-| --- | --- |
-| 🧬 **Compare one HiFi sample with its NoEP control** | Start with `results/report.md` for quality checks. In `paired_target_rates.tsv`, each row shows both indel counts, denominators and rates, plus **HiFi minus NoEP** in percentage points. The agent checks for **316 rows** (79 targets × 4 strategies). |
-| 📋 **Reproduce the full manuscript comparison** | Provide all 26 libraries and submitted Supplementary Tables 2–5. Open `report.md` for agreement with the manuscript and `panel_comparison.tsv` for **632 comparisons** (WT and HiFi, each versus NoEP), including fitted rates, Δ in percentage points, one-sided p-values and BH-adjusted q-values. |
-
-**How is the editing effect estimated?** For a matched pair, the agent divides each sample’s indel count by its denominator and subtracts the NoEP rate from the HiFi rate. For the manuscript panel, it pools replicate counts within each donor and treatment, then fits a Firth logistic regression for each target and strategy. It averages the three donor-specific logits equally and converts the result to a rate for each treatment. A primary positive call requires an editor-minus-NoEP difference above **0.1 percentage points** and **q < 0.05**. The q-values come from one-sided Wald tests with Benjamini–Hochberg correction across 79 targets within each editor and strategy.
-
-The pipeline generates the power table, renders the figure and Excel workbook, verifies the power outputs, then writes `report.md`. In chat, the analysis skill waits for completion, checks the comparison rows and runs the matching benchmark profile when one applies.
-
-<details>
-<summary><strong>Already have counts from a previous panel run?</strong></summary>
-
-`library_counts.tsv` saves one row per sequencing library, target and counting strategy. The `indel` column counts reads or barcode families with an indel, and `denominator` counts all reads or families included under that strategy. The full panel has 26 × 79 × 4 = 8,216 rows.
-
-You can give the agent this table and the submitted references to rerun the statistical model. This skips FASTQ alignment and reuses the barcode filters applied in the earlier run. To test a different barcode rule, regenerate the counts first. [Refit a panel from saved counts](docs/historical-maxi.md#refit-existing-counts)
-
-</details>
-
-📊 **How likely is this design to detect a small increase in editing?** The agent simulates 1,000 experiments per target and strategy at increases of **0.01 and 0.1 percentage points**, using the observed sequencing depths and estimated NoEP background. Power is the fraction of simulated one-sided tests with nominal *p* < 0.05. Open `power_estimates.tsv` for estimates, Monte Carlo intervals and the status of each estimate (632 rows per pair or 1,264 per panel). The report links the table, Dedud figure (PDF and PNG) and Excel source data. A matched pair gets a HiFi–NoEP figure. A full panel gets **Figure 3b with newly estimated power**. [Simulation method, assumptions and outputs](docs/power.md)
+**Report and figure.** Open `results/report.md` for the four-strategy summary and links to the Dedud figure (PDF and PNG) and its Excel source data. The analysis skill waits for completion and checks the outputs before returning them.
 
 ## Example conversations
 
@@ -127,12 +102,6 @@ The first prompt above runs the whole example. To guide it step by step, send th
 4. **Open the report.** “Give me the report, figure, target table and power estimates. Flag undefined rates and tell me whether the D3734/T1 benchmark passed.”
 
 **What a verified answer looks like.** For that target in the public pair, NoEP has **0/1,619** edited pBC families and HiFi has **9/675**. The rates are 0.00% and 1.33%, giving **+1.33 percentage points** for HiFi minus NoEP. You can check both counts in `paired_target_rates.tsv`.
-
-### From the full cohort to a manuscript report
-
-> I have all 26 libraries, their manifest and submitted Supplementary Tables 2–5. Check the historical software versions, run the manuscript workflow and summarize agreement for WT and HiFi by strategy. Estimate power from my counts, draw Figure 3b from the fitted Dedud estimates and simulated power, and return the report, PDF and Excel source data.
-
-If you already have a complete `library_counts.tsv` from a previous panel run, ask the agent to start with a [count refit](docs/historical-maxi.md#refit-existing-counts) and identify that starting point in the report.
 
 ## Quick start
 
@@ -186,6 +155,21 @@ python verify_results.py panel-refit runs/panel-refit
 
 ## Manuscript comparison
 
+The optional `--manuscript-panel` mode checks the agent against the submitted study results.
+
+<details>
+<summary><strong>Show reproduction inputs, commands and validation results</strong></summary>
+
+> I have all 26 libraries, their manifest and submitted Supplementary Tables 2–5. Check the historical software versions, run the manuscript workflow and summarize agreement for WT and HiFi by strategy. Estimate power from my counts, draw Figure 3b from the fitted Dedud estimates and simulated power, and return the report, PDF and Excel source data.
+
+If you already have a complete `library_counts.tsv` from a previous panel run, ask the agent to start with a [count refit](docs/historical-maxi.md#refit-existing-counts) and identify that starting point in the report.
+
+The manuscript panel pools replicate counts within each donor and treatment, then fits a Firth logistic regression for each target and strategy. It averages the three donor-specific logits equally and converts the result to a rate for each treatment. A primary positive call requires an editor-minus-NoEP difference above **0.1 percentage points** and **q < 0.05**. The q-values come from one-sided Wald tests with Benjamini–Hochberg correction across 79 targets within each editor and strategy.
+
+<p align="center">
+  <img src="docs/assets/paired-workflow.svg" width="660" alt="The agent selects a matched pair or the full manuscript panel, checks inputs, assigns reads to targets by target barcode (tBC), aligns them with CRISPResso2, groups reads by plasmid barcode (pBC) and counts indels four ways. It estimates 316 paired differences or 632 panel contrasts, simulates power, exports the Dedud figure and Excel data, then checks the outputs and returns the report." />
+</p>
+
 The full design covers 26 libraries and 79 targets. D3734/T3 has WT and NoEP without a matched HiFi library. Manuscript read processing uses Trimmomatic 0.36 and paired-end CRISPResso2 2.2.13. [Historical runtime and input setup](docs/manuscript-reads.md)
 
 ```bash
@@ -208,6 +192,8 @@ Open the tables linked from each report and the PDF, PNG and Excel files in the 
 | --- | --- |
 | Historical-trimming FASTQ replay | 628/632 (four WT differences). [Historical replay and four discordant calls](docs/manuscript-reads.md#luminary-validation) |
 | Saved encounter-order counts, equal-donor refit | 632/632. [Refit validation and numerical differences](docs/historical-maxi.md#luminary-acceptance) |
+
+</details>
 
 ## Local inputs and caches
 
