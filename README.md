@@ -13,10 +13,10 @@
 </p>
 
 <p align="center">
-  <a href="#start-with-one-message"><strong>Start in chat</strong></a> &nbsp;·&nbsp;
-  <a href="docs/d3734-t1-quick-start.md">Public dataset tutorial</a> &nbsp;·&nbsp;
-  <a href="#example-conversations">Example conversations</a> &nbsp;·&nbsp;
-  <a href="#figure-3b-and-reproducibility">Figure 3b &amp; Excel</a>
+  <a href="#start-with-one-message">💬 <strong>Start in chat</strong></a> &nbsp;·&nbsp;
+  <a href="docs/d3734-t1-quick-start.md">🧬 Public dataset tutorial</a> &nbsp;·&nbsp;
+  <a href="#example-conversations">📖 Example conversations</a> &nbsp;·&nbsp;
+  <a href="#figure-3b-and-reproducibility">📊 Figure 3b &amp; Excel</a>
 </p>
 
 ## Start with one message
@@ -48,7 +48,7 @@ cd ABSOLVE-seq-agent
 The clients use the same [analysis instructions](.agents/skills/absolve-seq/SKILL.md) and [Figure 3b instructions](.agents/skills/absolve-seq-figures/SKILL.md). For client installation, see the [Codex quick start](https://developers.openai.com/codex/quickstart/) or [Claude Code quick start](https://code.claude.com/docs/en/quickstart).
 
 <details>
-<summary><strong>Check setup before downloading reads</strong></summary>
+<summary><strong>🔧 Check setup before downloading reads</strong></summary>
 
 Ask: “List the pairs in `examples/manifest.example.tsv` and stop there.” You should see D3734/T1 with `NoEP_pool_D3734_T1` and `HiFi_pool_D3734_T1`. The example manifest contains placeholder paths.
 
@@ -70,28 +70,27 @@ For a real run, follow the [reference, manifest and FASTQ setup](docs/d3734-t1-q
 
 ## How the agent works
 
+Tell the agent which samples you want to compare and where your FASTQs and sample sheet are, or ask it to use the public D3734/T1 example. It checks the read pairs and references, matches samples by donor and replicate, and asks you to choose if the comparison is ambiguous. You can select how the Maxi plasmid pool defines a qualifying barcode (pBC). The default follows the manuscript.
+
 ```mermaid
 flowchart TD
-    request["Describe your samples and comparison"] --> inputs["Check FASTQ mates, sample identities and references"]
-    inputs --> reads["Prepare reads, align with CRISPResso2 and count indels"]
-    reads --> pair["Matched NoEP and HiFi pair"]
-    reads --> model["Fit the 26-library manuscript model"]
-    frozen["Frozen library counts"] --> model
-    pair --> paired["Check 316 target / strategy rows"]
-    model --> panel["Check 632 editor / target / strategy contrasts"]
-    paired --> report["Deliver report.md and supporting tables"]
+    reads["FASTQs and sample sheet"] --> align["Prepare reads and call indels with CRISPResso2"]
+    align --> counts["Count reads and pBC families under four strategies"]
+    counts --> pair["Compare HiFi with its matched NoEP control"]
+    counts --> panel["Fit WT and HiFi effects across donors"]
+    frozen["Frozen library counts"] --> panel
+    pair --> report["Verify the tables and deliver the report"]
     panel --> report
-    panel --> figure["Optional Figure 3b and Excel source data"]
 ```
 
-The agent follows the run through completion. For the public benchmark, it checks the result tables against their accepted SHA-256 digests. For other supported samples or filters, it checks coverage and reports the values from that run.
+The agent runs locally or on Slurm, waits for the analysis to finish, and checks that every expected comparison appears once. For a recognized benchmark with matching inputs and settings, it also verifies the result tables against their recorded SHA-256 checksums.
 
-| What you have | What you get | Where to look |
-| --- | --- | --- |
-| A matched NoEP/HiFi FASTQ pair | Four indel-rate estimates per target, HiFi minus NoEP, counts and denominators | `RUN/results/report.md` |
-| All 26 libraries and submitted Supplementary Tables 2–5 | WT and HiFi contrasts against NoEP, adjusted q-values and agreement with the supplements | `RUN/results/report.md` in manuscript read mode |
-| A complete frozen `library_counts.tsv` and submitted references | Refit of the 8,216 count cells and the 632 panel comparisons | `OUTPUT/report.md` |
-| Submitted Supplementary Table 2, optionally with a completed panel fit | Figure 3b PDF and PNG, a 158-row Excel source table, plotted TSV and provenance | Your chosen figure directory |
+| Your comparison | What to open |
+| --- | --- |
+| 🧬 **One donor and replicate** | Open `results/report.md` for QC and a summary. In `paired_target_rates.tsv`, each of the **316 rows** gives the HiFi and NoEP counts, both indel rates, and their difference in percentage points for one target and strategy. |
+| 📋 **Full manuscript panel** | Supply all 26 libraries and submitted Supplementary Tables 2–5, or start from frozen `library_counts.tsv` and the submitted references. Open `report.md` in the results directory. Its `panel_comparison.tsv` covers **632 comparisons** across 79 targets, four strategies, and two editors, with adjusted q-values and agreement with the submitted calls. |
+
+📊 **To reproduce Figure 3b**, ask for the submitted estimates or your panel estimates and provide Supplementary Table 2 for power. The agent returns the PDF and PNG with `Figure3b_source_data.xlsx`, which contains the 158 plotted target–editor rows. [Figure 3b inputs and outputs](docs/manuscript-figures.md)
 
 ## Example conversations
 
