@@ -1,6 +1,16 @@
 # ABSOLVE-seq agent
 
-ABSOLVE-seq agent measures cut-site indels in the original pooled reporter libraries. Run it from Codex or Claude Code on a workstation or Slurm cluster. Choose a donor, replicate and Maxi plasmid-barcode (pBC) rule to get four indel-rate estimates for every target. The manuscript mode compares WT and HiFi against NoEP across the original 26 libraries and 79 targets.
+Analyze ABSOLVE-seq sequencing data by talking to the agent in Codex or Claude Code. Tell it where your paired FASTQs and sample information are, and what you want to compare. The agent can prepare the inputs, run the analysis locally or on Slurm, check the results and write a report you can share.
+
+## Start with one message
+
+After [setting up your chat client](#set-up-in-codex-or-claude-code), paste this request and replace the paths with ones the client can access:
+
+> My ABSOLVE-seq FASTQs are in `/path/to/fastqs` and my sample sheet is at `/path/to/sample-sheet`. I want to know how editing differs between HiFi and NoEP for the same donor and replicate. Check which samples can be paired. If there is more than one pair, ask me which to analyze. Use the study defaults, run the analysis to completion and write a report with the counts, rates, quality checks and links to the result tables.
+
+To try it before using your own data, send **“Take me from the public D3734/T1 FASTQs to a report on this workstation. Use the defaults, verify the results and tell me where to open the report.”**
+
+The agent uses the original study's 79-target design and supported library layouts. If sample labels or inputs are ambiguous, it can ask a focused question before starting. You can continue in the same chat to inspect a target, change the pBC rule or request a different report. The [guided conversation](#example-conversations) shows what happens along the way.
 
 The analysis is based on the [upstream ABSOLVE-seq repository](https://github.com/pellinlab/ABSOLVE-seq/tree/271355dfe40cf46b952e82b88dd4521f23f9feb4). Read the [upstream license](https://github.com/pellinlab/ABSOLVE-seq/blob/271355dfe40cf46b952e82b88dd4521f23f9feb4/LICENSE.md) for its code and reference assets.
 
@@ -70,7 +80,7 @@ A paired run reports HiFi minus NoEP for each of 79 targets under the Unfiltered
 
 ### From paired FASTQs to a report
 
-Use the messages below in order in one Codex or Claude Code chat. This walkthrough uses the public D3734/T1 NoEP and HiFi libraries. For your own original-study libraries, give the agent the FASTQ directory and sample manifest, identify the donor and replicate, and substitute a new output directory.
+The one-message request above covers the full run. Use the messages below in the same chat if you want to guide each step yourself. This walkthrough uses the public D3734/T1 NoEP and HiFi libraries. For your own original-study libraries, give the agent the FASTQ directory and sample manifest, identify the donor and replicate, and substitute a new output directory.
 
 **1. Identify the inputs and prepare the workspace**
 
