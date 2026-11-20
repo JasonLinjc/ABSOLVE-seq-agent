@@ -86,6 +86,9 @@ if method == DEFAULT_METHOD:
             pbc,good=line.rstrip().split('\t')
             if pbc in families:
                 labels.setdefault(pbc,good=='1')
+elif method == 'historical':
+    from historical_maxi import historical_labels
+    labels = historical_labels(pair, tid)
 else:
     # Each file holds the Good pBCs for one target in one independently evaluated reference.
     votes = Counter()

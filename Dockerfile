@@ -16,6 +16,7 @@ COPY runtime/ runtime/
 COPY workers/ workers/
 COPY panel_report/ panel_report/
 COPY examples/ examples/
+COPY .agents/skills/absolve-seq-figures/ .agents/skills/absolve-seq-figures/
 LABEL org.opencontainers.image.source="https://github.com/JasonLinjc/ABSOLVE-seq-agent"
 USER $MAMBA_USER
 ENTRYPOINT []

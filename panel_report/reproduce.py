@@ -114,19 +114,27 @@ def read_good_families(folder, target, good):
 
 
 def recount_target(task):
-    target, samples, published = task
-    with (published/(target+'.tsv')).open() as f:
-        good = {}
-        for line in f:
-            pbc, flag = line.rstrip().split('\t')
-            good.setdefault(pbc,flag=='1')
+    target, samples, published, historical = task
+    if historical:
+        from historical_maxi import historical_labels
+        good = historical_labels({'historical_reference': historical}, target)
+    else:
+        with (published/(target+'.tsv')).open() as f:
+            good = {}
+            for line in f:
+                pbc, flag = line.rstrip().split('\t')
+                good.setdefault(pbc,flag=='1')
     identity = TargetIdentity(REFERENCE)
     rows = []
     for sample in samples:
         families, record = read_good_families(Path(sample['folder'])/'targets'/target,target,good)
         before = record['counts']
         raw, rep, _ = filtered_counts(target,families,good)
-        if raw!=before['Dedud'] or rep!=before['Dedud+Dedup'] or record['condition']!=sample['arm']:
+        if record['condition'] != sample['arm']:
+            raise ValueError('Archived counts have a different study arm')
+        if historical:
+            before = dict(before, Dedud=raw, **{'Dedud+Dedup':rep})
+        elif raw!=before['Dedud'] or rep!=before['Dedud+Dedup']:
             raise ValueError('Pre-filter counts do not match archive: '+str((sample['sample'],target)))
         raw, rep, _ = filtered_counts(target,families,good,identity)
         after = dict(before, Dedud=raw, **{'Dedud+Dedup':rep})
@@ -139,14 +147,14 @@ def recount_target(task):
     return rows
 
 
-def run_panel(output):
+def run_panel(output, historical=None):
     workers = int(os.environ.get('SLURM_CPUS_PER_TASK','1'))
     output = Path(output).resolve() if output else RUNS/('manuscript_'+os.environ['SLURM_JOB_ID'])
     output.parent.mkdir(parents=True,exist_ok=True)
     if output.exists():
         raise FileExistsError(output)
     published = PUBLISHED
-    if (published/'source.sha256').read_text().strip()!=PUBLISHED_SHA256:
+    if not historical and (published/'source.sha256').read_text().strip()!=PUBLISHED_SHA256:
         raise ValueError('Published reference SHA-256 mismatch')
     refs = DATA/'submitted_model_reference'
     targets = sorted(TargetIdentity(REFERENCE).designs)
@@ -154,7 +162,7 @@ def run_panel(output):
         stage = Path(tmp)/'result'
         stage.mkdir()
         samples = libraries(stage,workers)
-        tasks = [(t,samples,published) for t in targets]
+        tasks = [(t,samples,published,historical) for t in targets]
         with ProcessPoolExecutor(max_workers=workers) as pool:
             counts = [r for block in pool.map(recount_target,tasks) for r in block]
         if len(counts)!=26*79*4:
@@ -171,6 +179,9 @@ def run_panel(output):
                        manifest_sha256=sha256(MANIFEST),
                        submitted_workbooks=json.loads((refs/'source_sha256.json').read_text()),
                        implementation_sha256={p.name:sha256(p) for p in (Path(__file__),PANEL/'manuscript_model.R',AGENT/'target_identity.py')})
+        if historical:
+            receipt.pop('published_sha256')
+            receipt.update(maxi_method='historical', historical_reference=historical)
         (stage/'provenance.json').write_text(json.dumps(receipt,indent=2)+'\n')
         stage.rename(output)
     print(output,flush=True)

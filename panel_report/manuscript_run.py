@@ -3,6 +3,7 @@ import json
 import os
 from pathlib import Path
 import shlex
+import shutil
 import subprocess
 import sys
 from tempfile import TemporaryDirectory
@@ -39,6 +40,45 @@ def compare(baseline, current, output):
     save(output,records)
 
 
+def fit_panel(stage, refs, image):
+    refs = refs.resolve(strict=True)
+    margin = "equal-donor"
+    command = ["Rscript", str(PANEL / "manuscript_model.R"), str(stage), str(refs), margin]
+    if image:
+        binds = ",".join(str(p) for p in sorted({stage.resolve(), refs.resolve(), PANEL.resolve()}))
+        command = ["apptainer", "exec", "--cleanenv", "--bind", binds, image, *command]
+    subprocess.run(command, check=True)
+    return dict(donor_margin=margin, submitted_workbooks=json.loads((refs / "source_sha256.json").read_text()))
+
+
+def refit_counts(source, output):
+    """Fit the submitted model from frozen library counts with their existing filtering."""
+    output = output.resolve()
+    if output.exists():
+        raise FileExistsError(output)
+    output.parent.mkdir(parents=True, exist_ok=True)
+    refs = DATA / "submitted_model_reference"
+    design = {(r["donor_id"], r["replicate"], ARM[r["cas_type"]])
+              for r in table(PUBLIC / "NovaSeq3_sample_info.csv", ",")}
+    targets = {r["OT_name"] for r in table(PUBLIC / "OT_guide_amplicon_seq.csv", ",")}
+    expected = {(t, strategy, *sample) for t in targets for strategy in STRATEGIES for sample in design}
+    with TemporaryDirectory(dir=output.parent) as tmp:
+        stage = Path(tmp) / "results"
+        stage.mkdir()
+        counts = stage / "library_counts.tsv"
+        shutil.copyfile(source, counts)
+        rows = table(counts)
+        keys = {(r["target"], r["strategy"], r["donor"], r["replicate"], r["arm"]) for r in rows}
+        if len(rows) != 8216 or expected != keys or len(keys) != len(rows):
+            raise ValueError("Expected all 8,216 distinct original panel count cells")
+        receipt = fit_panel(stage, refs, os.environ.get("ABSOLVE_IMAGE"))
+        receipt.update(mode="frozen-count-refit", count_sha256=digest(counts),
+                       model_sha256=digest(PANEL / "manuscript_model.R"))
+        (stage / "provenance.json").write_text(json.dumps(receipt, indent=2) + "\n")
+        stage.rename(output)
+    print(output)
+
+
 def finish(config):
     cfg=json.loads(config.read_text()); base=config.parent
     targets=sorted(r["OT_name"] for r in table(Path(cfg["reference"])/"OT_guide_amplicon_seq.csv",","))
@@ -49,6 +89,8 @@ def finish(config):
     for s in libs:
         for t in targets:
             record=json.loads((base/"work"/s["sample_name"]/"targets"/(t+".json")).read_text())
+            if record.get("maxi_reference_sha256") != cfg.get("historical_reference", {}).get("reference_sha256"):
+                raise ValueError("Target counts use a different Maxi reference")
             if record["target"]!=t: raise ValueError("Target mismatch")
             for strategy in STRATEGIES:
                 n,d=record["counts"][strategy]
@@ -71,15 +113,12 @@ def finish(config):
                      image_sha256=digest(cfg["image"]),jar_sha256=digest(cfg["jar"]),adapters_sha256=digest(cfg["adapters"]),
                      libraries=len(libs),targets=len(targets),input_config_sha256=digest(config),
                      worker_sha256=digest(PANEL/"manuscript_reads.py"),model_sha256=digest(PANEL/"manuscript_model.R"))
+        receipt["maxi_method"] = cfg.get("maxi_method", "manuscript")
+        if "historical_reference" in cfg:
+            receipt["historical_reference"] = cfg["historical_reference"]
         if len(libs)==26:
             refs=Path(cfg["refs"]).resolve(strict=True)
-            receipt["donor_margin"]="equal-donor"
-            command=["Rscript",str(PANEL/"manuscript_model.R"),str(stage),str(refs),receipt["donor_margin"]]
-            if cfg.get("stats_image"):
-                binds=",".join(str(p) for p in sorted({stage.resolve(),refs.resolve(),PANEL.resolve()}))
-                command=["apptainer","exec","--cleanenv","--bind",binds,cfg["stats_image"],*command]
-            subprocess.run(command,check=True)
-            receipt["submitted_workbooks"]=json.loads((refs/"source_sha256.json").read_text())
+            receipt.update(fit_panel(stage, refs, cfg.get("stats_image")))
             if cfg.get("baseline"):
                 compare(Path(cfg["baseline"]),stage/"panel_comparison.tsv",stage/"call_changes.tsv")
                 receipt["baseline_sha256"]=digest(cfg["baseline"])
@@ -88,7 +127,7 @@ def finish(config):
             for t in targets:
                 for strat in STRATEGIES:
                     r=dict(donor=libs[0]["donor"], replicate=libs[0]["replicate"],
-                           target=t, strategy=strat, maxi_method="manuscript",
+                           target=t, strategy=strat, maxi_method=cfg.get("maxi_method", "manuscript"),
                            min_exact_reads=None, target_filter="manuscript")
                     for arm in ("NoEP","HiFi"):
                         n,d=paired[t,strat,arm]
@@ -138,11 +177,16 @@ def start(args):
     if len(libs)!=(26 if args.manuscript_panel else 2) or len({s["sample_name"] for s in libs})!=len(libs):
         raise ValueError("Incomplete or duplicated manuscript design")
     from maxi_qc import PUBLISHED_SHA256
-    if (PUBLISHED/"source.sha256").read_text().strip()!=PUBLISHED_SHA256:
+    if not args.maxi_reference and (PUBLISHED/"source.sha256").read_text().strip()!=PUBLISHED_SHA256:
         raise ValueError("Published Maxi annotation checksum mismatch")
     cfg=dict(libraries=libs,reference=str(PUBLIC),published=str(PUBLISHED),refs=str(DATA/"submitted_model_reference"),
              adapters=str(DATA/"upstream/test/data/adapters.fa"),stats_image=os.getenv("ABSOLVE_IMAGE"),
              baseline=str(Path(args.baseline_panel).resolve()) if args.baseline_panel else None)
+    cfg["maxi_method"] = args.maxi_method
+    if args.maxi_reference:
+        from historical_maxi import reference
+        cfg["historical_reference"] = reference(args.maxi_reference)
+        del cfg["published"]
     for key,var in [("jar","ABSOLVE_TRIMMOMATIC_JAR"),("image","ABSOLVE_CRISPRESSO2213_IMAGE")]:
         if not os.getenv(var):raise ValueError("Set "+var)
         cfg[key]=str(Path(os.environ[var]).resolve(strict=True))

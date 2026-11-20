@@ -17,3 +17,14 @@
 !runtime/config/*.json
 !runtime/src/
 !runtime/src/*.py
+!runtime/maxi/
+!runtime/maxi/*
+!.agents/
+!.agents/skills/
+!.agents/skills/absolve-seq-figures/
+!.agents/skills/absolve-seq-figures/scripts/
+!.agents/skills/absolve-seq-figures/scripts/*.py
+!.agents/skills/absolve-seq-figures/SKILL.md
+!.agents/skills/absolve-seq-figures/references/
+!.agents/skills/absolve-seq-figures/references/*.tsv
+!.agents/skills/absolve-seq-figures/references/*.md

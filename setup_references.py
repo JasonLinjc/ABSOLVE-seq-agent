@@ -79,4 +79,17 @@ def build(upstream):
 if __name__=='__main__':
     parser=argparse.ArgumentParser(description=__doc__)
     parser.add_argument('upstream',type=Path,nargs='?',default=DATA/'upstream')
-    build(parser.parse_args().upstream)
+    parser.add_argument('--historical-maxi', type=Path, metavar='FASTQ_DIR', help='Rebuild the historical reference from the six original Maxi FASTQs.')
+    parser.add_argument('--trimmomatic-jar', type=Path)
+    parser.add_argument('--output', type=Path)
+    parser.add_argument('--threads', type=int, default=3)
+    args = parser.parse_args()
+    if args.historical_maxi:
+        from historical_maxi import build as build_historical
+        if not args.trimmomatic_jar:
+            parser.error('--historical-maxi requires --trimmomatic-jar')
+        build_historical(args.historical_maxi, args.trimmomatic_jar, args.output or DATA/'historical-maxi', args.threads)
+    elif args.trimmomatic_jar or args.output:
+        parser.error('--trimmomatic-jar and --output apply to --historical-maxi')
+    else:
+        build(args.upstream)

@@ -13,6 +13,7 @@ import sys
 import tempfile
 
 from maxi_qc import DEFAULT_METHOD, MERGED, POOLS, REQUIRED, reconstructed_call, sha256, verified_reference
+from historical_maxi import reference as historical_reference
 from pilot import CUT, PUBLIC, table
 
 AGENT = Path(__file__).resolve().parent
@@ -87,7 +88,7 @@ def execute(args, samples):
     previous = None if args.fresh else previous_alignment(args.donor, args.replicate, samples)
     config = dict(donor=args.donor, replicate=args.replicate, samples=samples, maxi_method=args.maxi_method, target_filter=args.target_filter,
                   oligo_sha256=sha256(PUBLIC/'target_oligos_sequenes.csv'),
-                  min_exact_reads=None if args.maxi_method == DEFAULT_METHOD else args.min_exact_reads,
+                  min_exact_reads=None if args.maxi_method in (DEFAULT_METHOD, "historical") else args.min_exact_reads,
                   manifest_sha256=sha256(MANIFEST), target_map_sha256=sha256(CUT/'target_guide_mapping.json'),
                   job_id=os.environ['SLURM_JOB_ID'])
     if previous is not None:
@@ -109,6 +110,9 @@ def execute(args, samples):
             if (published/'source.sha256').read_text().strip() != PUBLISHED_SHA256:
                 raise ValueError('Manuscript reference checksum mismatch.')
             config.update(published=str(published), references=[dict(path=str(published), source_sha256=PUBLISHED_SHA256)])
+        elif args.maxi_method == 'historical':
+            config['historical_reference'] = historical_reference(args.maxi_reference)
+            config['references'] = [config['historical_reference']]
         else:
             folders = [MERGED] if args.maxi_method == 'merged' else POOLS
             config['reference_dirs'] = [str(Path(tmp)/f.name) for f in folders]
@@ -129,24 +133,38 @@ def main():
     parser.add_argument('--target-filter', choices=['manuscript','pbc-only'], help='Cross-target identity check after Maxi filtering (default manuscript).')
     parser.add_argument('--donor')
     parser.add_argument('--replicate')
-    parser.add_argument('--maxi-method', choices=[DEFAULT_METHOD, *REQUIRED], default=DEFAULT_METHOD)
+    parser.add_argument('--maxi-method', choices=[DEFAULT_METHOD, 'historical', *REQUIRED], default=DEFAULT_METHOD)
+    parser.add_argument('--maxi-reference', type=Path, help='Verified reference directory built with setup_references.py --historical-maxi.')
     parser.add_argument('--min-exact-reads', type=int, help='Reconstructed Maxi methods only (default 1).')
     parser.add_argument('--output', type=Path, help='New run directory on Luminary (default runs/paired_JOBID).')
     parser.add_argument('--fresh', action='store_true', help='Prepare and align full FASTQs again.')
     parser.add_argument('--read-mode', choices=['fast','manuscript'], help='Read processing mode. Pairs default to fast and manuscript panels default to manuscript.')
     parser.add_argument('--baseline-panel', type=Path, help='Earlier panel_comparison.tsv for tracking resolved, persistent and new disagreements.')
+    parser.add_argument('--refit-counts', type=Path, help='Fit the equal-donor manuscript panel from a complete existing library_counts.tsv.')
     parser.add_argument('--finish-manuscript', type=Path, help=argparse.SUPPRESS)
     args = parser.parse_args()
+    if args.refit_counts:
+        if not args.manuscript_panel or not args.output or any((args.list, args.donor, args.replicate, args.maxi_reference,
+                args.maxi_method != DEFAULT_METHOD, args.min_exact_reads is not None, args.fresh, args.target_filter,
+                args.read_mode == 'fast', args.baseline_panel, args.finish_manuscript)):
+            parser.error('Use --manuscript-panel --refit-counts FILE --output DIR to refit counts with their existing filtering')
+        from panel_report.manuscript_run import refit_counts
+        refit_counts(args.refit_counts, args.output)
+        return
     if args.finish_manuscript:
         from panel_report.manuscript_run import finish
         finish(args.finish_manuscript.resolve())
         return
+    if (args.maxi_method == 'historical') != bool(args.maxi_reference):
+        parser.error('--maxi-method historical and --maxi-reference must be supplied together')
+    if args.maxi_method == 'historical' and args.min_exact_reads is not None:
+        parser.error('The historical rule has no adjustable read threshold')
     mode = args.read_mode or ('manuscript' if args.manuscript_panel else 'fast')
     if args.baseline_panel and not (args.manuscript_panel and mode=='manuscript'):
         parser.error('--baseline-panel requires a manuscript read-mode panel')
     if mode == 'manuscript' and not args.list:
-        if args.maxi_method != DEFAULT_METHOD or args.min_exact_reads is not None or args.target_filter == 'pbc-only':
-            parser.error('Manuscript reads use the published Maxi annotation and cross-target filtering.')
+        if args.maxi_method not in (DEFAULT_METHOD, "historical") or args.min_exact_reads is not None or args.target_filter == 'pbc-only':
+            parser.error('Manuscript reads use manuscript or historical Maxi membership and cross-target filtering.')
         if args.manuscript_panel and (args.donor or args.replicate):
             parser.error('The manuscript panel covers the entire submitted design.')
         if not args.manuscript_panel and not (args.donor and args.replicate):
@@ -155,12 +173,12 @@ def main():
         start(args)
         return
     if args.manuscript_panel:
-        if args.list or args.donor or args.replicate or args.maxi_method != DEFAULT_METHOD or args.min_exact_reads is not None or args.fresh or args.target_filter == 'pbc-only':
-            parser.error('--manuscript-panel uses the full original design, published Maxi annotations and manuscript target filter.')
+        if args.list or args.donor or args.replicate or args.maxi_method not in (DEFAULT_METHOD, "historical") or args.min_exact_reads is not None or args.fresh or args.target_filter == 'pbc-only':
+            parser.error('--manuscript-panel uses the full original design, manuscript or historical Maxi membership and manuscript target filter.')
         if not os.environ.get('SLURM_JOB_ID'):
             parser.error('Submit the panel with sbatch paired.sbatch --manuscript-panel.')
         from panel_report.reproduce import run_panel
-        run_panel(args.output)
+        run_panel(args.output, historical_reference(args.maxi_reference) if args.maxi_reference else None)
         return
     args.target_filter = args.target_filter or 'manuscript'
     groups = discover()

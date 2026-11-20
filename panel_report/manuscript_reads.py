@@ -165,7 +165,10 @@ def summarize(target, families, labels, identity):
 def count_target(cfg, root, spec, pair_count):
     target = spec["OT_name"]
     final = root/"targets"/(target+".json")
+    reference_hash = cfg.get("historical_reference", {}).get("reference_sha256")
     if final.exists():
+        if json.loads(final.read_text()).get("maxi_reference_sha256") != reference_hash:
+            raise ValueError("Cached counts use a different Maxi reference")
         return
     families = defaultdict(Counter)
     with TemporaryDirectory(dir=root/"targets",prefix="."+target+"-") as tmp:
@@ -214,10 +217,14 @@ def count_target(cfg, root, spec, pair_count):
                 total=sum(sum(vs.values()) for vs in families.values())
                 if (k,total,pair_count)!=(int(q["Modified"]),int(q["Reads_aligned"]),int(q["Reads_in_input"])):
                     raise ValueError(f"Read conservation failed for {target}: {k,total,pair_count} vs {q}")
-        labels={}
-        with (Path(cfg["published"])/(target+".tsv")).open() as handle:
-            for ln in handle:
-                b,flag=ln.rstrip().split("\t");labels.setdefault(b,flag=="1")
+        if cfg.get("historical_reference"):
+            from historical_maxi import historical_labels
+            labels = historical_labels(cfg, target)
+        else:
+            labels={}
+            with (Path(cfg["published"])/(target+".tsv")).open() as handle:
+                for ln in handle:
+                    b,flag=ln.rstrip().split("\t");labels.setdefault(b,flag=="1")
         identity=TargetIdentity(Path(cfg["reference"])/"target_oligos_sequenes.csv")
         counts, before=summarize(target,families,labels,identity)
         if target in ("1617_OT_0041_ALT","1450_OT_0274_ALT"):
@@ -230,7 +237,8 @@ def count_target(cfg, root, spec, pair_count):
                         tag=hashlib.sha256(b.encode()).hexdigest()[:16]
                         handle.write(f"{tag}\t{sum(n for a,n in retained.items() if a[2])}\t{sum(retained.values())}\n")
             (work/"focal.tsv.gz").replace(final.with_suffix(".families.tsv.gz"))
-        receipt=dict(target=target,paired_input=pair_count,counts=counts,before=before)
+        receipt=dict(target=target,paired_input=pair_count,counts=counts,before=before,
+                     maxi_reference_sha256=reference_hash)
         (work/"result").write_text(json.dumps(receipt))
         (work/"result").replace(final)
 

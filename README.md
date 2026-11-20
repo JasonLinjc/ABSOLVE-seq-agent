@@ -47,7 +47,7 @@ Each completed pair produces `runs/paired_JOBID/results/paired_target_rates.tsv`
 | Dedud | Aligned reads | Good pBC and cross-target identity check |
 | Dedud+Dedup | One representative per retained family | Select the representative after filtering |
 
-The default `--maxi-method manuscript` uses the published pBC annotation. Edited alleles must match the assigned target uniquely by minimum edit distance across the panel. Use `--target-filter pbc-only` to replay the earlier barcode-only counts. The four alternative Maxi methods use locally supplied QC outputs.
+The default `--maxi-method manuscript` uses the published pBC annotation. Edited alleles must match the assigned target uniquely by minimum edit distance across the panel. Use `--target-filter pbc-only` to replay the earlier barcode-only counts. The four QC-based alternatives use locally supplied QC outputs. Select `--maxi-method historical --maxi-reference DIR` to use a verified reference rebuilt from all six original Maxi FASTQs. [Build and use the historical reference](docs/historical-maxi.md)
 
 | Maxi method | Evidence for a Good pBC |
 | --- | --- |
@@ -57,6 +57,10 @@ The default `--maxi-method manuscript` uses the published pBC annotation. Edited
 | `all-pools` | Pass in all three independent pools |
 
 Set `ABSOLVE_MAXI_MERGED` to the merged reference directory and `ABSOLVE_MAXI_POOLS` to the parent of `LV_Maxi_1`, `LV_Maxi_2` and `LV_Maxi_3`. Each reference requires `summary.json` and its checksum-matched `plasmid_barcode_category.tsv.gz`. For example, submit `sbatch paired.sbatch --donor D3742 --replicate T2 --maxi-method two-pools --min-exact-reads 3`.
+
+## Result figures
+
+Use the [absolve-seq-figures skill](.agents/skills/absolve-seq-figures/SKILL.md) to regenerate Figures 2a, 2b, 2d, 3b and Supplementary Figures 10–13 from their corresponding study inputs. Outputs include PDF and PNG figures, plotted coordinates, and a receipt identifying fitted estimates and archived power values. [Figure-specific inputs, commands and validation](docs/manuscript-figures.md)
 
 ## Manuscript comparison
 
