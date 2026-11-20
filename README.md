@@ -58,9 +58,17 @@ The default `--maxi-method manuscript` uses the published pBC annotation. Edited
 
 Set `ABSOLVE_MAXI_MERGED` to the merged reference directory and `ABSOLVE_MAXI_POOLS` to the parent of `LV_Maxi_1`, `LV_Maxi_2` and `LV_Maxi_3`. Each reference requires `summary.json` and its checksum-matched `plasmid_barcode_category.tsv.gz`. For example, submit `sbatch paired.sbatch --donor D3742 --replicate T2 --maxi-method two-pools --min-exact-reads 3`.
 
-## Result figures
+## Figure 3b and reproducibility
 
-Use the [absolve-seq-figures skill](.agents/skills/absolve-seq-figures/SKILL.md) to regenerate Figures 2a, 2b, 2d, 3b and Supplementary Figures 10–13 from their corresponding study inputs. Outputs include PDF and PNG figures, plotted coordinates, and a receipt identifying fitted estimates and archived power values. [Figure-specific inputs, commands and validation](docs/manuscript-figures.md)
+Use the [Figure 3b skill](.agents/skills/absolve-seq-figures/SKILL.md) to export the manuscript Dedud panel, its 158-row Excel source table, plotted TSV and provenance. The [Figure 3b guide](docs/manuscript-figures.md) covers the submitted workbook and the agent refit.
+
+For the original study benchmarks, compare your exports against the accepted table hashes. Each command exits with a nonzero status on a mismatch. The paired profiles use D3734/T1 with the documented fast defaults or manuscript reads with the historical Maxi rule. The panel profile uses the frozen 8,216-cell encounter-order count table and the locked statistical environment.
+
+```bash
+python verify_results.py pair-fast runs/paired-fast/results
+python verify_results.py pair-historical runs/paired-historical/results
+python verify_results.py panel-refit runs/panel-refit
+```
 
 ## Manuscript comparison
 

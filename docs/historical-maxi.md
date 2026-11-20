@@ -1,4 +1,4 @@
-# Historical Maxi reference and results figures
+# Historical Maxi reference and manuscript results
 
 The historical rule pools the three original Maxi libraries before assigning a target/pBC key. A pBC/tBC needs exact agreement with its designed insert in every observation. A pBC with one observed tBC needs entropy above 1.477 bits. A pBC with exactly two observed tBCs can pass at any entropy. Count all distinct observed tBCs when applying this rule. The default `manuscript` method uses the upstream published annotation and applies its entropy cutoff to both barcode counts.
 
@@ -39,9 +39,9 @@ python paired.py --manuscript-panel --refit-counts previous/results/library_coun
   --output runs/panel-refit
 ```
 
-## Generate figures
+## Generate Figure 3b
 
-The [manuscript figure guide](manuscript-figures.md) covers Figures 2a, 2b, 2d, 3b and Supplementary Figures 10–13. Figure 2d uses the original published strict entropy index. The historical two-tBC exception is a separate analysis rule.
+Follow the [Figure 3b guide](manuscript-figures.md) to export the Dedud plot and its Excel source data.
 
 ## Luminary acceptance
 

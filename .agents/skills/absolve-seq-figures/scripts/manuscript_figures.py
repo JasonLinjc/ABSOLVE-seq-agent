@@ -1,4 +1,4 @@
-"""Regenerate the submitted ABSOLVE-seq editing and power figures."""
+"""Regenerate ABSOLVE-seq Figure 3b and its Excel source data."""
 import argparse
 import csv
 from tempfile import TemporaryDirectory
@@ -12,14 +12,13 @@ matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 from matplotlib.colors import LinearSegmentedColormap
 from matplotlib.lines import Line2D
-from matplotlib.patches import Polygon, Patch
-from openpyxl import load_workbook
+from matplotlib.patches import Polygon
+from openpyxl import Workbook, load_workbook
+from openpyxl.styles import Font, PatternFill
+from openpyxl.utils import get_column_letter
 import numpy as np
 
 ORDER = Path(__file__).resolve().parents[1] / "references/target_order.tsv"
-FIGURES = {"3b": ("Dedud", 2), "S10": ("Unfiltered", 3), "S11": ("Dedup", 4),
-           "S12": ("Dedud+Dedup", 5)}
-STRATEGIES = ["Unfiltered", "Dedup", "Dedud", "Dedud+Dedup"]
 EDITORS = {"WT": "WTCas9", "HiFi": "HiFi"}
 COLORS = {"WT": "#00852a", "HiFi": "#e72a98"}
 CONTROLS = {"1450_OT_0000_REF", "1617_OT_0000_REF", "1617_OT_0040_ALT"}
@@ -55,9 +54,11 @@ def adjust(pvalues):
     return q
 
 
-def load_panel(args, chosen):
+def load_panel(args):
     labels = tsv(ORDER)
     targets = [r["target"] for r in labels]
+    if len(targets) != 79 or len(set(targets)) != 79:
+        raise ValueError("Expected 79 distinct targets in manuscript order")
     paths = [ORDER]
     panel = fields = {}
     if args.results:
@@ -69,87 +70,51 @@ def load_panel(args, chosen):
         if len(panel) != 632:
             raise ValueError("Expected a complete 632-row panel")
     records = []
-    for strategy, number in chosen:
-        path = args.tables/f"SupplementaryTable{number}.xlsx"
-        paths.append(path)
-        book = load_workbook(path, read_only=True, data_only=True)
-        try:
-            it = iter(book.active.values)
-            next(it)
-            header = next(it)
-            rows = unique([dict(zip(header,r)) for r in it if r and r[0]], ["barcode"])
-        finally:
-            book.close()
-        if set(rows) != {(t,) for t in targets}:
-            raise ValueError("Workbook targets differ from the submitted design")
-        for editor, suffix in EDITORS.items():
-            submitted_q = adjust({t:float(rows[t,]["asymPval-treat"+suffix]) for t in targets})
-            for position, label in enumerate(labels):
-                t = label["target"]
-                src = rows[t,]
-                keys = ["predicted-NoEP", "predicted-"+suffix, "confLow-"+suffix, "confHigh-"+suffix]
-                marginal = [float(src[k]) for k in keys]
-                q = submitted_q[t]
-                if args.results:
-                    comp = panel[t,strategy,editor]
-                    if abs(float(comp["manuscript_delta_pp"])-100*(marginal[1]-marginal[0]))>1e-8 or abs(float(comp["manuscript_q_bh"])-q)>1e-8:
-                        raise ValueError("Model and workbook describe different submitted estimates")
-                    for k, original in zip(keys, marginal):
-                        if abs(float(fields[t,strategy,k]["submitted"])-original)>1e-8:
-                            raise ValueError("Model-field reference mismatch for " + t)
-                    marginal = [float(fields[t,strategy,k]["agent"]) for k in keys]
-                    q = float(comp["q_bh"])
-                    if abs(float(comp["delta_pp"])-100*(marginal[1]-marginal[0]))>1e-8:
-                        raise ValueError("Inconsistent agent estimates for " + t)
-                background, estimate, low, high = marginal
-                powers = [float(src[f"power{threshold}Treat{suffix}"]) for threshold in ("0.01","0.1")]
-                if not (0 <= low <= estimate <= high <= 1 and 0 <= background <= 1 and 0 <= q <= 1
-                        and all(0 <= v <= 1 for v in powers)):
-                    raise ValueError("Invalid model values for " + t)
-                records.append(dict(target=t, label=label["label"], order=position+1, guide=t[:4],
-                                    strategy=strategy, editor=editor, delta_pp=100*(estimate-background),
-                                    lower_pp=100*(low-background), upper_pp=100*(high-background),
-                                    q_bh=q, power001=powers[0], power01=powers[1], positive_control=t in CONTROLS))
+    strategy = "Dedud"
+    path = args.tables / "SupplementaryTable2.xlsx"
+    paths.append(path)
+    book = load_workbook(path, read_only=True, data_only=True)
+    try:
+        it = iter(book.active.values)
+        next(it)
+        header = next(it)
+        rows = unique([dict(zip(header,r)) for r in it if r and r[0]], ["barcode"])
+    finally:
+        book.close()
+    if set(rows) != {(t,) for t in targets}:
+        raise ValueError("Workbook targets differ from the submitted design")
+    for editor, suffix in EDITORS.items():
+        submitted_q = adjust({t:float(rows[t,]["asymPval-treat"+suffix]) for t in targets})
+        for position, label in enumerate(labels):
+            t = label["target"]
+            src = rows[t,]
+            keys = ["predicted-NoEP", "predicted-"+suffix, "confLow-"+suffix, "confHigh-"+suffix]
+            marginal = [float(src[k]) for k in keys]
+            q = submitted_q[t]
+            if args.results:
+                comp = panel[t,strategy,editor]
+                if abs(float(comp["manuscript_delta_pp"])-100*(marginal[1]-marginal[0]))>1e-8 or abs(float(comp["manuscript_q_bh"])-q)>1e-8:
+                    raise ValueError("Model and workbook describe different submitted estimates")
+                for k, original in zip(keys, marginal):
+                    if abs(float(fields[t,strategy,k]["submitted"])-original)>1e-8:
+                        raise ValueError("Model-field reference mismatch for " + t)
+                marginal = [float(fields[t,strategy,k]["agent"]) for k in keys]
+                q = float(comp["q_bh"])
+                if abs(float(comp["delta_pp"])-100*(marginal[1]-marginal[0]))>1e-8:
+                    raise ValueError("Inconsistent agent estimates for " + t)
+            background, estimate, low, high = marginal
+            powers = [float(src[f"power{threshold}Treat{suffix}"]) for threshold in ("0.01","0.1")]
+            if not (0 <= low <= estimate <= high <= 1 and 0 <= background <= 1 and 0 <= q <= 1
+                    and all(0 <= v <= 1 for v in powers)):
+                raise ValueError("Invalid model values for " + t)
+            records.append(dict(target=t, label=label["label"], order=position+1, guide=t[:4],
+                                strategy=strategy, editor=editor, delta_pp=100*(estimate-background),
+                                lower_pp=100*(low-background), upper_pp=100*(high-background),
+                                q_bh=q, power001=powers[0], power01=powers[1], positive_control=t in CONTROLS))
     return records, {p.name:digest(p) for p in paths}
 
 
-def load_summary_archive(folder):
-    """Follow the original visualize.ipynb inputs for both halves of Supplementary Figure 13."""
-    stems = ["raw","raw_dedup","dedudS_filtered_v3","dedudS_filtered_v3_dedup"]
-    labels = tsv(ORDER)
-    targets = {(row["target"],) for row in labels}
-    rows = []
-    paths = [ORDER]
-    for strategy, stem in zip(STRATEGIES, stems):
-        path = folder / ("summaryResult_" + stem + "_fdr.tsv")
-        archive = unique(tsv(path), ["offtarget"])
-        paths.append(path)
-        if archive.keys() != targets:
-            raise ValueError("Unexpected original figure target set")
-        powers = {}
-        for threshold in ["0.01", "0.1"]:
-            power_file = folder / f"powerAnalysis_{stem}_{threshold}.csv"
-            paths.append(power_file)
-            with power_file.open() as stream:
-                data = unique(list(csv.DictReader(stream)), ["sequence"])
-            if data.keys() != targets:
-                raise ValueError("Unexpected original power target set")
-            powers[threshold] = data
-        for editor, suffix in EDITORS.items():
-            for position, label in enumerate(labels):
-                t = label["target"]
-                q = float(archive[t,]["adj_pval_"+suffix])
-                delta = float(archive[t,]["Delta"+suffix])
-                p1, p2 = [float(powers[key][t,]["Treat"+suffix]) for key in ["0.01","0.1"]]
-                if not (0 <= q <= 1 and 0 <= p1 <= 1 and 0 <= p2 <= 1 and math.isfinite(delta)):
-                    raise ValueError("Invalid archived figure estimates")
-                rows.append(dict(target=t, label=label["label"], order=position+1, guide=t[:4],
-                                 strategy=strategy,editor=editor,delta_pp=delta,q_bh=q,power001=p1,
-                                 power01=p2,positive_control=t in CONTROLS))
-    return rows, {p.name:digest(p) for p in paths}
-
-
-def editing_plot(rows, name):
+def editing_plot(rows):
     fig = plt.figure(figsize=(17, 7.7))
     guides = ["1450", "1617"]
     groups = [[r for r in rows if r["guide"]==guide and r["editor"]=="WT"] for guide in guides]
@@ -220,83 +185,84 @@ def editing_plot(rows, name):
     bar=fig.colorbar(plt.cm.ScalarMappable(cmap=POWER,norm=plt.Normalize(0,1)),cax=fig.add_axes([.36,.048,.13,.012]),orientation="horizontal")
     bar.set_label("Statistical power",fontsize=8)
     bar.ax.tick_params(labelsize=7)
-    fig.suptitle(f"{'Figure 3b' if name=='3b' else 'Supplementary Figure '+name[1:]}   |   {rows[0]['strategy']}",fontsize=15)
+    fig.suptitle("Figure 3b   |   Dedud", fontsize=15)
     return fig
 
 
-def summary_plot(rows):
-    fig, axes = plt.subplots(2,2,figsize=(10,7.4),layout="constrained")
-    for j,(delta,key) in enumerate([(.1,"power01"),(.01,"power001")]):
-        bars, dots = axes[j]
-        for si, strategy in enumerate(STRATEGIES):
-            for i, editor in enumerate(EDITORS):
-                selected = [r for r in rows if r["strategy"]==strategy and r["editor"]==editor]
-                x = si+(i-.5)*.32
-                hits = [r for r in selected if r["q_bh"]<.05 and r["delta_pp"]>delta]
-                bars.bar(x,len(hits),width=.31,color=COLORS[editor],alpha=.72)
-                bars.bar(x,sum(r["positive_control"] for r in hits),width=.31,color=COLORS[editor],ec=".25",lw=.7)
-                for k,r in enumerate(selected):
-                    control=r["positive_control"]
-                    dots.scatter(x+(((k*31)%79)/78-.5)*.23,r[key],s=15 if control else 7,
-                                 marker="^" if control else "o",color="red" if control else COLORS[editor])
-        bars.set_ylim(0,35)
-        bars.set_ylabel(f"Targets with Δ > {delta}% and BH q < 0.05")
-        dots.set_ylabel(f"Power to detect Δ = {delta}%")
-        dots.set_ylim(-.025,1.035)
-        for value,style in [(.8,"-"),(.9,"--")]:
-            dots.axhline(value,color="#cc3646",ls=style,lw=.8)
-        for ax in (bars,dots):
-            ax.set_xticks(range(4),STRATEGIES,rotation=18)
-            ax.spines[["top","right"]].set_visible(False)
-        bars.set_title("a" if j==0 else "b",loc="left",fontweight="bold")
-    fig.suptitle("Supplementary Figure 13   |   Significant candidates and statistical power")
-    bars.legend(handles=[Patch(color=COLORS["WT"],label="SpCas9"),Patch(color=COLORS["HiFi"],label="HiFi"),
-                         Line2D([],[],ls="",marker="^",color="red",label="Positive control")],fontsize=8,frameon=False)
-    return fig
+def write_workbook(path, rows, receipt):
+    book = Workbook()
+    data = book.active
+    data.title = "Figure 3b"
+    columns = list(rows[0])
+    data.append(columns)
+    for row in rows:
+        data.append([row[key] for key in columns])
+    data.freeze_panes = "C2"
+    data.auto_filter.ref = data.dimensions
+    for index, width in enumerate([23, 29, 9, 10, 12, 12, 22, 22, 22, 18, 14, 14, 20], 1):
+        data.column_dimensions[get_column_letter(index)].width = width
+    for cells in data.iter_rows(min_row=2, min_col=7, max_col=12):
+        for cell in cells:
+            cell.number_format = "0.00000E+00" if cell.column == 10 else "0.00000000"
+
+    info = book.create_sheet("Notes")
+    info.append(["Field", "Definition or value"])
+    for item in [
+        ("estimates", receipt["estimates"]),
+        ("power", receipt["power"]),
+        ("order", "Submitted target order within the two sgRNA blocks."),
+        ("editor", "WT denotes SpCas9. Each editor is compared with NoEP."),
+        ("delta_pp", "Edited minus NoEP marginal rate in percentage points."),
+        ("lower_pp / upper_pp", "Treatment confidence bounds shifted by the NoEP point estimate, in percentage points."),
+        ("q_bh", "Benjamini-Hochberg q-value within the editor and Dedud strategy."),
+        ("power001 / power01", "Simulated power at effects of 0.01 and 0.1 percentage points, respectively."),
+        ("heatmap", "Effect flags use strict > 0.01 and > 0.1 pp. The significance flag uses q < 0.05."),
+        ("plotted_data.tsv SHA-256", receipt["plotted_data_sha256"]),
+        *((name + " SHA-256", value) for name, value in receipt["input_sha256"].items()),
+    ]:
+        info.append(item)
+    info.column_dimensions["A"].width = 43
+    info.column_dimensions["B"].width = 102
+    for sheet in (data, info):
+        sheet.sheet_view.showGridLines = False
+        for cell in sheet[1]:
+            cell.fill = PatternFill("solid", fgColor="204458")
+            cell.font = Font(color="FFFFFF", bold=True)
+        sheet.row_dimensions[1].height = 23
+    book.save(path)
 
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("figure",choices=[*FIGURES,"S13"])
-    parser.add_argument("--tables",type=Path,help="Directory containing submitted SupplementaryTable2–5.xlsx")
-    parser.add_argument("--figure-tables",type=Path,help="Original draft5 tables directory for the artwork version of S13")
-    parser.add_argument("--results",type=Path,help="Use refitted estimates and BH q from the agent model directory")
-    parser.add_argument("--out",type=Path,required=True,help="New output directory")
-    args=parser.parse_args()
-    chosen = [FIGURES[args.figure]] if args.figure in FIGURES else list(FIGURES.values())
-    if args.figure_tables:
-        if args.figure != "S13" or args.tables or args.results:
-            parser.error("--figure-tables applies only to S13 and selects the original artwork inputs")
-        rows, sources = load_summary_archive(args.figure_tables)
-        estimate_source = "draft5 original figure tables"
-    else:
-        if not args.tables:
-            parser.error("Supply --tables, or --figure-tables for original S13")
-        rows, sources = load_panel(args, chosen)
-        estimate_source = "agent refit" if args.results else "submitted workbook"
-    fig = summary_plot(rows) if args.figure=="S13" else editing_plot(rows,args.figure)
+    parser.add_argument("figure", choices=["3b"])
+    parser.add_argument("--tables", type=Path, required=True, help="Directory containing SupplementaryTable2.xlsx")
+    parser.add_argument("--results", type=Path, help="Use the completed agent panel refit for estimates and BH q-values")
+    parser.add_argument("--out", type=Path, required=True, help="New output directory")
+    args = parser.parse_args()
     if args.out.exists():
         raise FileExistsError(args.out)
-    if args.figure=="S13" and not args.figure_tables:
-        fig.suptitle("Supplementary Figure 13   |   "+estimate_source+" estimates")
+    rows, sources = load_panel(args)
+    fig = editing_plot(rows)
     args.out.parent.mkdir(parents=True, exist_ok=True)
     with TemporaryDirectory(dir=args.out.parent) as tmp:
         dest = Path(tmp) / "result"
         dest.mkdir()
-        stem = "Figure3b" if args.figure=="3b" else "SupplementaryFigure"+args.figure[1:]
-        fig.savefig(dest/(stem+".pdf"))
-        fig.savefig(dest/(stem+".png"),dpi=170)
+        fig.savefig(dest / "Figure3b.pdf", metadata={"CreationDate": None})
+        fig.savefig(dest / "Figure3b.png", dpi=170)
         plt.close(fig)
-        with (dest/"plotted_data.tsv").open("w") as f:
-            writer=csv.DictWriter(f,rows[0],delimiter="\t",lineterminator="\n")
+        data = dest / "plotted_data.tsv"
+        with data.open("w", newline="", encoding="utf-8") as stream:
+            writer = csv.DictWriter(stream, rows[0], delimiter="\t", lineterminator="\n")
             writer.writeheader()
             writer.writerows(rows)
-        receipt = dict(figure=args.figure,targets=79,rows=len(rows),input_sha256=sources,
-                       estimates=estimate_source,
-                       power="draft5 power tables" if args.figure_tables else "submitted candidate-specific simulations",coordinate_order="submitted Figure 3b")
-        (dest/"provenance.json").write_text(json.dumps(receipt,indent=2)+"\n")
+        receipt = dict(figure="3b", targets=79, rows=len(rows), input_sha256=sources,
+                       plotted_data_sha256=digest(data),
+                       estimates="agent refit" if args.results else "submitted workbook",
+                       power="submitted candidate-specific simulations", coordinate_order="submitted Figure 3b")
+        write_workbook(dest / "Figure3b_source_data.xlsx", rows, receipt)
+        (dest / "provenance.json").write_text(json.dumps(receipt, indent=2) + "\n")
         dest.rename(args.out)
 
 
-if __name__=="__main__":
+if __name__ == "__main__":
     main()
