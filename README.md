@@ -62,24 +62,37 @@ Once your real manifest and references are ready, try the [example conversations
 
 ## How the agent works
 
-Open this repository in Codex or Claude Code and describe the comparison or figure you want. The [analysis skill](.agents/skills/absolve-seq/SKILL.md) translates the request into a donor, replicate, read-processing mode and Maxi pBC rule. It calls the same Python workflow you can run from the command line. The [Figure 3b skill](.agents/skills/absolve-seq-figures/SKILL.md) uses the submitted workbook or a completed panel fit to generate the plot and its source data.
+**One request takes a supported sample from paired FASTQs to a verified result table and a readable report.** Give Codex or Claude Code your FASTQ and sample-sheet paths, or name the public D3734/T1 example. The analysis skill handles setup, execution and the final handoff in the same conversation.
 
 ```mermaid
 flowchart TD
-    request["Request in Codex or Claude Code"] --> analysis["Analysis skill"]
-    request --> figure["Figure 3b skill"]
-    analysis --> workflow["paired.py · local or Slurm"]
-    inputs["Paired FASTQs, sample manifest and references"] --> workflow
-    workflow --> counts["Prepare reads, align with CRISPResso2 and count indels"]
-    counts --> pair["Matched NoEP and HiFi pair · 316 rows"]
-    counts --> model["26-library manuscript model · 632 contrasts"]
-    frozen["Existing library_counts.tsv"] --> model
-    model -->|Refitted estimates| figure
-    workbook["Supplementary Table 2"] -->|Submitted estimates and power| figure
-    figure --> output["Figure 3b PDF and PNG · Excel and TSV source data"]
+    request["User names data and comparison"] --> inputs["Agent checks environment, sample labels, mates and references"]
+    inputs --> pair["Matched NoEP and HiFi libraries"]
+    inputs --> cohort["26-library manuscript design"]
+    pair --> paired["Prepare and align reads, filter pBCs, count four strategies"]
+    cohort --> model["Prepare and align reads, count four strategies, fit donor model"]
+    frozen["Previously exported library counts"] -->|Refit| fitted["Check 632 WT and HiFi contrasts"]
+    model --> fitted
+    paired --> checked["Check 316 target and strategy rows"]
+    checked --> report["Workflow writes report.md beside the result tables"]
+    fitted --> report
+    fitted -->|If Figure 3b is requested| fig["Figure skill uses Dedud estimates and Supplementary Table 2"]
+    report --> deliver["Agent returns report and supporting file links"]
+    fig -->|PDF, PNG and Excel source data| deliver
 ```
 
-A paired run reports HiFi minus NoEP for each of 79 targets under the Unfiltered, Dedup, Dedud and Dedud+Dedup strategies. The manuscript model compares WT and HiFi separately with NoEP across three donors. Figure 3b uses the model's **Dedud** results and takes target-specific power from Supplementary Table 2 in both plotting modes.
+1. **Resolve the inputs.** The agent matches R1/R2 files to samples, selects the donor, replicate and comparison, and prepares the checksum-backed manifest and 79-target reference. It asks for clarification when the files support more than one interpretation.
+2. **Run and wait.** The agent runs the workflow locally or submits it to Slurm and follows it through aggregation. Fast read processing and the manuscript Maxi pBC rule are the defaults for a pair. The full manuscript workflow uses historical read processing.
+3. **Check the evidence.** A paired run checks 79 targets across four strategies. A panel checks 79 targets across four strategies and two editors. The report records the benchmark name when all of its reference tables match the accepted SHA-256 digests. For a requested study reproduction, the agent also runs the corresponding `verify_results.py` check.
+4. **Deliver the report.** The workflow writes an English Markdown report with relative links to the evidence. In chat, the agent returns its path, summarizes the result and identifies any undefined rates or discordant calls. If the user requests Figure 3b, it uses the panel fit and the submitted power values, returns the figure and its source table, and adds links to the report. To draw the submitted figure directly, the figure skill can start from Supplementary Table 2.
+
+| Starting point | Report location | Contents |
+| --- | --- | --- |
+| NoEP/HiFi FASTQ pair | `RUN/results/report.md` | Counts and rates, four-strategy summary, undefined differences and the manuscript focal target. Fast mode also includes raw-to-prepared read retention. |
+| 26 libraries in manuscript read mode | `RUN/results/report.md` | WT and HiFi calls by strategy, agreement with the supplements, and Δ and q for discordant calls. |
+| Frozen 26-library counts or a fast panel | `OUTPUT/report.md` | Panel comparisons and primary-call agreement, labeled with the analysis used. |
+
+The [analysis skill](.agents/skills/absolve-seq/SKILL.md) and [Figure 3b skill](.agents/skills/absolve-seq-figures/SKILL.md) use the same Python entry points in both clients.
 
 ## Example conversations
 
@@ -109,11 +122,11 @@ The public benchmark checks the complete table with `python verify_results.py pa
 
 For another donor, replicate or pBC rule, use the run's own counts, denominators and coverage checks. The `pair-fast` reference digest is specific to the documented D3734/T1 settings.
 
-**4. Write the report**
+**4. Open the completed report**
 
-> **User** — Write an English Markdown report to `runs/D3734-T1/report.md` using the completed run. Identify the samples and analysis settings. Summarize read retention by arm, compare the four strategies, and include the numerator, denominator, rate and HiFi-minus-NoEP difference for the focal target. Mark zero-denominator rates as undefined. Link the supporting files and state which checks passed.
+> **User** — Open `runs/D3734-T1/results/report.md` and summarize the focal target for me. Show me where to find its counts, read retention and the complete target table. Tell me whether the benchmark passed.
 
-The final message asks the chat agent to author the narrative. The fast workflow supplies the evidence:
+The report is already present when the workflow finishes. The fast workflow supplies the following evidence.
 
 | File relative to `runs/D3734-T1/` | What to use it for |
 | --- | --- |
@@ -128,7 +141,7 @@ Use this path when the report needs WT and HiFi comparisons across donors, BH-ad
 
 > **User** — I have the 26 original libraries, their manifest and submitted Supplementary Tables 2–5. Check the inputs and historical software versions, run the 79-target manuscript workflow into `runs/panel`, and compare the 632 editor/target/strategy calls with the supplements.
 >
-> **User** — Write `runs/panel/report.md` from the finished results. Summarize concordant and discordant calls by editor and strategy, with Δ and q for each discrepancy. Draw Figure 3b from this run's Dedud estimates using Supplementary Table 2 for power. Link the comparison tables, run provenance, PDF and 158-row Excel source table in the report.
+> **User** — Open `runs/panel/results/report.md`. Summarize concordant and discordant calls by editor and strategy, with Δ and q for each discrepancy. Draw Figure 3b from this run's Dedud estimates using Supplementary Table 2 for power. Link the comparison tables, run provenance, PDF and 158-row Excel source table in the report.
 
 If you already have the frozen 8,216-row `library_counts.tsv`, ask the agent to start with a count refit and identify that starting point in the report. [Manuscript workflow](docs/manuscript-reads.md) · [Count refit](docs/historical-maxi.md#refit-existing-counts) · [Figure 3b and its Excel table](docs/manuscript-figures.md)
 

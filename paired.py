@@ -125,6 +125,7 @@ def execute(args, samples, workers, job_id):
         run_tasks('target.py', range(2*len(targets)))
         run_tasks('summarize.py', [0])
     print(work/'results/paired_target_rates.tsv', flush=True)
+    print(work/'results/report.md', flush=True)
 
 
 def main():

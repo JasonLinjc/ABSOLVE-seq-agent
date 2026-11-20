@@ -9,6 +9,7 @@ import sys
 from tempfile import TemporaryDirectory
 
 from panel_report.manuscript_reads import GITHUB_TRIM_STEPS, HISTORICAL_TRIM_STEPS, ROOT, STRATEGIES, digest, save, table
+from analysis_report import write_report
 from settings import DATA, MANIFEST, PUBLIC, PUBLISHED, RUNS
 
 ARM = {"WTCas9":"WT","HiFiCas9":"HiFi","noEP":"NoEP"}
@@ -75,8 +76,10 @@ def refit_counts(source, output):
         receipt.update(mode="frozen-count-refit", count_sha256=digest(counts),
                        model_sha256=digest(PANEL / "manuscript_model.R"))
         (stage / "provenance.json").write_text(json.dumps(receipt, indent=2) + "\n")
+        write_report(stage, "frozen-count refit with equal donor weights", panel=True)
         stage.rename(output)
     print(output)
+    print(output / "report.md", flush=True)
 
 
 def finish(config):
@@ -144,7 +147,12 @@ def finish(config):
         else:
             raise ValueError("Unexpected manuscript library design")
         (stage/"provenance.json").write_text(json.dumps(receipt,indent=2)+"\n")
+        if len(libs) == 26:
+            write_report(stage, "manuscript reads with equal donor weights", panel=True, run_config="run.json")
+        else:
+            write_report(stage, "manuscript", run_config="run.json")
         stage.rename(base/"results")
+    print(base / "results/report.md", flush=True)
 
 
 def submit(config, stages=("prepare","align","finish")):

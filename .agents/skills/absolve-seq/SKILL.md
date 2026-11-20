@@ -1,6 +1,6 @@
 ---
 name: absolve-seq
-description: Analyze original ABSOLVE-seq pooled reporter FASTQs locally or on Slurm. Select a matched donor and replicate, compare Maxi pBC criteria, export four indel-rate strategies, or reproduce manuscript treatment margins across the 79-target panel.
+description: Analyze original ABSOLVE-seq pooled reporter FASTQs end to end and deliver a report locally or on Slurm. Select a matched donor and replicate, compare Maxi pBC criteria, export four indel-rate strategies, or reproduce manuscript treatment margins across the 79-target panel.
 ---
 
 # ABSOLVE-seq analysis
@@ -16,3 +16,8 @@ For a public test dataset, follow the [D3734/T1 quick start](../../../docs/d3734
 5. A request for filtering sensitivity may select `merged`, `any-pool`, `two-pools`, or `all-pools`. Those methods require the corresponding Maxi QC references. Use a distinct output directory for each run.
 
 To rebuild the historical membership from original Maxi pool FASTQs, follow the [historical reference guide](../../../docs/historical-maxi.md). Select `--maxi-method historical --maxi-reference DIR` for paired or panel analyses using that reference. Record the reference digest and the read mode with the results.
+
+
+For a FASTQ-to-report request, carry the run through setup, sample matching, analysis, verification and delivery. Use the paths supplied by the user or the linked public example. Resolve the environment, references and manifest first. If donor or arm identity is ambiguous, ask the user which comparison to run. Once the inputs are resolved, continue through the remaining steps in the same conversation.
+
+For Slurm, wait for the final aggregation job to succeed. Open `report.md` beside the completed tables and check its supporting links before handing it back. For an exact study benchmark, run the matching `verify_results.py` profile and state its outcome separately from structural checks. Return the report path, a short interpretation and the underlying tables. On failure, identify the failed stage and log. If Figure 3b is requested, follow the [figure skill](../absolve-seq-figures/SKILL.md), verify the figure inputs, and link the generated PDF and Excel source table in the report.

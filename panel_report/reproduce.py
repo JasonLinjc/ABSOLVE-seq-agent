@@ -13,6 +13,7 @@ from uuid import uuid4
 from pathlib import Path
 from tempfile import TemporaryDirectory
 
+from analysis_report import write_report
 from maxi_qc import PUBLISHED_SHA256, sha256
 from pilot import PUBLIC
 from target_identity import TargetIdentity, filtered_counts
@@ -184,5 +185,7 @@ def run_panel(output, historical=None, *, workers, job_id):
             receipt.pop('published_sha256')
             receipt.update(maxi_method='historical', historical_reference=historical)
         (stage/'provenance.json').write_text(json.dumps(receipt,indent=2)+'\n')
+        write_report(stage, "fast panel with family-weighted donor margins", panel=True)
         stage.rename(output)
     print(output,flush=True)
+    print(output / "report.md", flush=True)
