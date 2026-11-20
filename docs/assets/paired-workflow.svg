@@ -10,7 +10,7 @@
     .stage, .output { fill: #fae888; stroke: #211f20; stroke-width: 2; }
     .task { fill: white; stroke: #211f20; stroke-width: 2; }
     .flow { fill: none; stroke: #211f20; stroke-width: 1.8; marker-end: url(#arrow); }
-    text { font-family: Arial, Helvetica, sans-serif; font-size: 17px; fill: #191819; text-anchor: middle; }
+    text { font-family: Arial, Helvetica, sans-serif; font-size: 15px; fill: #191819; text-anchor: middle; }
     @media (max-width: 480px) { text { font-size: 19px; } }
   </style>
 
