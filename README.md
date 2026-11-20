@@ -73,7 +73,7 @@ For a real run, follow the [reference, manifest and FASTQ setup](docs/d3734-t1-q
 **Choose your comparison in chat.** For one donor and replicate, give the agent your FASTQ folder and sample sheet, or ask for the public D3734/T1 example. It matches HiFi with its NoEP control and asks which pair to use if several match. To reproduce the manuscript panel, supply the 26 study libraries and submitted Supplementary Tables 2–5.
 
 <p align="center">
-  <img src="docs/assets/paired-workflow.svg" width="660" alt="The agent selects a matched pair or the full manuscript panel, checks inputs, assigns reads to targets, aligns them with CRISPResso2 and counts indels four ways. It verifies 316 paired results or 632 panel comparisons and returns the report and tables." />
+  <img src="docs/assets/paired-workflow.svg" width="660" alt="The agent selects a matched pair or the full manuscript panel, checks inputs, assigns reads to targets, aligns them with CRISPResso2 and counts indels four ways. It verifies 316 paired results or 632 panel comparisons and returns the report and tables. Optional Figure 3b combines Dedud effect estimates with published simulation power." />
 </p>
 
 **From reads to counts.** The agent runs locally or on Slurm. A pair defaults to fast read processing. The manuscript panel defaults to historical trimming and paired-end alignment. Both use the target barcode to assign reads and the plasmid barcode (pBC) to group reads into families. Unfiltered counts reads, Dedup counts one representative allele per family, and Dedud applies the selected Maxi pBC rule and, by default, a cross-target identity check. Dedud+Dedup combines filtering and family counting. The published manuscript Maxi annotation is the default in both read modes. [Counting strategies](#paired-results) · [Read modes](docs/manuscript-reads.md)
@@ -81,7 +81,9 @@ For a real run, follow the [reference, manifest and FASTQ setup](docs/d3734-t1-q
 | What you want to do | What to open when the run finishes |
 | --- | --- |
 | 🧬 **Compare one HiFi sample with its NoEP control** | Start with `results/report.md` for quality checks. In `paired_target_rates.tsv`, each row shows both indel counts, denominators and rates, plus **HiFi minus NoEP** in percentage points. The agent checks for **316 rows** (79 targets × 4 strategies). |
-| 📋 **Reproduce the full manuscript comparison** | Provide all 26 libraries and submitted Supplementary Tables 2–5. Open `report.md` for agreement with the manuscript and `panel_comparison.tsv` for **632 comparisons** (WT and HiFi, each versus NoEP), with equal donor weights on the logit scale and BH-adjusted q-values for each editor and strategy. |
+| 📋 **Reproduce the full manuscript comparison** | Provide all 26 libraries and submitted Supplementary Tables 2–5. Open `report.md` for agreement with the manuscript and `panel_comparison.tsv` for **632 comparisons** (WT and HiFi, each versus NoEP), including fitted rates, Δ in percentage points, one-sided p-values and BH-adjusted q-values. |
+
+**How is the editing effect estimated?** For a matched pair, the agent divides each sample’s indel count by its denominator and subtracts the NoEP rate from the HiFi rate. For the manuscript panel, it pools replicate counts within each donor and treatment, then fits a Firth logistic regression for each target and strategy. It averages the three donor-specific logits equally and converts the result to a rate for each treatment. A primary positive call requires an editor-minus-NoEP difference above **0.1 percentage points** and **q < 0.05**. The q-values come from one-sided Wald tests with Benjamini–Hochberg correction across 79 targets within each editor and strategy.
 
 The agent waits for the local run or final Slurm job to finish and checks that each expected comparison appears once. If the inputs and settings match a benchmark profile, it also runs the SHA-256 check on the exported tables before returning the report.
 
@@ -94,7 +96,7 @@ You can give the agent this table and the submitted references to rerun the stat
 
 </details>
 
-📊 **Need Figure 3b?** Ask for the figure using either the submitted estimates or your panel results, and provide Supplementary Table 2 for power. The agent returns the PDF, PNG and `Figure3b_source_data.xlsx` with the 158 plotted values (79 targets × 2 editors). [Figure 3b inputs and outputs](docs/manuscript-figures.md)
+📊 **Where does statistical power come from?** Figure 3b pairs each Dedud effect estimate with the manuscript’s simulated probability of detecting an effect of **0.01 or 0.1 percentage points** for that target and editor. Both the submitted-estimate and panel-refit options read these probabilities from Supplementary Table 2. A refit updates the effect estimates and q-values while reusing the published power values. You can inspect them in the `power001` and `power01` columns of `Figure3b_source_data.xlsx`. [Figure 3b inputs and outputs](docs/manuscript-figures.md)
 
 ## Example conversations
 

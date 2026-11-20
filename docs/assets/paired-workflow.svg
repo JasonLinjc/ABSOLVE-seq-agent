@@ -1,6 +1,6 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="660" height="675" viewBox="0 0 660 675" role="img" aria-labelledby="title desc">
+<svg xmlns="http://www.w3.org/2000/svg" width="660" height="795" viewBox="0 0 660 795" role="img" aria-labelledby="title desc">
   <title id="title">From FASTQs to paired or manuscript results</title>
-  <desc id="desc">Choose a matched pair or the full study. Both routes use the target and plasmid barcodes and count indels under four strategies. The pair produces 316 differences. The panel fits 632 contrasts. The agent checks coverage and returns the report and tables.</desc>
+  <desc id="desc">Choose a matched pair or the full study. Both routes use the target and plasmid barcodes and count indels under four strategies. The pair produces 316 differences. The panel fits 632 contrasts. The agent checks coverage and returns the report and tables. Optional Figure 3b combines Dedud estimates with the submitted simulation power for each editor and target.</desc>
   <defs>
     <marker id="arrow" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="6" markerHeight="6" orient="auto">
       <path d="M0 0 L8 4 L0 8 Z" fill="#211f20"/>
@@ -13,7 +13,7 @@
     text { font-family: Arial, Helvetica, sans-serif; font-size: 19px; fill: #191819; text-anchor: middle; }
   </style>
 
-  <rect width="660" height="675" rx="8" fill="white"/>
+  <rect width="660" height="795" rx="8" fill="white"/>
   <g aria-label="Choose a comparison in chat">
     <rect class="stage" x="8" y="8" width="644" height="98" rx="10"/>
     <rect class="task" x="20" y="16" width="292" height="60" rx="13"/>
@@ -54,15 +54,15 @@
   </g>
   <path class="flow" d="M166 351 v18"/>
   <path class="flow" d="M490 351 v18"/>
-  <g aria-label="Summarize the selected comparison">
+  <g aria-label="Estimate indel rates and differences">
     <rect class="stage" x="8" y="374" width="644" height="98" rx="10"/>
     <rect class="task" x="20" y="382" width="292" height="60" rx="13"/>
-    <text x="166" y="407">Matched pair</text>
+    <text x="166" y="407">Observed indel fractions</text>
     <text x="166" y="429">HiFi rate minus NoEP rate</text>
     <rect class="task" x="344" y="382" width="292" height="60" rx="13"/>
-    <text x="490" y="407">Manuscript panel</text>
-    <text x="490" y="429">Fit WT and HiFi versus NoEP</text>
-    <text x="330" y="465">Summarize the selected comparison</text>
+    <text x="490" y="407">Donor-adjusted Firth model</text>
+    <text x="490" y="429">One-sided Wald tests, BH q</text>
+    <text x="330" y="465">Estimate indel rates and differences</text>
   </g>
   <path class="flow" d="M166 473 v18"/>
   <path class="flow" d="M490 473 v18"/>
@@ -79,4 +79,15 @@
   <path class="flow" d="M330 595 v18"/>
   <rect class="output" x="126" y="619" width="408" height="48" rx="13"/>
     <text x="330" y="649">Return report.md and supporting tables</text>
+  <g aria-label="Optional Figure 3b and Excel source data">
+    <rect class="stage" x="8" y="685" width="644" height="101" rx="10"/>
+    <rect class="task" x="20" y="694" width="292" height="60" rx="13"/>
+    <text x="166" y="720">Dedud effect estimates</text>
+    <text x="166" y="742">Submitted workbook or panel fit</text>
+    <path d="M322 724 h12 M328 718 v12" fill="none" stroke="#211f20" stroke-width="2"/>
+    <rect class="task" x="344" y="694" width="292" height="60" rx="13"/>
+    <text x="490" y="720">Published simulation power</text>
+    <text x="490" y="742">Supplementary Table 2</text>
+    <text x="330" y="776">Optional Figure 3b and Excel source data</text>
+  </g>
 </svg>
