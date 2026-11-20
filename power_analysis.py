@@ -79,7 +79,9 @@ def estimate(target, strategy, depths, baseline, editors, design, draws, seed):
                 center = power + z**2 / (2 * draws)
                 half = z * np.sqrt(power * (1 - power) / draws + z**2 / (4 * draws**2))
                 scale = 1 + z**2 / draws
-                low, high = max(0.0, (center - half) / scale), min(1.0, (center + half) / scale)
+                # At 0/n and n/n the Wilson endpoint is exact. Avoid cancellation at the boundary.
+                low = 0.0 if hit == 0 else (center - half) / scale
+                high = 1.0 if hit == draws else (center + half) / scale
             rows.append(dict(target=target, strategy=strategy, editor=editor, effect_pp=effect,
                              power=power, mc_low95=low, mc_high95=high, detections=None if hit is None else int(hit),
                              simulations=0 if hit is None else draws, status=status))
