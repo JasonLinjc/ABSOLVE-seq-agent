@@ -4,6 +4,59 @@ A Codex agent with local and Slurm workflows for measuring cut-site indels in th
 
 The analysis is based on the [upstream ABSOLVE-seq repository](https://github.com/pellinlab/ABSOLVE-seq/tree/271355dfe40cf46b952e82b88dd4521f23f9feb4). Read the [upstream license](https://github.com/pellinlab/ABSOLVE-seq/blob/271355dfe40cf46b952e82b88dd4521f23f9feb4/LICENSE.md) for its code and reference assets.
 
+## How the agent works
+
+Open this repository in Codex and describe the comparison or figure you want. The [analysis skill](.agents/skills/absolve-seq/SKILL.md) translates the request into a donor, replicate, read-processing mode and Maxi pBC rule. It calls the same Python workflow you can run from the command line. The [Figure 3b skill](.agents/skills/absolve-seq-figures/SKILL.md) uses the submitted workbook or a completed panel fit to generate the plot and its source data.
+
+```mermaid
+flowchart TD
+    request["Request in Codex"] --> analysis["Analysis skill"]
+    request --> figure["Figure 3b skill"]
+    analysis --> workflow["paired.py · local or Slurm"]
+    inputs["Paired FASTQs, sample manifest and references"] --> workflow
+    workflow --> counts["Prepare reads, align with CRISPResso2 and count indels"]
+    counts --> pair["Matched NoEP and HiFi pair · 316 rows"]
+    counts --> model["26-library manuscript model · 632 contrasts"]
+    frozen["Existing library_counts.tsv"] --> model
+    model -->|Refitted estimates| figure
+    workbook["Supplementary Table 2"] -->|Submitted estimates and power| figure
+    figure --> output["Figure 3b PDF and PNG · Excel and TSV source data"]
+```
+
+A paired run reports HiFi minus NoEP for each of 79 targets under the Unfiltered, Dedup, Dedud and Dedud+Dedup strategies. The manuscript model compares WT and HiFi separately with NoEP across three donors. Figure 3b uses the model's **Dedud** results and takes target-specific power from Supplementary Table 2 in both plotting modes.
+
+## Example conversations
+
+### Run a public sample and inspect one target
+
+> **User** — I have a workstation and four cores. Run the public D3734/T1 NoEP and HiFi FASTQs from scratch with the default Maxi rule. Verify all four strategies.
+>
+> **Agent** — I'll use fast read processing, the published manuscript pBC annotation and four local workers. I'll check the 316-row `paired_target_rates.tsv` against the `pair-fast` benchmark.
+>
+> **User** — For `1617_OT_0040_ALT`, is the difference still positive after Dedud+Dedup? Show the counts behind the rates.
+>
+> **Agent** — Yes. In the verified D3734/T1 example, NoEP has 0 edited families out of 1,619 (0.00%) and HiFi has 9 out of 675 (1.33%). HiFi minus NoEP is **+1.33 percentage points** for this pair.
+
+The [public-data quick start](docs/d3734-t1-quick-start.md) gives the accessions, file checks and commands for this conversation.
+
+### Change the pBC rule for the same pair
+
+> **User** — I have QC results for all three Maxi pools. Repeat D3734/T1 with `two-pools` and compare it with the default run. Did the Dedud estimate change for `1617_OT_0040_ALT`?
+>
+> **Agent** — I'll keep the donor, replicate and read mode fixed and write the new run to a separate directory. For that target I'll report the edited counts and denominators in each arm, then compare the two HiFi-minus-NoEP estimates.
+
+### Refit the manuscript panel and export Figure 3b
+
+> **User** — I have the frozen 26-library `library_counts.tsv` and submitted Supplementary Tables 2–5. Refit the manuscript model and tell me how many WT and HiFi calls agree with the supplements.
+>
+> **Agent** — I'll check the 8,216 count records, fit the equal-donor model and compare the 632 calls by editor and strategy.
+>
+> **User** — Draw Figure 3b from that refit and give me the underlying Excel table.
+>
+> **Agent** — I'll use the refitted Dedud estimates and the power values from Supplementary Table 2. The PDF and PNG will share a 158-row source table, one row per target and editor, exported as Excel and TSV alongside input hashes.
+
+See the [count-refit instructions](docs/historical-maxi.md#refit-existing-counts) and the [Figure 3b commands](docs/manuscript-figures.md). To redraw the submitted estimates directly, ask “Reproduce Figure 3b from Supplementary Table 2 and export its Excel source data.”
+
 ## Quick start
 
 Use the [Docker or Apptainer container](docs/container.md) for the locked Linux environment, or install the Conda environment below.
@@ -40,8 +93,6 @@ python paired.py --donor D3734 --replicate T1 --threads 4 --fresh --output runs/
 ```
 
 On Slurm, submit the same pair with `sbatch paired.sbatch --donor D3734 --replicate T1`. Local and Slurm runs use the same workers and write the same result tables. For a local Docker run, see the [container example](docs/container.md#docker).
-
-In Codex, open the repository and use the [absolve-seq skill](.agents/skills/absolve-seq/SKILL.md). For example, ask “Analyze D3734/T1 with the default manuscript method. Export the NoEP and HiFi indel rates and their difference for each of the four counting strategies.”
 
 ## Paired results
 
