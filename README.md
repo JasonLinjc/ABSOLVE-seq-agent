@@ -1,16 +1,57 @@
 # ABSOLVE-seq agent
 
-A Codex agent with local and Slurm workflows for measuring cut-site indels in the original ABSOLVE-seq pooled reporter libraries. Choose a donor, replicate and Maxi plasmid-barcode (pBC) rule to get four indel-rate estimates for every target. The manuscript mode compares WT and HiFi against NoEP across the original 26 libraries and 79 targets.
+ABSOLVE-seq agent measures cut-site indels in the original pooled reporter libraries. Run it from Codex or Claude Code on a workstation or Slurm cluster. Choose a donor, replicate and Maxi plasmid-barcode (pBC) rule to get four indel-rate estimates for every target. The manuscript mode compares WT and HiFi against NoEP across the original 26 libraries and 79 targets.
 
 The analysis is based on the [upstream ABSOLVE-seq repository](https://github.com/pellinlab/ABSOLVE-seq/tree/271355dfe40cf46b952e82b88dd4521f23f9feb4). Read the [upstream license](https://github.com/pellinlab/ABSOLVE-seq/blob/271355dfe40cf46b952e82b88dd4521f23f9feb4/LICENSE.md) for its code and reference assets.
 
+## Set up in Codex or Claude Code
+
+Clone the repository on the workstation or cluster where you want to run the analysis. Both clients use the same checkout, skills and Python workflow. You can try the setup check below with Python 3.10+ and the included example manifest. For a real run, follow the [public-data quick start](docs/d3734-t1-quick-start.md) to install the analysis environment, prepare the references and verify the FASTQs.
+
+```bash
+git clone https://github.com/JasonLinjc/ABSOLVE-seq-agent.git
+cd ABSOLVE-seq-agent
+```
+
+### Codex with a ChatGPT account
+
+1. In the ChatGPT desktop app, sign in, choose **Codex** from the product selector and open the cloned **ABSOLVE-seq-agent** folder. For the terminal interface, install the Codex CLI, run `codex` from the repository root and choose **Sign in with ChatGPT**. [OpenAI quick start](https://developers.openai.com/codex/quickstart/) · [Codex CLI](https://developers.openai.com/codex/cli/)
+2. Start a chat in that folder. Codex discovers `absolve-seq` and `absolve-seq-figures` under `.agents/skills/`. In the CLI, type `$` to select either skill. [Codex skill discovery](https://developers.openai.com/codex/skills/)
+3. Try this first message in the project chat. **“Use the absolve-seq skill to list the pairs in `examples/manifest.example.tsv`. Stop after listing them.”**
+
+### Claude Code
+
+1. Install Claude Code using the [Claude Code quick start](https://code.claude.com/docs/en/quickstart). From the repository root, run the following setup in Bash or Zsh. It links both skills into Claude Code's project skill directory so that a future `git pull` updates the instructions and plotting script together. [Claude Code project skills](https://code.claude.com/docs/en/skills)
+
+   ```bash
+   mkdir -p .claude/skills
+   for skill in absolve-seq absolve-seq-figures; do
+     if [ ! -e ".claude/skills/$skill" ] && [ ! -L ".claude/skills/$skill" ]; then
+       ln -s "../../.agents/skills/$skill" ".claude/skills/$skill"
+     fi
+   done
+   claude
+   ```
+
+2. Follow the sign-in prompt on first launch. In the Claude Code chat, enter **`/absolve-seq List the pairs in examples/manifest.example.tsv and stop there.`** For Figure 3b, start a request with **`/absolve-seq-figures`**.
+
+### Check your setup
+
+Either prompt should list **D3734 / T1** with **NoEP_pool_D3734_T1** and **HiFi_pool_D3734_T1**. The example manifest contains placeholder paths. This checks the workflow entry point and pair discovery before downloading reads. You can run the same check directly from the repository root.
+
+```bash
+ABSOLVE_MANIFEST=examples/manifest.example.tsv python paired.py --list
+```
+
+Once your real manifest and references are ready, try the [example conversations](#example-conversations). The analysis runs where the workflow is launched, so that machine must have access to the input paths. On a workstation without Slurm the Python workflow runs locally.
+
 ## How the agent works
 
-Open this repository in Codex and describe the comparison or figure you want. The [analysis skill](.agents/skills/absolve-seq/SKILL.md) translates the request into a donor, replicate, read-processing mode and Maxi pBC rule. It calls the same Python workflow you can run from the command line. The [Figure 3b skill](.agents/skills/absolve-seq-figures/SKILL.md) uses the submitted workbook or a completed panel fit to generate the plot and its source data.
+Open this repository in Codex or Claude Code and describe the comparison or figure you want. The [analysis skill](.agents/skills/absolve-seq/SKILL.md) translates the request into a donor, replicate, read-processing mode and Maxi pBC rule. It calls the same Python workflow you can run from the command line. The [Figure 3b skill](.agents/skills/absolve-seq-figures/SKILL.md) uses the submitted workbook or a completed panel fit to generate the plot and its source data.
 
 ```mermaid
 flowchart TD
-    request["Request in Codex"] --> analysis["Analysis skill"]
+    request["Request in Codex or Claude Code"] --> analysis["Analysis skill"]
     request --> figure["Figure 3b skill"]
     analysis --> workflow["paired.py · local or Slurm"]
     inputs["Paired FASTQs, sample manifest and references"] --> workflow
