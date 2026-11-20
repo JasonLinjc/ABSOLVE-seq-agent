@@ -110,9 +110,14 @@ def finish(config):
             inventory.append(entry)
         save(stage/"sample_inventory.tsv",inventory)
         receipt=dict(read_mode="manuscript",crispresso_version="2.2.13",trimmomatic_version="0.36",
-                     image_sha256=digest(cfg["image"]),jar_sha256=digest(cfg["jar"]),adapters_sha256=digest(cfg["adapters"]),
+                     jar_sha256=digest(cfg["jar"]),adapters_sha256=digest(cfg["adapters"]),
                      libraries=len(libs),targets=len(targets),input_config_sha256=digest(config),
                      worker_sha256=digest(PANEL/"manuscript_reads.py"),model_sha256=digest(PANEL/"manuscript_model.R"))
+        if cfg.get("image"):
+            receipt["image_sha256"] = digest(cfg["image"])
+        else:
+            receipt["crispresso_executable_sha256"] = digest(cfg["crispresso"])
+        receipt["executor"] = cfg.get("executor", "slurm")
         receipt["maxi_method"] = cfg.get("maxi_method", "manuscript")
         if "historical_reference" in cfg:
             receipt["historical_reference"] = cfg["historical_reference"]
@@ -162,7 +167,7 @@ def submit(config, stages=("prepare","align","finish")):
         print(f"{phase} job {dependency}",flush=True)
 
 
-def start(args):
+def start(args, *, local, workers):
     manifest={}
     for r in table(MANIFEST):
         if r["status"]=="matched":
@@ -187,9 +192,27 @@ def start(args):
         from historical_maxi import reference
         cfg["historical_reference"] = reference(args.maxi_reference)
         del cfg["published"]
-    for key,var in [("jar","ABSOLVE_TRIMMOMATIC_JAR"),("image","ABSOLVE_CRISPRESSO2213_IMAGE")]:
-        if not os.getenv(var):raise ValueError("Set "+var)
-        cfg[key]=str(Path(os.environ[var]).resolve(strict=True))
+    jar = os.environ.get("ABSOLVE_TRIMMOMATIC_JAR")
+    if not jar:
+        raise ValueError("Set ABSOLVE_TRIMMOMATIC_JAR to the Trimmomatic 0.36 JAR")
+    cfg["jar"] = str(Path(jar).expanduser().resolve(strict=True))
+    cfg["executor"] = "local" if local else "slurm"
+    image = os.environ.get("ABSOLVE_CRISPRESSO2213_IMAGE")
+    if local:
+        cfg["threads"] = workers
+    if image:
+        if local and not shutil.which("apptainer"):
+            raise ValueError("Install Apptainer for the configured image, or unset ABSOLVE_CRISPRESSO2213_IMAGE and configure native CRISPResso2 2.2.13")
+        cfg["image"] = str(Path(image).expanduser().resolve(strict=True))
+    elif local:
+        from panel_report.manuscript_reads import checked_version
+        executable = shutil.which(os.getenv("ABSOLVE_CRISPRESSO2213_EXECUTABLE", "CRISPResso"))
+        if not executable or not shutil.which("flash"):
+            raise ValueError("Local manuscript mode requires CRISPResso2 2.2.13 and flash, or ABSOLVE_CRISPRESSO2213_IMAGE")
+        cfg["crispresso"] = str(Path(executable).absolute())
+        checked_version([cfg["crispresso"], "--version"], "2.2.13")
+    else:
+        raise ValueError("Set ABSOLVE_CRISPRESSO2213_IMAGE")
     inputs=[cfg["adapters"]]+[s[k] for s in libs for k in ("r1","r2")]
     if args.manuscript_panel:
         refs = Path(cfg["refs"])
@@ -208,4 +231,17 @@ def start(args):
         base=Path(tempfile.mkdtemp(prefix="manuscript_reads_",dir=RUNS))
     config=base/"run.json";config.write_text(json.dumps(cfg,indent=2)+"\n")
     print("Manuscript run directory",base,flush=True)
-    submit(config)
+    if local:
+        run_local(config, len(libs), workers)
+    else:
+        submit(config)
+
+
+def run_local(config, library_count, workers):
+    from panel_report.manuscript_reads import worker
+    for phase in ("prepare", "align"):
+        for index in range(library_count):
+            print(f"{phase} library {index + 1}/{library_count}", flush=True)
+            worker(config, phase, index, threads=workers)
+    finish(config)
+    print(config.parent / "results", flush=True)

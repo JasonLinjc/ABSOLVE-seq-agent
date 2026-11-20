@@ -1,6 +1,13 @@
 """Local inputs and optional caches. All overrides accept absolute paths."""
 import os
+import shutil
 from pathlib import Path
+
+
+def use_local(executor):
+    if executor == "local":
+        return True
+    return not os.environ.get("SLURM_JOB_ID") and shutil.which("sbatch") is None
 
 
 def location(variable, default):

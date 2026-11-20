@@ -2,9 +2,9 @@
 
 Choose manuscript mode to replay the original preprocessing with Trimmomatic 0.36 and paired-end CRISPResso2 2.2.13. The default for ordinary NoEP/HiFi pairs is the fast workflow. A full manuscript panel defaults to manuscript read processing. The Maxi annotation choice and the read processing mode are separate options.
 
-## Configure the submission host
+## Configure the runtime
 
-Use Python 3.10 or later, Java, Apptainer, Slurm and the upstream checkout and references from the main README. Supply the original Trimmomatic 0.36 JAR and a Linux CRISPResso2 2.2.13 image. The final panel fit uses the agent analysis image when `ABSOLVE_IMAGE` is set, or an available `Rscript` with brglm2. All paths must be visible on the compute nodes. [Trimmomatic 0.36 distribution](https://anaconda.org/bioconda/trimmomatic/files) · [CRISPResso2 2.2.13 image](https://depot.galaxyproject.org/singularity/crispresso2:2.2.13--py310hd6be1da_0)
+Use Python 3.10 or later, Java and the upstream checkout and references from the main README. The cluster workflow uses Slurm and Apptainer. Local execution can use Apptainer on Linux or a native installation of the historical tools. Supply the original Trimmomatic 0.36 JAR and a Linux CRISPResso2 2.2.13 image. The final panel fit uses the agent analysis image when `ABSOLVE_IMAGE` is set, or an available `Rscript` with brglm2. All paths must be visible on the compute nodes. [Trimmomatic 0.36 distribution](https://anaconda.org/bioconda/trimmomatic/files) · [CRISPResso2 2.2.13 image](https://depot.galaxyproject.org/singularity/crispresso2:2.2.13--py310hd6be1da_0)
 
 ```sh
 export ABSOLVE_TRIMMOMATIC_JAR=/shared/software/trimmomatic-0.36.jar
@@ -16,9 +16,26 @@ python paired.py --manuscript-panel --read-mode manuscript \
   --output runs/manuscript-replay
 ```
 
-Omit `--baseline-panel` to compare directly with the submitted workbooks. Choose a new run directory. Set site-specific scheduler defaults with variables such as `SBATCH_PARTITION` and `SBATCH_ACCOUNT`. The launcher submits a preparation array, a corresponding alignment array and a final aggregation job, and records their IDs in `jobs.json`. The two arrays use six CPUs, 18 GB memory and an eight-hour limit per library by default. Allow shared scratch for trimmed pairs and uncompressed per-target FASTQs.
+Omit `--baseline-panel` to compare directly with the submitted workbooks. Choose a new run directory. On Slurm, set site-specific scheduler defaults with variables such as `SBATCH_PARTITION` and `SBATCH_ACCOUNT`. The launcher submits a preparation array, a corresponding alignment array and a final aggregation job, and records their IDs in `jobs.json`. The two arrays use six CPUs, 18 GB memory and an eight-hour limit per library by default. Allow shared scratch for trimmed pairs and uncompressed per-target FASTQs.
 
 For a single complete donor/replicate pair, run `python paired.py --donor D3734 --replicate T1 --read-mode manuscript --output runs/pair-replay`. Pair output contains 316 target/strategy rows. For a fast panel, submit `sbatch paired.sbatch --manuscript-panel --read-mode fast`.
+
+## Run locally
+
+With no Slurm allocation or `sbatch`, the same Python commands process each library on this machine and return after aggregation. Use `--threads N` to set the trimming and target alignment concurrency within one library. Libraries run sequentially. Allocate working space for trimmed FASTQs and per-target alignments across all requested libraries.
+
+For the image route, keep the JAR and image settings above. For a native run, use the following environment with the original JAR, a working CRISPResso2 2.2.13 executable, and FLASH on PATH. For a full panel, also configure R with brglm2 and prepare the submitted reference extracts. The workflow checks the historical tool versions.
+
+```sh
+export ABSOLVE_TRIMMOMATIC_JAR=/software/trimmomatic-0.36.jar
+unset ABSOLVE_CRISPRESSO2213_IMAGE ABSOLVE_IMAGE
+export PATH="/software/crispresso-2.2.13/bin:$PATH"
+python paired.py --executor local --read-mode manuscript --donor D3734 --replicate T1 \
+  --threads 4 --output runs/local-pair
+python paired.py --executor local --manuscript-panel --threads 4 --output runs/local-panel
+```
+
+To select a specific native CRISPResso executable, set `ABSOLVE_CRISPRESSO2213_EXECUTABLE` to its path. To analyze frozen counts directly, use [the count refit](historical-maxi.md#refit-existing-counts). Reference rebuilding and Figure 3b export also run directly from Python.
 
 ## How reads are counted
 

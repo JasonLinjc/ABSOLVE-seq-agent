@@ -66,3 +66,14 @@ To build locally, run these commands from the repository root. The second comman
 docker build --platform linux/amd64 -t absolve-seq-agent:local .
 docker run --rm --platform linux/amd64 absolve-seq-agent:local
 ```
+
+From a current checkout, use the loaded image as a local runtime for the fast workflow. Prepare the inputs and manifest following the [paired quick start](d3734-t1-quick-start.md). Mount the checkout at its original absolute path so the manifest and the output refer to the same files on the host and inside the container. Mount any external FASTQ directories at their original paths as well.
+
+```bash
+docker run --rm --platform linux/amd64 --user "$(id -u):$(id -g)" \
+    --volume "$PWD:$PWD" --workdir "$PWD" "$image" \
+    python paired.py --donor D3734 --replicate T1 --threads 4 --fresh --output runs/local-pair
+python verify_results.py pair-fast runs/local-pair/results
+```
+
+For a locally built image use `image=absolve-seq-agent:local`. The [manuscript workflow](manuscript-reads.md#run-locally) uses its own historical read-processing runtime.

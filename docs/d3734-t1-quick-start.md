@@ -6,7 +6,7 @@ For a prebuilt environment, use the [container instructions](container.md). The 
 
 ## 1. Get the agent and create an environment
 
-On a Linux Slurm cluster, choose a shared working directory visible to the login and compute nodes. The login node needs access to GitHub and the Conda channels. Use a new checkout and an empty environment prefix.
+Use a local working directory on a workstation or a shared working directory on a Slurm cluster. Download the inputs on a machine with access to GitHub, ENA and the Conda channels. Use a new checkout and an empty environment prefix.
 
 ```bash
 git clone https://github.com/JasonLinjc/ABSOLVE-seq-agent.git
@@ -86,7 +86,17 @@ python paired.py --list
 
 The example hashes the four compressed files and writes a two-row manifest. Compare its four SHA-256 values with your laboratory inventory.
 
-## 4. Submit the full pair
+## 4. Run the full pair
+
+On a machine without Slurm, the CLI runs the pair locally and returns after the result table has been written. Use a new output directory.
+
+```bash
+run_dir="$PWD/runs/acceptance"
+python paired.py --donor D3734 --replicate T1 --threads 4 --fresh --output "$run_dir"
+python verify_results.py pair-fast "$run_dir/results"
+```
+
+### Slurm submission
 
 Submit from the agent repository root with the new environment active. Set the partition to one available on your cluster. The following command uses the Luminary CPU partitions.
 

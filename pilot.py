@@ -1,4 +1,4 @@
-"""Run a bounded original-library smoke test inside a Luminary Slurm allocation."""
+"""Run a bounded original-library smoke test locally or inside a Slurm allocation."""
 import argparse
 from collections import Counter
 import csv
@@ -14,7 +14,7 @@ import time
 
 import maxi_qc
 
-from settings import PUBLIC, REFERENCES as CUT, RUNTIME as FROZEN
+from settings import PUBLIC, REFERENCES as CUT, RUNTIME as FROZEN, use_local
 
 
 def table(path):
@@ -90,7 +90,7 @@ def run(args):
     summary = dict(sample=sample, repository_sample=metadata, target=args.target, pairs=stats['pairs'],
                    prepared=stats['prepared_pairs'], targets_with_reads=stats['targets_with_reads'],
                    target_reads=job['prepared_reads'], version=subprocess.check_output(['CRISPResso','--version'],text=True).strip(),
-                   job=os.environ['SLURM_JOB_ID'], scope='prefix pilot, raw cut-site counts', runs={})
+                   job=os.environ.get('SLURM_JOB_ID'), scope='prefix pilot, raw cut-site counts', runs={})
     previous = None
     for mode in (['lean','report'] if args.compare_reports else ['lean']):
         dest = root/mode
@@ -145,14 +145,17 @@ if __name__=='__main__':
     parser.add_argument('--output',type=Path,required=True)
     maxi_qc.add_options(parser)
     parser.add_argument('--skip-maxi-qc', action='store_true', help='Run the raw alignment pilot only.')
+    parser.add_argument('--executor', choices=['auto', 'local'], default='auto')
     args=parser.parse_args()
+    if not use_local(args.executor) and not os.environ.get('SLURM_JOB_ID'):
+        parser.error('Submit pilot.sbatch on Slurm or select --executor local.')
     if args.skip_maxi_qc and args.maxi_method:
         parser.error('--skip-maxi-qc conflicts with --maxi-method.')
     methods = args.maxi_method or [maxi_qc.DEFAULT_METHOD]
     if args.min_exact_reads < 1 or (not any(m in maxi_qc.REQUIRED for m in methods) and args.min_exact_reads != 1):
         parser.error("A custom positive exact-read threshold requires --maxi-method.")
-    if not os.environ.get('SLURM_JOB_ID') or not 1<=args.pairs<=250000:
-        parser.error('A Slurm allocation and a prefix between 1 and 250000 pairs are required.')
+    if not 1<=args.pairs<=250000:
+        parser.error('Choose a prefix between 1 and 250000 pairs.')
     sys.path[:0]=[str(FROZEN/'src')]
     run(args)
     if not args.skip_maxi_qc:

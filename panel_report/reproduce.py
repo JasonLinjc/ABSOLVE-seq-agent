@@ -9,6 +9,7 @@ import subprocess
 import sys
 from collections import Counter, defaultdict
 from concurrent.futures import ProcessPoolExecutor, ThreadPoolExecutor
+from uuid import uuid4
 from pathlib import Path
 from tempfile import TemporaryDirectory
 
@@ -45,7 +46,8 @@ def align_library(sample, donor, replicate, arm, output, workers):
     def task(script, index):
         with (output/f'{script}_{index}.log').open('x') as log:
             subprocess.run([sys.executable,str(AGENT/'workers'/(script+'.py')),str(index)],
-                           cwd=output,stdout=log,stderr=subprocess.STDOUT,check=True)
+                           cwd=output,stdout=log,stderr=subprocess.STDOUT,check=True,
+                           env=dict(os.environ, ABSOLVE_DATA=str(DATA), ABSOLVE_MANIFEST=str(MANIFEST)))
     task('prepare',0)
     with ThreadPoolExecutor(max_workers=workers) as pool:
         list(pool.map(lambda i:task('target',i),range(79)))
@@ -147,9 +149,8 @@ def recount_target(task):
     return rows
 
 
-def run_panel(output, historical=None):
-    workers = int(os.environ.get('SLURM_CPUS_PER_TASK','1'))
-    output = Path(output).resolve() if output else RUNS/('manuscript_'+os.environ['SLURM_JOB_ID'])
+def run_panel(output, historical=None, *, workers, job_id):
+    output = Path(output).resolve() if output else RUNS / ('manuscript_' + (job_id or 'local_' + uuid4().hex))
     output.parent.mkdir(parents=True,exist_ok=True)
     if output.exists():
         raise FileExistsError(output)
@@ -174,7 +175,7 @@ def run_panel(output, historical=None):
                 s['folder'] = str(output/path.relative_to(stage))
         write(stage/'sample_inventory.tsv',samples)
         subprocess.run(['Rscript',str(PANEL/'manuscript_model.R'),str(stage),str(refs)],check=True)
-        receipt = dict(job=os.environ['SLURM_JOB_ID'],libraries=len(samples),targets=len(targets),
+        receipt = dict(job=job_id, executor='slurm' if job_id else 'local', workers=workers, libraries=len(samples),targets=len(targets),
                        published_sha256=PUBLISHED_SHA256,oligo_sha256=sha256(REFERENCE),
                        manifest_sha256=sha256(MANIFEST),
                        submitted_workbooks=json.loads((refs/'source_sha256.json').read_text()),

@@ -8,6 +8,7 @@ import json
 import os
 from pathlib import Path
 import re
+from uuid import uuid4
 import subprocess
 import sys
 import tempfile
@@ -18,7 +19,7 @@ from pilot import CUT, PUBLIC, table
 
 AGENT = Path(__file__).resolve().parent
 SCRIPTS = AGENT / 'workers'
-from settings import MANIFEST, DEPLOYMENT, PUBLISHED, RUNS
+from settings import DATA, MANIFEST, DEPLOYMENT, PUBLISHED, RUNS, use_local
 ARCHIVE = DEPLOYMENT / 'paired_cohort_261119/cohort_results/jobs.json'
 CONDITIONS = ('NoEP', 'HiFi')
 
@@ -77,20 +78,20 @@ def partition_reference(folder, dest, targets, minimum):
     return source
 
 
-def execute(args, samples):
+def execute(args, samples, workers, job_id):
     from maxi_qc import PUBLISHED_SHA256
     targets = {r['target_id']: r['tbc'] for r in json.loads((CUT/'target_guide_mapping.json').read_text())}
     published_targets = {r['OT'].replace('-', '_'): r['Barcode'] for r in table(PUBLIC/'target_oligos_sequenes.csv')}
     if len(targets) != 79 or targets != published_targets:
         raise ValueError('Target map disagrees with the published 79-target panel.')
-    work = args.output.resolve() if args.output else RUNS/f'paired_{os.environ["SLURM_JOB_ID"]}'
+    work = args.output.resolve() if args.output else RUNS / f"paired_{job_id or ('local_' + uuid4().hex)}"
     work.mkdir(parents=True, exist_ok=False)
     previous = None if args.fresh else previous_alignment(args.donor, args.replicate, samples)
     config = dict(donor=args.donor, replicate=args.replicate, samples=samples, maxi_method=args.maxi_method, target_filter=args.target_filter,
                   oligo_sha256=sha256(PUBLIC/'target_oligos_sequenes.csv'),
                   min_exact_reads=None if args.maxi_method in (DEFAULT_METHOD, "historical") else args.min_exact_reads,
                   manifest_sha256=sha256(MANIFEST), target_map_sha256=sha256(CUT/'target_guide_mapping.json'),
-                  job_id=os.environ['SLURM_JOB_ID'])
+                  job_id=job_id, executor='slurm' if job_id else 'local', workers=workers)
     if previous is not None:
         config['alignment_source'] = str(previous)
     print('Working directory:', work, flush=True)
@@ -99,8 +100,8 @@ def execute(args, samples):
         def run(index):
             command = [sys.executable, str(SCRIPTS/script), str(index)]
             with (work/f'{Path(script).stem}_{index}.log').open('x') as log:
-                subprocess.run(command, cwd=work, stdout=log, stderr=subprocess.STDOUT, check=True)
-        workers = int(os.environ.get('SLURM_CPUS_PER_TASK', '1'))
+                subprocess.run(command, cwd=work, stdout=log, stderr=subprocess.STDOUT, check=True,
+                               env=dict(os.environ, ABSOLVE_DATA=str(DATA), ABSOLVE_MANIFEST=str(MANIFEST)))
         with ThreadPoolExecutor(max_workers=workers) as pool:
             list(pool.map(run, indices))
 
@@ -136,13 +137,21 @@ def main():
     parser.add_argument('--maxi-method', choices=[DEFAULT_METHOD, 'historical', *REQUIRED], default=DEFAULT_METHOD)
     parser.add_argument('--maxi-reference', type=Path, help='Verified reference directory built with setup_references.py --historical-maxi.')
     parser.add_argument('--min-exact-reads', type=int, help='Reconstructed Maxi methods only (default 1).')
-    parser.add_argument('--output', type=Path, help='New run directory on Luminary (default runs/paired_JOBID).')
+    parser.add_argument('--output', type=Path, help='New output directory (default: a unique directory under runs/).')
     parser.add_argument('--fresh', action='store_true', help='Prepare and align full FASTQs again.')
     parser.add_argument('--read-mode', choices=['fast','manuscript'], help='Read processing mode. Pairs default to fast and manuscript panels default to manuscript.')
     parser.add_argument('--baseline-panel', type=Path, help='Earlier panel_comparison.tsv for tracking resolved, persistent and new disagreements.')
     parser.add_argument('--refit-counts', type=Path, help='Fit the equal-donor manuscript panel from a complete existing library_counts.tsv.')
     parser.add_argument('--finish-manuscript', type=Path, help=argparse.SUPPRESS)
+    parser.add_argument('--executor', choices=['auto', 'local'], default='auto',
+                        help='Use the local machine when Slurm is absent, or force local execution.')
+    parser.add_argument('--threads', type=int, help='Local worker limit (default 1).')
     args = parser.parse_args()
+    local = use_local(args.executor)
+    if args.threads is not None and (args.threads < 1 or not local):
+        parser.error('--threads requires local execution and a positive integer')
+    workers = (args.threads or 1) if local else int(os.environ.get('SLURM_CPUS_PER_TASK', '1'))
+    job_id = None if local else os.environ.get('SLURM_JOB_ID')
     if args.refit_counts:
         if not args.manuscript_panel or not args.output or any((args.list, args.donor, args.replicate, args.maxi_reference,
                 args.maxi_method != DEFAULT_METHOD, args.min_exact_reads is not None, args.fresh, args.target_filter,
@@ -170,15 +179,15 @@ def main():
         if not args.manuscript_panel and not (args.donor and args.replicate):
             parser.error('Choose --donor and --replicate, or --manuscript-panel.')
         from panel_report.manuscript_run import start
-        start(args)
+        start(args, local=local, workers=workers)
         return
     if args.manuscript_panel:
         if args.list or args.donor or args.replicate or args.maxi_method not in (DEFAULT_METHOD, "historical") or args.min_exact_reads is not None or args.fresh or args.target_filter == 'pbc-only':
             parser.error('--manuscript-panel uses the full original design, manuscript or historical Maxi membership and manuscript target filter.')
-        if not os.environ.get('SLURM_JOB_ID'):
+        if not local and not job_id:
             parser.error('Submit the panel with sbatch paired.sbatch --manuscript-panel.')
         from panel_report.reproduce import run_panel
-        run_panel(args.output, historical_reference(args.maxi_reference) if args.maxi_reference else None)
+        run_panel(args.output, historical_reference(args.maxi_reference) if args.maxi_reference else None, workers=workers, job_id=job_id)
         return
     args.target_filter = args.target_filter or 'manuscript'
     groups = discover()
@@ -193,9 +202,9 @@ def main():
     if args.min_exact_reads is not None and (args.min_exact_reads < 1 or args.maxi_method == DEFAULT_METHOD):
         parser.error('--min-exact-reads requires a reconstructed Maxi method and a positive integer.')
     args.min_exact_reads = args.min_exact_reads or 1
-    if not os.environ.get('SLURM_JOB_ID'):
+    if not local and not job_id:
         parser.error('Run with sbatch paired.sbatch or use --list.')
-    execute(args, samples)
+    execute(args, samples, workers, job_id)
 
 
 if __name__ == '__main__':

@@ -1,6 +1,6 @@
 # ABSOLVE-seq agent
 
-A Codex skill and Slurm workflow for measuring cut-site indels in the original ABSOLVE-seq pooled reporter libraries. Choose a donor, replicate and Maxi plasmid-barcode (pBC) rule to get four indel-rate estimates for every target. The manuscript mode compares WT and HiFi against NoEP across the original 26 libraries and 79 targets.
+A Codex agent with local and Slurm workflows for measuring cut-site indels in the original ABSOLVE-seq pooled reporter libraries. Choose a donor, replicate and Maxi plasmid-barcode (pBC) rule to get four indel-rate estimates for every target. The manuscript mode compares WT and HiFi against NoEP across the original 26 libraries and 79 targets.
 
 The analysis is based on the [upstream ABSOLVE-seq repository](https://github.com/pellinlab/ABSOLVE-seq/tree/271355dfe40cf46b952e82b88dd4521f23f9feb4). Read the [upstream license](https://github.com/pellinlab/ABSOLVE-seq/blob/271355dfe40cf46b952e82b88dd4521f23f9feb4/LICENSE.md) for its code and reference assets.
 
@@ -12,7 +12,7 @@ Try the agent with public ABSOLVE-seq data from [SRA study SRP722226](https://tr
 
 The same donor and replicate also have a wild-type Cas9 library, [WT SRR39887693](https://www.ebi.ac.uk/ena/browser/view/SRR39887693). The [26-library manuscript workflow](#manuscript-comparison) includes the WT versus NoEP comparison.
 
-Clone this repository and run commands from its root. The analysis runs on a Linux Slurm cluster with a shared filesystem. Activate the environment **before** submitting jobs. Supply your site's partition, account or wall time through the usual `sbatch` options.
+Clone this repository and run commands from its root. Activate the analysis environment on your workstation or Linux cluster. With no Slurm allocation and no `sbatch` on PATH, the Python entry point runs synchronously on the local machine. On a cluster use the Slurm submission commands and a shared filesystem.
 
 ```sh
 conda env create -f environment.yml
@@ -31,8 +31,15 @@ git clone https://github.com/pellinlab/ABSOLVE-seq.git data/upstream
 git -C data/upstream checkout --detach 271355dfe40cf46b952e82b88dd4521f23f9feb4
 python setup_references.py
 python paired.py --list
-sbatch paired.sbatch --donor D3734 --replicate T1
 ```
+
+On a workstation, run the following command after preparing your inputs. Local execution uses one worker by default. Set `--threads` to the number of workers your machine can support. Add `--executor local` to select the local machine explicitly, including on a host with Slurm tools installed.
+
+```sh
+python paired.py --donor D3734 --replicate T1 --threads 4 --fresh --output runs/D3734-T1
+```
+
+On Slurm, submit the same pair with `sbatch paired.sbatch --donor D3734 --replicate T1`. Local and Slurm runs use the same workers and write the same result tables. For a local Docker run, see the [container example](docs/container.md#docker).
 
 In Codex, open the repository and use the [absolve-seq skill](.agents/skills/absolve-seq/SKILL.md). For example, ask “Analyze D3734/T1 with the default manuscript method. Export the NoEP and HiFi indel rates and their difference for each of the four counting strategies.”
 
@@ -93,6 +100,6 @@ The historical-trimming manuscript panel agreed with the submitted tables on **6
 
 ## Local inputs and caches
 
-`ABSOLVE_DATA` overrides the default `data/` directory. `ABSOLVE_MANIFEST` selects an individual manifest. `ABSOLVE_CACHE` can point to a compatible historical deployment containing paired or WT alignment provenance. With fresh inputs the agent prepares and aligns libraries with CRISPResso2. Allow sufficient cluster scratch and wall time for your FASTQs. On a single pair, `--fresh` forces realignment. `Rscript` must find `brglm2` through the active environment or `R_LIBS_USER`.
+`ABSOLVE_DATA` overrides the default `data/` directory. `ABSOLVE_MANIFEST` selects an individual manifest. `ABSOLVE_CACHE` can point to a compatible historical deployment containing paired or WT alignment provenance. With fresh inputs the agent prepares and aligns libraries with CRISPResso2. Allow sufficient working disk space for the FASTQs and intermediate alignments. On a single pair, `--fresh` forces realignment. `Rscript` must find `brglm2` through the active environment or `R_LIBS_USER`.
 
 The upstream reference, sample manifest, FASTQs, submitted workbooks and run outputs live outside version control. The scripts in `panel_report/` also support inspecting historical matched cohorts, including pBC family tracing; the archived-cohort audit scripts expect the original provenance and alignment layout.

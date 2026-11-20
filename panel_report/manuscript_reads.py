@@ -117,11 +117,12 @@ def step(func, sample_dir, name, *args):
         stage.rename(final)
 
 
-def worker(config, action, index):
+def worker(config, action, index, threads=None):
     cfg=json.loads(config.read_text())
     sample=cfg["libraries"][index]
     root=config.parent/"work"/sample["sample_name"]
-    threads=int(os.getenv("SLURM_CPUS_PER_TASK","1"))
+    if threads is None:
+        threads = int(os.getenv("SLURM_CPUS_PER_TASK", "1"))
     if action=="prepare":
         step(lambda stage: trim(cfg,sample,stage,threads),root,"trim")
         step(demultiplex,root,"pairs",cfg,root)
@@ -162,6 +163,15 @@ def summarize(target, families, labels, identity):
     return dict(zip(STRATEGIES,[raw,rep,final,final_rep])), dict(zip(STRATEGIES,[raw,rep,pre,pre_rep]))
 
 
+def crispresso_command(cfg, root=None):
+    if not cfg.get("image"):
+        return [cfg["crispresso"]]
+    command = ["apptainer", "exec", "--cleanenv"]
+    if root is not None:
+        command.extend(["--bind", str(root)])
+    return command + [cfg["image"], "CRISPResso"]
+
+
 def count_target(cfg, root, spec, pair_count):
     target = spec["OT_name"]
     final = root/"targets"/(target+".json")
@@ -176,8 +186,7 @@ def count_target(cfg, root, spec, pair_count):
         if pair_count:
             for i in (1,2):
                 (work/f"R{i}.fq").symlink_to(root/"pairs"/f"{target}.R{i}.fq")
-            command = ["apptainer","exec","--cleanenv","--bind",str(root), cfg["image"],
-                       "CRISPResso","--fastq_r1","R1.fq","--fastq_r2","R2.fq",
+            command = crispresso_command(cfg, root) + ["--fastq_r1","R1.fq","--fastq_r2","R2.fq",
                        "--amplicon_seq",spec["amplicon_seq"],"--guide_seq",spec["guide_seq"],
                        "--ignore_substitutions","--plot_window_size","10","--min_frequency_alleles_around_cut_to_plot","0","--name","family","--flash_command","flash -t 1",
                        "--write_detailed_allele_table","--fastq_output","--suppress_plots","--suppress_report"]
@@ -244,7 +253,7 @@ def count_target(cfg, root, spec, pair_count):
 
 
 def align_library(cfg,sample,root,threads):
-    checked_version(["apptainer","exec","--cleanenv",cfg["image"],"CRISPResso","--version"],"2.2.13")
+    checked_version(crispresso_command(cfg) + ["--version"], "2.2.13")
     (root/"targets").mkdir(exist_ok=True)
     specs=table(Path(cfg["reference"])/"OT_guide_amplicon_seq.csv",",")
     admitted=json.loads((root/"pairs/pairs.json").read_text())
