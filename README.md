@@ -70,11 +70,22 @@ For a real run, follow the [reference, manifest and FASTQ setup](docs/d3734-t1-q
 
 ## How the agent works
 
+<p align="center">
+  <img src="docs/assets/agent-architecture.svg" width="660" alt="A chat request selects the analysis or figure skill in Codex or Claude Code. The skills use the CLI directly. Sequencing data and references feed a local or Slurm workflow that returns a report, effect and power tables, and a figure with Excel source data." />
+</p>
+
+The two skills guide Codex and Claude Code through the repository's command-line tools. The analysis skill runs `paired.py` for a matched pair or a full panel. The figure skill also supports historical Figure 3b redraws. This workflow runs without an MCP server.
+
 **Choose your comparison in chat.** For one donor and replicate, give the agent your FASTQ folder and sample sheet, or ask for the public D3734/T1 example. It matches HiFi with its NoEP control and asks which pair to use if several match. To reproduce the manuscript panel, supply the 26 study libraries and submitted Supplementary Tables 2–5.
+
+<details>
+<summary><strong>See the analysis steps for a matched pair and the full panel</strong></summary>
 
 <p align="center">
   <img src="docs/assets/paired-workflow.svg" width="660" alt="The agent selects a matched pair or the full manuscript panel, checks inputs, assigns reads to targets by target barcode (tBC), aligns them with CRISPResso2, groups reads by plasmid barcode (pBC) and counts indels four ways. It verifies 316 paired results or 632 panel comparisons and returns the report and tables. Each run simulates detection power and exports a Dedud figure and its Excel data." />
 </p>
+
+</details>
 
 **From reads to counts.** The agent runs locally or on Slurm. A pair defaults to fast read processing. The manuscript panel defaults to historical trimming and paired-end alignment. Both modes use the **target barcode (tBC)** to assign each read to a target. Within each sample and target, reads with the same **plasmid barcode (pBC)** form one family. Unfiltered counts reads, Dedup counts one representative allele per family, and Dedud applies the selected plasmid barcode rule and, by default, a cross-target identity check. Dedud+Dedup combines filtering and family counting. The published plasmid barcode annotation from the Maxi pool is the default in both read modes. [Counting strategies](#paired-results) · [Read modes](docs/manuscript-reads.md)
 
