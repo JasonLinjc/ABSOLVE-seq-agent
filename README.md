@@ -4,7 +4,13 @@ Analyze ABSOLVE-seq sequencing data by talking to the agent in Codex or Claude C
 
 ## Start with one message
 
-After [setting up your chat client](#set-up-in-codex-or-claude-code), paste this request and replace the paths with ones the client can access:
+Open an empty project folder in a signed-in **Codex** or **Claude Code** session with Git and access to the internet. Paste this setup request:
+
+> Set up https://github.com/JasonLinjc/ABSOLVE-seq-agent in this empty folder, prepare the fast-mode analysis environment and reference index using the README, then verify the tool versions and list the D3734/T1 example pair.
+
+Both project skills ship with the repository. Cloning into the folder already open in your client keeps them in the current project. See [setup and readiness checks](#set-up-in-codex-or-claude-code) for the expected results.
+
+When you are ready to analyze data, send:
 
 > My ABSOLVE-seq FASTQs are in `/path/to/fastqs` and my sample sheet is at `/path/to/sample-sheet`. I want to know how editing differs between HiFi and NoEP for the same donor and replicate. Check which samples can be paired. If there is more than one pair, ask me which to analyze. Use the study defaults, run the analysis to completion and write a report with the counts, rates, quality checks and links to the result tables.
 
@@ -16,7 +22,7 @@ The analysis is based on the [upstream ABSOLVE-seq repository](https://github.co
 
 ## Set up in Codex or Claude Code
 
-Clone the repository on the workstation or cluster where you want to run the analysis. Both clients use the same checkout, skills and Python workflow. You can try the setup check below with Python 3.10+ and the included example manifest. For a real run, follow the [public-data quick start](docs/d3734-t1-quick-start.md) to install the analysis environment, prepare the references and verify the FASTQs.
+For manual setup, clone the repository on the workstation or cluster where you want to run the analysis. Both clients use the same checkout, skills and Python workflow. You can try the setup check below with Python 3.10+ and the included example manifest. For a real run, follow the [public-data quick start](docs/d3734-t1-quick-start.md) to install the analysis environment, prepare the references and verify the FASTQs.
 
 ```bash
 git clone https://github.com/JasonLinjc/ABSOLVE-seq-agent.git
@@ -31,19 +37,8 @@ cd ABSOLVE-seq-agent
 
 ### Claude Code
 
-1. Install Claude Code using the [Claude Code quick start](https://code.claude.com/docs/en/quickstart). From the repository root, run the following setup in Bash or Zsh. It links both skills into Claude Code's project skill directory so that a future `git pull` updates the instructions and plotting script together. [Claude Code project skills](https://code.claude.com/docs/en/skills)
-
-   ```bash
-   mkdir -p .claude/skills
-   for skill in absolve-seq absolve-seq-figures; do
-     if [ ! -e ".claude/skills/$skill" ] && [ ! -L ".claude/skills/$skill" ]; then
-       ln -s "../../.agents/skills/$skill" ".claude/skills/$skill"
-     fi
-   done
-   claude
-   ```
-
-2. Follow the sign-in prompt on first launch. In the Claude Code chat, enter **`/absolve-seq List the pairs in examples/manifest.example.tsv and stop there.`** For Figure 3b, start a request with **`/absolve-seq-figures`**.
+1. Install Claude Code and start `claude` in the repository root. Follow the sign-in prompt on first launch. The checkout includes project skills under `.claude/skills/` that point Claude to the same workflow instructions and plotting code used by Codex. [Claude Code quick start](https://code.claude.com/docs/en/quickstart) · [Project skills](https://code.claude.com/docs/en/skills)
+2. Enter **`/absolve-seq List the pairs in examples/manifest.example.tsv and stop there.`** For Figure 3b, start a request with **`/absolve-seq-figures`**. You can also describe the task in plain language.
 
 ### Check your setup
 
@@ -52,6 +47,16 @@ Either prompt should list **D3734 / T1** with **NoEP_pool_D3734_T1** and **HiFi_
 ```bash
 ABSOLVE_MANIFEST=examples/manifest.example.tsv python paired.py --list
 ```
+
+For the one-message deployment above, also check the scientific runtime in the selected Conda environment or container. The fast workflow uses CRISPResso2 2.3.4. R with brglm2 supports the panel model, and the Python plotting packages support Figure 3b.
+
+```bash
+CRISPResso --version
+Rscript -e 'stopifnot(requireNamespace("brglm2", quietly=TRUE))'
+python -c 'import matplotlib, numpy, openpyxl'
+```
+
+The [reference setup](docs/d3734-t1-quick-start.md#2-build-the-published-reference-index) checks the pinned upstream inputs and builds the 79-target index. The example pair listing uses placeholder paths. To check a complete run with real FASTQs, follow the [D3734/T1 benchmark](docs/d3734-t1-quick-start.md#5-verify-the-result). Manuscript read mode has [additional historical dependencies](docs/manuscript-reads.md).
 
 Once your real manifest and references are ready, try the [example conversations](#example-conversations). The analysis runs where the workflow is launched, so that machine must have access to the input paths. On a workstation without Slurm the Python workflow runs locally.
 
