@@ -19,9 +19,7 @@
   <a href="#figure-3b-and-reproducibility">📊 Figure 3b &amp; Excel</a>
 </p>
 
-**What is ABSOLVE-seq?** ABSOLVE-seq is a pooled sequencing assay that uses barcoded reporters in primary cells to test how genetic variants affect CRISPR editing at candidate off-target sites. By sequencing reporters carrying reference and variant sequences, researchers can measure how often insertions or deletions (indels) occur in each reporter. [Original ABSOLVE-seq study](https://doi.org/10.1101/2024.07.24.605019)
-
-In the agent’s default analysis, each target’s editing effect is the indel rate in the HiFi Cas9 sample minus the rate in its no-electroporation control (NoEP), matched by donor and replicate.
+**What is ABSOLVE-seq?** ABSOLVE-seq (Assessment By Stand-in Off-target LentiViral Ensemble with sequencing) measures how often CRISPR causes insertions or deletions (indels) in reporters carrying reference or variant sequences from candidate off-target sites. From FASTQs, the agent reports indel rates for HiFi Cas9 and its matched control, their difference at each target, and estimated detection power, with a figure and Excel table. [Original ABSOLVE-seq study](https://doi.org/10.1101/2024.07.24.605019)
 
 ## Start with one message
 
