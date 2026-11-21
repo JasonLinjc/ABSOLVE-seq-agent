@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="660" height="545" viewBox="0 0 660 545" role="img" aria-labelledby="title desc">
   <title id="title">ABSOLVE-seq agent architecture</title>
-  <desc id="desc">A chat request in Codex or Claude Code selects a repository skill. The skills invoke command-line tools without requiring an MCP server. A matched NoEP and HiFi pair supplies R1 and R2 FASTQs and a sample manifest. The reference index supplies target barcodes, amplicons, guides and plasmid barcode annotations. Conda or a container provides the software, and execution runs locally or on Slurm. For each target and strategy, the workflow estimates the NoEP and HiFi indel rates, calculates Δindel rate as HiFi minus NoEP in percentage points, and simulates detection power at increases of 0.01 and 0.1 percentage points. The paired_target_rates.tsv table contains indel rates and paired differences. The power_estimates.tsv table contains detection power estimates. The run also produces report.md, a PDF and PNG figure and Excel source data.</desc>
+  <desc id="desc">A chat request in Codex or Claude Code selects a repository skill. The skills invoke command-line tools without requiring an MCP server. A matched NoEP and HiFi pair supplies R1 and R2 FASTQs and a sample manifest. The reference index supplies target barcodes, amplicons, guides and plasmid barcode annotations. Conda or a container provides the software, and execution runs locally or on Slurm. Reads are assigned by target barcode, aligned with CRISPResso2 and grouped by plasmid barcode. For each target and strategy, the workflow estimates the NoEP and HiFi indel rates, calculates Δindel rate as HiFi minus NoEP in percentage points, and simulates detection power at increases of 0.01 and 0.1 percentage points. The paired_target_rates.tsv table contains indel rates and paired differences. The power_estimates.tsv table contains detection power estimates. The run also produces report.md, a PDF and PNG figure and Excel source data.</desc>
   <defs>
     <marker id="arrow" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="6" markerHeight="6" orient="auto">
       <path d="M0 0 L8 4 L0 8 Z" fill="#211f20"/>
@@ -61,9 +61,10 @@
   <g aria-label="Analysis workflow">
     <rect class="stage workflow" x="8" y="307" width="644" height="116" rx="10"/>
     <text class="label" x="330" y="328">Analysis workflow · paired.py</text>
-    <rect class="box" x="17" y="338" width="297" height="55" rx="10"/>
-    <text x="165.5" y="361">Assign reads to targets by tBC</text>
-    <text x="165.5" y="382">Group reads by pBC</text>
+    <rect class="box" x="17" y="335" width="297" height="65" rx="10"/>
+    <text x="165.5" y="353">Assign reads to targets by tBC</text>
+    <text x="165.5" y="373">Align reads with CRISPResso2</text>
+    <text x="165.5" y="393">Group reads by pBC</text>
     <path class="flow" d="M316 365 h27"/>
     <rect class="box" x="347" y="335" width="296" height="65" rx="10"/>
     <text x="495" y="353">Estimate indel rates (%)</text>

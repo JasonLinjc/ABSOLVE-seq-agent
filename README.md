@@ -74,16 +74,12 @@ For a real run, follow the [reference, manifest and FASTQ setup](docs/d3734-t1-q
 
 ## How the agent works
 
-### FASTQ-to-report workflow
-
-<p align="center">
-  <img src="docs/assets/paired-workflow.svg" width="660" alt="Match NoEP and HiFi FASTQs by donor and replicate. Check the reads, assign targets by tBC, align with CRISPResso2 and group reads by pBC. Count indels four ways, estimate the NoEP and HiFi indel rates (%), calculate the paired difference (HiFi minus NoEP, in percentage points) and simulate detection power. Save the rates and differences in paired_target_rates.tsv and power in power_estimates.tsv. Export the Dedud figure and Excel data, verify the outputs and return the report." />
-</p>
+<a id="fastq-to-report-workflow"></a>
 
 ### Agent architecture
 
 <p align="center">
-  <img src="docs/assets/agent-architecture.svg" width="660" alt="A chat request selects the analysis or figure skill in Codex or Claude Code. The skills use the CLI directly. The local or Slurm workflow estimates NoEP and HiFi indel rates, calculates Δindel rate (HiFi minus NoEP) and simulates detection power. It exports indel rates and paired differences in paired_target_rates.tsv and detection power in power_estimates.tsv, alongside a report and a figure with Excel source data." />
+  <img src="docs/assets/agent-architecture.svg" width="660" alt="A chat request selects the analysis or figure skill in Codex or Claude Code. The skills use the CLI directly. The local or Slurm workflow assigns reads by tBC, aligns them with CRISPResso2, groups them by pBC, estimates NoEP and HiFi indel rates, calculates Δindel rate (HiFi minus NoEP) and simulates detection power. It exports indel rates and paired differences in paired_target_rates.tsv and detection power in power_estimates.tsv, alongside a report and a figure with Excel source data." />
 </p>
 
 Give the agent the FASTQ folder and sample sheet for your NoEP and HiFi libraries, or ask for the public D3734/T1 example. It matches samples by donor and replicate and asks which pair to use if several match.
