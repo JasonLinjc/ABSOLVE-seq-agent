@@ -82,17 +82,9 @@ For a real run, follow the [reference, manifest and FASTQ setup](docs/d3734-t1-q
   <img src="docs/assets/agent-architecture.svg" width="660" alt="A chat request selects the analysis or figure skill in Codex or Claude Code. The skills use the CLI directly. The local or Slurm workflow assigns reads by tBC, aligns them with CRISPResso2, groups them by pBC, estimates NoEP and HiFi indel rates, calculates Δindel rate (HiFi minus NoEP) and simulates detection power. It exports indel rates and paired differences in paired_target_rates.tsv and detection power in power_estimates.tsv, alongside a report and a figure with Excel source data." />
 </p>
 
-Give the agent the FASTQ folder and sample sheet for your NoEP and HiFi libraries, or ask for the public D3734/T1 example. It matches samples by donor and replicate and asks which pair to use if several match.
+**What to prepare.** Provide four FASTQ files (R1 and R2 for both NoEP and HiFi) from the same donor and replicate, plus a sample sheet or manifest that maps each file to its sample. To try the agent with public data, ask for the [D3734/T1 example](docs/d3734-t1-quick-start.md).
 
-The analysis skill runs `paired.py` locally or on Slurm. The public setup indexes the target barcodes, reference amplicons, guides and plasmid barcode annotations used to process the reads. Codex and Claude Code call the CLI directly. [Analysis environment](docs/container.md)
-
-**From reads to counts.** A matched pair defaults to fast read processing. The agent uses the **target barcode (tBC)** to assign reads to a target before alignment. Within each sample and target, reads with the same **plasmid barcode (pBC)** form one family. Unfiltered counts reads, Dedup counts one representative allele per family, and Dedud applies the selected plasmid barcode rule and, by default, a cross-target identity check. Dedud+Dedup combines filtering and family counting. The published plasmid barcode annotation from the Maxi pool is the default in both read modes. [Counting strategies](#paired-results) · [Read modes](docs/manuscript-reads.md)
-
-**Indel rate estimates and paired editing effect.** For each target and counting strategy, the agent estimates the NoEP and HiFi indel rates separately as `100 × indel count / denominator`. It then calculates Δindel rate as the HiFi rate minus the NoEP rate, in percentage points. Open `results/paired_target_rates.tsv` for both counts, denominators, rates and the paired difference. The table has **316 rows** (79 targets × 4 strategies).
-
-**Detection power.** Using the observed depths and estimated NoEP background, the agent simulates 1,000 experiments at each of two assumed increases, **0.01 and 0.1 percentage points**. Power is the fraction of simulated one-sided tests with nominal *p* < 0.05. Open `results/power_estimates.tsv` for the 632 target/strategy/effect combinations, their status and Monte Carlo intervals. [Simulation method](docs/power.md)
-
-**Report and figure.** Open `results/report.md` for the four-strategy summary and links to the Dedud figure (PDF and PNG) and its Excel source data. The analysis skill waits for completion and checks the outputs before returning them.
+**Where to find results.** Open `results/report.md` in your run directory. In the same folder, `paired_target_rates.tsv` gives indel rates and Δindel rates (HiFi minus NoEP), and `power_estimates.tsv` gives detection power by target and strategy. The PDF, PNG and Excel source data are in `results/figures/`.
 
 ## Example conversations
 
