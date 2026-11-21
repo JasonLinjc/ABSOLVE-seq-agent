@@ -96,7 +96,7 @@ The analysis skill runs `paired.py` locally or on Slurm. The public setup indexe
 <summary><strong>Agent architecture</strong></summary>
 
 <p align="center">
-  <img src="docs/assets/agent-architecture.svg" width="660" alt="A chat request selects the analysis or figure skill in Codex or Claude Code. The skills use the CLI directly. The software environment and sequencing inputs feed a local or Slurm workflow that returns a report, effect and power tables, and a figure with Excel source data." />
+  <img src="docs/assets/agent-architecture.svg" width="660" alt="A chat request selects the analysis or figure skill in Codex or Claude Code. The skills use the CLI directly. The local or Slurm workflow estimates NoEP and HiFi indel rates, calculates Δindel rate (HiFi minus NoEP) and simulates detection power. It returns a report, tables and a figure with Excel source data." />
 </p>
 
 </details>
