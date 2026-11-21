@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="660" height="336" viewBox="0 0 660 336" role="img" aria-labelledby="title desc">
   <title id="title">Matched-pair FASTQ-to-report workflow</title>
-  <desc id="desc">Match the NoEP and HiFi FASTQs for one donor and replicate. Verify inputs and prepare reads. Assign targets by target barcode, align with CRISPResso2 and group reads by plasmid barcode. Count indels using four strategies. Estimate paired effects and detection power, export the Dedud figure and Excel source data, verify the outputs and write the report.</desc>
+  <desc id="desc">Match the NoEP and HiFi FASTQs for one donor and replicate. Verify inputs and prepare reads. Assign targets by target barcode, align with CRISPResso2 and group reads by plasmid barcode. Count indels using four strategies. Estimate the NoEP and HiFi indel rates for each target and strategy, subtract the NoEP rate from the HiFi rate in percentage points, simulate detection power, export the Dedud figure and Excel source data, verify the outputs and write the report.</desc>
   <defs>
     <marker id="arrow" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="6" markerHeight="6" orient="auto">
       <path d="M0 0 L8 4 L0 8 Z" fill="#211f20"/>
@@ -41,15 +41,19 @@
     <text x="330" y="140">Count indels with Unfiltered, Dedup, Dedud and Dedud+Dedup</text>
   </g>
   <path class="flow" d="M330 148 v12"/>
-  <g aria-label="Paired effects and power">
+  <g aria-label="Indel rate estimation, paired difference and detection power">
     <rect class="stage estimates" x="8" y="163" width="644" height="78" rx="10"/>
-    <rect class="task" x="19" y="169" width="292" height="44" rx="9"/>
-    <text x="165" y="187">Calculate each arm’s indel rate</text>
-    <text x="165" y="206">Δ (pp) = HiFi rate − NoEP rate</text>
-    <path class="flow" d="M313 191 h26"/>
-    <rect class="task" x="344" y="169" width="297" height="44" rx="9"/>
-    <text x="492.5" y="187">Simulate detection power</text>
-    <text x="492.5" y="206">+0.01 and +0.1 pp</text>
+    <rect class="task" x="19" y="169" width="192" height="44" rx="9"/>
+    <text class="label" x="115" y="187">Estimate indel rates</text>
+    <text x="115" y="206">NoEP and HiFi (%)</text>
+    <path class="flow" d="M213 191 h16"/>
+    <rect class="task" x="233" y="169" width="190" height="44" rx="9"/>
+    <text x="328" y="187">Calculate Δindel rate</text>
+    <text x="328" y="206">HiFi − NoEP (pp)</text>
+    <path class="flow" d="M425 191 h16"/>
+    <rect class="task" x="445" y="169" width="196" height="44" rx="9"/>
+    <text x="543" y="187">Simulate power</text>
+    <text x="543" y="206">+0.01 and +0.1 pp</text>
     <text x="330" y="234">79 targets × 4 strategies = 316 paired effects and 632 power estimates</text>
   </g>
   <path class="flow" d="M330 242 v12"/>
