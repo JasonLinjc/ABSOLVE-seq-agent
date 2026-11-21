@@ -136,7 +136,7 @@ def main():
     parser.add_argument('--donor')
     parser.add_argument('--replicate')
     parser.add_argument('--maxi-method', choices=[DEFAULT_METHOD, 'historical', *REQUIRED], default=DEFAULT_METHOD)
-    parser.add_argument('--maxi-reference', type=Path, help='Verified reference directory built with setup_references.py --historical-maxi.')
+    parser.add_argument('--maxi-reference', type=Path, help='Folder containing the pBC annotation you generated with setup_references.py --historical-maxi. Reuse it across runs.')
     parser.add_argument('--min-exact-reads', type=int, help='Reconstructed Maxi methods only (default 1).')
     parser.add_argument('--output', type=Path, help='New output directory (default: a unique directory under runs/).')
     parser.add_argument('--fresh', action='store_true', help='Prepare and align full FASTQs again.')

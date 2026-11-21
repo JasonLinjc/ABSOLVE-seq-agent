@@ -81,10 +81,10 @@ For a real run, follow the [reference, manifest and FASTQ setup](docs/d3734-t1-q
 After target assignment by tBC, **CRISPResso2** aligns reads to each target’s reference amplicon and identifies insertions and deletions in the cut-site window. The agent then groups aligned reads by pBC and calculates indel rates under the four counting strategies.
 
 <p align="center">
-  <img src="docs/assets/agent-architecture.svg" width="660" alt="A chat request selects the analysis or figure skill in Codex or Claude Code. The skills use the CLI directly. Use the published pBC annotation by default or rebuild historical target/pBC membership from the six original Maxi plasmid pool FASTQs. The local or Slurm workflow assigns reads by tBC, uses CRISPResso2 to align them and identify cut-site indels, groups them by pBC, estimates NoEP and HiFi indel rates, calculates Δindel rate (HiFi minus NoEP) and simulates detection power. It exports indel rates and paired differences in paired_target_rates.tsv and detection power in power_estimates.tsv, alongside a report and a figure with Excel source data." />
+  <img src="docs/assets/agent-architecture.svg" width="660" alt="A chat request selects the analysis or figure skill in Codex or Claude Code. The skills use the CLI directly. Use the published pBC annotation by default, or generate it from the six original Maxi plasmid pool FASTQs and reuse it across runs. The local or Slurm workflow assigns reads by tBC, uses CRISPResso2 to align them and identify cut-site indels, groups them by pBC, estimates NoEP and HiFi indel rates, calculates Δindel rate (HiFi minus NoEP) and simulates detection power. It exports indel rates and paired differences in paired_target_rates.tsv and detection power in power_estimates.tsv, alongside a report and a figure with Excel source data." />
 </p>
 
-**What to prepare.** Provide four FASTQ files (R1 and R2 for both NoEP and HiFi) from the same donor and replicate, plus a sample sheet or manifest that maps each file to its sample. The default run uses the published pBC annotation. To rebuild historical target/pBC membership, provide the six original Maxi plasmid pool FASTQs (R1 and R2 for each of three pools). [Rebuild instructions](docs/historical-maxi.md#build-the-reference-once). To try the agent with public data, ask for the [D3734/T1 example](docs/d3734-t1-quick-start.md).
+**What to prepare.** Provide four FASTQ files (R1 and R2 for both NoEP and HiFi) from the same donor and replicate, plus a sample sheet or manifest that maps each file to its sample. The default run uses the published pBC annotation. If you choose to generate the annotation yourself, provide the six original Maxi plasmid pool FASTQs (R1 and R2 for each of three pools) or reuse the pBC annotation you generated last time. To try the agent with public data, ask for the [D3734/T1 example](docs/d3734-t1-quick-start.md).
 
 **Where to find results.** Open `results/report.md` in your run directory. In the same folder, `paired_target_rates.tsv` gives indel rates and Δindel rates (HiFi minus NoEP), and `power_estimates.tsv` gives detection power by target and strategy. The PDF, PNG and Excel source data are in `results/figures/`.
 
@@ -94,11 +94,15 @@ After target assignment by tBC, **CRISPResso2** aligns reads to each target’s 
 
 **You:** “Use the public D3734/T1 pair on my workstation. Let me choose the pBC annotation before you start.”
 
-**Agent:** “Which annotation should I use for Dedud and Dedud+Dedup? **1. Published annotation** (default). **2. Historical reference**, rebuilt from the six original Maxi plasmid pool FASTQs.”
+**Agent:** “Which annotation should I use for Dedud and Dedud+Dedup? **1. Use the published pBC annotation** (default). **2. Generate the pBC annotation from plasmid pool FASTQs**.”
 
-**You:** “1. Run the pair from FASTQ and give me the report.”
+**You:** “Option 2. I generated it on my last run.”
 
-You can also ask to choose among donor/replicate pairs in your manifest or to run on Slurm. Choosing the historical reference prompts the agent to use your verified reference directory or ask for the original Maxi FASTQs to build it.
+**Agent:** “Let’s reuse your last pBC annotation. Where did you save it?”
+
+**You:** “Use the annotation in `/data/annotations/maxi` and run the pair.”
+
+You can also ask to choose among donor/replicate pairs in your manifest or to run on Slurm. If this is your first time using option 2, the agent asks for the six original Maxi FASTQs.
 
 ### From paired FASTQs to a report
 
@@ -138,7 +142,7 @@ In `results/paired_target_rates.tsv`, each row gives the NoEP and HiFi numerator
 
 When alleles tie for the highest read count, fast reads use the first allele encountered. Manuscript reads break the tie by aligned read sequence and then aligned reference sequence.
 
-Plasmid pool sequencing identifies which plasmid barcodes (pBCs) qualify for each target. The default `--maxi-method manuscript` uses the published annotation derived from the study’s Maxi plasmid pool. To use historical membership, first build the reference from the six original Maxi FASTQs with `python setup_references.py --historical-maxi FASTQ_DIR --trimmomatic-jar JAR --output DIR`, then pass `--maxi-method historical --maxi-reference DIR` to the analysis. [Historical Maxi reference and validation](docs/historical-maxi.md)
+Plasmid pool sequencing identifies which plasmid barcodes (pBCs) qualify for each target. The default `--maxi-method manuscript` uses the published annotation derived from the study’s Maxi plasmid pool. To generate a pBC annotation from the six original Maxi FASTQs, run `python setup_references.py --historical-maxi FASTQ_DIR --trimmomatic-jar JAR --output DIR`, then pass `--maxi-method historical --maxi-reference DIR` to the analysis. To reuse your last pBC annotation, pass the same flags with its saved path. [Historical Maxi reference and validation](docs/historical-maxi.md)
 
 <details>
 <summary><strong>Compare pBC definitions or change the target filter</strong></summary>
