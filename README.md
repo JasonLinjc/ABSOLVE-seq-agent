@@ -5,11 +5,11 @@
   </picture>
 </p>
 
-<h1 align="center">From ABSOLVE-seq FASTQs to an indel report</h1>
+<h1 align="center">Quantify off-target gene editing with ABSOLVE-seq</h1>
 
 <p align="center">
-  Analyze the original 79-target reporter panel by talking to Codex or Claude Code.<br />
-  Run on a workstation or Slurm. Get editing effects, simulated detection power, a report and a figure.
+  Ask Codex or Claude Code to analyze your FASTQs from the original 79-target reporter panel.<br />
+  Get indel rates, paired editing effects and detection power in a report with a figure and Excel source data.
 </p>
 
 <p align="center">
@@ -18,6 +18,10 @@
   <a href="#example-conversations">📖 Example conversations</a> &nbsp;·&nbsp;
   <a href="#figure-3b-and-reproducibility">📊 Figure 3b &amp; Excel</a>
 </p>
+
+**What is ABSOLVE-seq?** ABSOLVE-seq is a pooled sequencing assay that uses barcoded reporters in primary cells to test how genetic variants affect CRISPR editing at candidate off-target sites. By sequencing reporters carrying reference and variant sequences, researchers can measure how often insertions or deletions (indels) occur in each reporter. [Original ABSOLVE-seq study](https://doi.org/10.1101/2024.07.24.605019)
+
+In the agent’s default analysis, each target’s editing effect is the indel rate in the HiFi Cas9 sample minus the rate in its no-electroporation control (NoEP), matched by donor and replicate.
 
 ## Start with one message
 
