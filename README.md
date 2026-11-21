@@ -78,8 +78,10 @@ For a real run, follow the [reference, manifest and FASTQ setup](docs/d3734-t1-q
 
 ### Agent architecture
 
+After target assignment by tBC, **CRISPResso2** aligns reads to each target’s reference amplicon and identifies insertions and deletions in the cut-site window. The agent then groups aligned reads by pBC and calculates indel rates under the four counting strategies.
+
 <p align="center">
-  <img src="docs/assets/agent-architecture.svg" width="660" alt="A chat request selects the analysis or figure skill in Codex or Claude Code. The skills use the CLI directly. The local or Slurm workflow assigns reads by tBC, aligns them with CRISPResso2, groups them by pBC, estimates NoEP and HiFi indel rates, calculates Δindel rate (HiFi minus NoEP) and simulates detection power. It exports indel rates and paired differences in paired_target_rates.tsv and detection power in power_estimates.tsv, alongside a report and a figure with Excel source data." />
+  <img src="docs/assets/agent-architecture.svg" width="660" alt="A chat request selects the analysis or figure skill in Codex or Claude Code. The skills use the CLI directly. The local or Slurm workflow assigns reads by tBC, uses CRISPResso2 to align them and identify cut-site indels, groups them by pBC, estimates NoEP and HiFi indel rates, calculates Δindel rate (HiFi minus NoEP) and simulates detection power. It exports indel rates and paired differences in paired_target_rates.tsv and detection power in power_estimates.tsv, alongside a report and a figure with Excel source data." />
 </p>
 
 **What to prepare.** Provide four FASTQ files (R1 and R2 for both NoEP and HiFi) from the same donor and replicate, plus a sample sheet or manifest that maps each file to its sample. To try the agent with public data, ask for the [D3734/T1 example](docs/d3734-t1-quick-start.md).
