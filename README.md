@@ -90,6 +90,16 @@ After target assignment by tBC, **CRISPResso2** aligns reads to each target’s 
 
 ## Example conversations
 
+### Choose settings in chat
+
+**You:** “Use the public D3734/T1 pair on my workstation. Let me choose the pBC annotation before you start.”
+
+**Agent:** “Which annotation should I use for Dedud and Dedud+Dedup? **1. Published annotation** (default). **2. Historical reference**, rebuilt from the six original Maxi plasmid pool FASTQs.”
+
+**You:** “1. Run the pair from FASTQ and give me the report.”
+
+You can also ask to choose among donor/replicate pairs in your manifest or to run on Slurm. Choosing the historical reference prompts the agent to use your verified reference directory or ask for the original Maxi FASTQs to build it.
+
 ### From paired FASTQs to a report
 
 The first prompt above runs the whole example. To guide it step by step, send these messages in the same chat:

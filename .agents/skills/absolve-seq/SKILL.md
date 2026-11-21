@@ -9,6 +9,16 @@ Work from the repository root in the environment described in the README. Use th
 
 For a public test dataset, follow the [D3734/T1 quick start](../../../docs/d3734-t1-quick-start.md#public-test-data-from-sra). Download both mates of NoEP `SRR39887646` and HiFi `SRR39887695` from study `SRP722226`. Use the example's `--ena` manifest option to verify the four files before submitting the pair with `--fresh`.
 
+### Choices in chat
+
+When a user asks to choose settings, offer short numbered options for the choices still open. Accept an option number or a plain-language answer. Wait for the answer before starting the selected analysis or rebuilding a reference. Carry choices forward across turns. For an explicit run with defaults, proceed once the inputs and sample identity are resolved.
+
+- **Samples.** If the input source is open, offer the public D3734/T1 example or the user's original-study FASTQs and sample sheet. For user data, list the complete NoEP/HiFi pairs from the manifest. If several match, offer the actual donor/replicate combinations.
+- **pBC annotation.** Offer the published annotation (`--maxi-method manuscript`, default) or historical membership rebuilt from the six original Maxi plasmid pool FASTQs. For the latter, ask for their location or an existing verified reference, then follow the historical reference guide below. This choice affects Dedud and Dedud+Dedup. Keep the selected read mode independent.
+- **Execution.** Offer local execution or Slurm when both are available. For a remote cluster, resolve the SSH host and a shared project directory. Once the requested choices are settled, apply them to the commands below and continue through the report.
+
+### Run and verify
+
 1. For a donor/replicate request, run `python paired.py --list` and select the matching complete NoEP/HiFi pair. Run `python paired.py --donor DONOR --replicate REPLICATE` locally, or submit `sbatch paired.sbatch --donor DONOR --replicate REPLICATE` on Slurm. Use the requested Maxi method, with `manuscript` as the default.
 2. For a manuscript-wide comparison, confirm that the four workbook extracts and 26 libraries are available. Follow the [paired-end reproduction guide](../../../docs/manuscript-reads.md) and run `python paired.py --manuscript-panel --read-mode manuscript` on the local machine or from a Slurm submission host. The run records the historical trimming steps for each library. To track changes against an earlier panel, supply its `panel_comparison.tsv` with `--baseline-panel`.
 3. Check the local process exit code or Slurm job state, then verify the exported tables. For paired analyses verify 316 unique target/strategy rows in `results/paired_target_rates.tsv`. For the full panel verify 632 unique target/strategy/editor comparisons in the reported results directory’s `panel_comparison.tsv`.
