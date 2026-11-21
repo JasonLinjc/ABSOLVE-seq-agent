@@ -1,98 +1,62 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="660" height="615" viewBox="0 0 660 615" role="img" aria-labelledby="title desc">
-  <title id="title">FASTQ-to-report workflow</title>
-  <desc id="desc">Choose a matched pair or the full study. The target barcode (tBC) assigns each read to a target. Within each sample and target, reads with the same plasmid barcode (pBC) form a family. The pair produces 316 differences. The panel fits 632 contrasts. Each run simulates conditional power from its counts, renders the Dedud figure and Excel source data, verifies the outputs and returns the report.</desc>
+<svg xmlns="http://www.w3.org/2000/svg" width="660" height="336" viewBox="0 0 660 336" role="img" aria-labelledby="title desc">
+  <title id="title">Matched-pair FASTQ-to-report workflow</title>
+  <desc id="desc">Match the NoEP and HiFi FASTQs for one donor and replicate. Verify inputs and prepare reads. Assign targets by target barcode, align with CRISPResso2 and group reads by plasmid barcode. Count indels using four strategies. Estimate paired effects and detection power, export the Dedud figure and Excel source data, verify the outputs and write the report.</desc>
   <defs>
     <marker id="arrow" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="6" markerHeight="6" orient="auto">
       <path d="M0 0 L8 4 L0 8 Z" fill="#211f20"/>
     </marker>
   </defs>
   <style>
-    .stage, .output { fill: #f7e6ab; stroke: #211f20; stroke-width: 2; }
+    .stage, .task, .output { stroke: #211f20; stroke-width: 2; }
     .input { fill: #d9eaf5; }
-    .environment { fill: #e5ead3; }
+    .reads { fill: #f7e6ab; }
+    .estimates { fill: #e8dff3; }
     .output { fill: #f4ddcf; }
-    .task { fill: white; stroke: #211f20; stroke-width: 2; }
+    .task { fill: white; }
     .flow { fill: none; stroke: #211f20; stroke-width: 1.8; marker-end: url(#arrow); }
-    text { font-family: Arial, Helvetica, sans-serif; font-size: 15px; fill: #191819; text-anchor: middle; }
+    text { font: 15px Arial, Helvetica, sans-serif; fill: #191819; text-anchor: middle; }
+    .label { font-weight: bold; }
     @media (max-width: 480px) { text { font-size: 19px; } }
   </style>
-
-  <rect width="660" height="615" rx="8" fill="white"/>
-  <g aria-label="Choose a comparison in chat">
-    <rect class="stage input" x="8" y="6" width="644" height="79" rx="10"/>
-    <rect class="task" x="20" y="11" width="292" height="47" rx="13"/>
-    <text x="166" y="30">One donor and replicate</text>
-    <text x="166" y="50">Matched NoEP and HiFi</text>
-    <rect class="task" x="344" y="11" width="292" height="47" rx="13"/>
-    <text x="490" y="30">Full manuscript panel</text>
-    <text x="490" y="50">26 libraries and Tables 2–5</text>
-    <text x="330" y="78">Choose a comparison in chat</text>
+  <rect width="660" height="336" rx="8" fill="white"/>
+  <g aria-label="Inputs and preparation">
+    <rect class="stage input" x="8" y="5" width="644" height="52" rx="10"/>
+    <text class="label" x="330" y="26">Match NoEP and HiFi FASTQs by donor and replicate</text>
+    <text x="330" y="47">Check the manifest, FASTQ checksums and references. Prepare reads.</text>
   </g>
-  <path class="flow" d="M166 86 v12"/>
-  <path class="flow" d="M490 86 v12"/>
-  <g aria-label="Check FASTQs, manifest and references, then run locally or on Slurm">
-    <rect class="stage environment" x="8" y="101" width="644" height="79" rx="10"/>
-    <rect class="task" x="20" y="106" width="292" height="47" rx="13"/>
-    <text x="166" y="125">Pair default: fast mode</text>
-    <text x="166" y="145">Single-end alignment input</text>
-    <rect class="task" x="344" y="106" width="292" height="47" rx="13"/>
-    <text x="490" y="125">Panel default: manuscript mode</text>
-    <text x="490" y="145">Trim paired reads per library</text>
-    <text x="330" y="173">Check FASTQs, manifest and references, then run locally or on Slurm</text>
+  <path class="flow" d="M330 58 v12"/>
+  <g aria-label="Read processing">
+    <rect class="stage reads" x="8" y="73" width="644" height="74" rx="10"/>
+    <rect class="task" x="19" y="79" width="201" height="43" rx="9"/>
+    <text x="119.5" y="97">Target barcode (tBC)</text>
+    <text x="119.5" y="116">Assign reads by tBC</text>
+    <path class="flow" d="M222 100 h18"/>
+    <rect class="task" x="244" y="79" width="151" height="43" rx="9"/>
+    <text x="319.5" y="97">Align reads with</text>
+    <text x="319.5" y="116">CRISPResso2</text>
+    <path class="flow" d="M397 100 h18"/>
+    <rect class="task" x="419" y="79" width="222" height="43" rx="9"/>
+    <text x="530" y="97">Plasmid barcode (pBC)</text>
+    <text x="530" y="116">Group reads by pBC</text>
+    <text x="330" y="140">Count indels with Unfiltered, Dedup, Dedud and Dedud+Dedup</text>
   </g>
-  <path class="flow" d="M330 181 v12"/>
-  <g aria-label="Count indels across 79 targets under four strategies">
-    <rect class="stage" x="8" y="196" width="644" height="79" rx="10"/>
-    <rect class="task" x="20" y="201" width="204" height="47" rx="13"/>
-    <text x="122" y="220">Target barcode (tBC)</text>
-    <text x="122" y="240">Assign reads by target</text>
-    <path class="flow" d="M225 224 h17"/>
-    <rect class="task" x="245" y="201" width="151" height="47" rx="13"/>
-    <text x="320.5" y="220">Align reads with</text>
-    <text x="320.5" y="240">CRISPResso2</text>
-    <path class="flow" d="M397 224 h17"/>
-    <rect class="task" x="417" y="201" width="223" height="47" rx="13"/>
-    <text x="528.5" y="220">Plasmid barcode (pBC)</text>
-    <text x="528.5" y="240">Group reads by pBC</text>
-    <text x="330" y="268">Count indels across 79 targets under four strategies</text>
+  <path class="flow" d="M330 148 v12"/>
+  <g aria-label="Paired effects and power">
+    <rect class="stage estimates" x="8" y="163" width="644" height="78" rx="10"/>
+    <rect class="task" x="19" y="169" width="292" height="44" rx="9"/>
+    <text x="165" y="187">Calculate each arm’s indel rate</text>
+    <text x="165" y="206">Δ (pp) = HiFi rate − NoEP rate</text>
+    <path class="flow" d="M313 191 h26"/>
+    <rect class="task" x="344" y="169" width="297" height="44" rx="9"/>
+    <text x="492.5" y="187">Simulate detection power</text>
+    <text x="492.5" y="206">+0.01 and +0.1 pp</text>
+    <text x="330" y="234">79 targets × 4 strategies = 316 paired effects and 632 power estimates</text>
   </g>
-  <path class="flow" d="M166 276 v12"/>
-  <path class="flow" d="M490 276 v12"/>
-  <g aria-label="Estimate indel rates and differences">
-    <rect class="stage" x="8" y="291" width="644" height="79" rx="10"/>
-    <rect class="task" x="20" y="296" width="292" height="47" rx="13"/>
-    <text x="166" y="315">Observed indel fractions</text>
-    <text x="166" y="335">HiFi rate minus NoEP rate</text>
-    <rect class="task" x="344" y="296" width="292" height="47" rx="13"/>
-    <text x="490" y="315">Donor-adjusted Firth model</text>
-    <text x="490" y="335">One-sided Wald tests, BH q</text>
-    <text x="330" y="363">Estimate indel rates and differences</text>
-  </g>
-  <path class="flow" d="M166 371 v12"/>
-  <path class="flow" d="M490 371 v12"/>
-  <g aria-label="Simulate power at 0.01 and 0.1 percentage points">
-    <rect class="stage" x="8" y="386" width="644" height="79" rx="10"/>
-    <rect class="task" x="20" y="391" width="292" height="47" rx="13"/>
-    <text x="166" y="410">Two-group binomial simulation</text>
-    <text x="166" y="430">Use observed pair depths</text>
-    <rect class="task" x="344" y="391" width="292" height="47" rx="13"/>
-    <text x="490" y="410">Three-donor simulation</text>
-    <text x="490" y="430">Refit donor-adjusted models</text>
-    <text x="330" y="458">Simulate power at 0.01 and 0.1 percentage points</text>
-  </g>
-  <path class="flow" d="M330 466 v12"/>
-  <rect class="output" x="126" y="481" width="408" height="33" rx="13"/>
-    <text x="330" y="503">Render the Dedud figure from run estimates</text>
-  <path class="flow" d="M330 515 v12"/>
-  <g aria-label="Verify outputs and return report.md with PDF, PNG and Excel">
-    <rect class="stage output" x="8" y="530" width="644" height="79" rx="10"/>
-    <rect class="task" x="20" y="535" width="292" height="47" rx="13"/>
-    <text x="166" y="554">Matched pair</text>
-    <text x="166" y="574">HiFi–NoEP effects and power</text>
-
-    <rect class="task" x="344" y="535" width="292" height="47" rx="13"/>
-    <text x="490" y="554">Full manuscript panel</text>
-    <text x="490" y="574">Figure 3b with simulated power</text>
-    <text x="330" y="602">Verify outputs and return report.md with PDF, PNG and Excel</text>
+  <path class="flow" d="M330 242 v12"/>
+  <g aria-label="Figure and report">
+    <rect class="output" x="8" y="257" width="644" height="73" rx="10"/>
+    <text x="330" y="278">Export the Dedud figure (PDF and PNG) and Excel source data</text>
+    <text x="330" y="299">Verify outputs and write the report</text>
+    <text class="label" x="330" y="321">Open results/report.md</text>
   </g>
 </svg>

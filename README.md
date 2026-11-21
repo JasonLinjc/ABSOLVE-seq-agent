@@ -72,10 +72,10 @@ For a real run, follow the [reference, manifest and FASTQ setup](docs/d3734-t1-q
 
 ## How the agent works
 
-### Agent architecture
+### FASTQ-to-report workflow
 
 <p align="center">
-  <img src="docs/assets/agent-architecture.svg" width="660" alt="A chat request selects the analysis or figure skill in Codex or Claude Code. The skills use the CLI directly. The software environment and sequencing inputs feed a local or Slurm workflow that returns a report, effect and power tables, and a figure with Excel source data." />
+  <img src="docs/assets/paired-workflow.svg" width="660" alt="Match NoEP and HiFi FASTQs by donor and replicate. Check the reads, assign targets by tBC, align with CRISPResso2 and group reads by pBC. Count indels four ways, calculate HiFi minus NoEP and simulate power. Export the Dedud figure and Excel data, verify the outputs and return the report." />
 </p>
 
 Give the agent the FASTQ folder and sample sheet for your NoEP and HiFi libraries, or ask for the public D3734/T1 example. It matches samples by donor and replicate and asks which pair to use if several match.
@@ -89,6 +89,15 @@ The analysis skill runs `paired.py` locally or on Slurm. The public setup indexe
 **Detection power.** Using the observed depths and estimated NoEP background, the agent simulates 1,000 experiments at each of two assumed increases, **0.01 and 0.1 percentage points**. Power is the fraction of simulated one-sided tests with nominal *p* < 0.05. Open `results/power_estimates.tsv` for the 632 target/strategy/effect combinations, their status and Monte Carlo intervals. [Simulation method](docs/power.md)
 
 **Report and figure.** Open `results/report.md` for the four-strategy summary and links to the Dedud figure (PDF and PNG) and its Excel source data. The analysis skill waits for completion and checks the outputs before returning them.
+
+<details>
+<summary><strong>Agent architecture</strong></summary>
+
+<p align="center">
+  <img src="docs/assets/agent-architecture.svg" width="660" alt="A chat request selects the analysis or figure skill in Codex or Claude Code. The skills use the CLI directly. The software environment and sequencing inputs feed a local or Slurm workflow that returns a report, effect and power tables, and a figure with Excel source data." />
+</p>
+
+</details>
 
 ## Example conversations
 
@@ -165,10 +174,6 @@ The optional `--manuscript-panel` mode checks the agent against the submitted st
 If you already have a complete `library_counts.tsv` from a previous panel run, ask the agent to start with a [count refit](docs/historical-maxi.md#refit-existing-counts) and identify that starting point in the report.
 
 The manuscript panel pools replicate counts within each donor and treatment, then fits a Firth logistic regression for each target and strategy. It averages the three donor-specific logits equally and converts the result to a rate for each treatment. A primary positive call requires an editor-minus-NoEP difference above **0.1 percentage points** and **q < 0.05**. The q-values come from one-sided Wald tests with Benjamini–Hochberg correction across 79 targets within each editor and strategy.
-
-<p align="center">
-  <img src="docs/assets/paired-workflow.svg" width="660" alt="The agent selects a matched pair or the full manuscript panel, checks inputs, assigns reads to targets by target barcode (tBC), aligns them with CRISPResso2, groups reads by plasmid barcode (pBC) and counts indels four ways. It estimates 316 paired differences or 632 panel contrasts, simulates power, exports the Dedud figure and Excel data, then checks the outputs and returns the report." />
-</p>
 
 The full design covers 26 libraries and 79 targets. D3734/T3 has WT and NoEP without a matched HiFi library. Manuscript read processing uses Trimmomatic 0.36 and paired-end CRISPResso2 2.2.13. [Historical runtime and input setup](docs/manuscript-reads.md)
 
