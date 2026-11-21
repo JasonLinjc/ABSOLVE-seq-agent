@@ -77,7 +77,7 @@ For a real run, follow the [reference, manifest and FASTQ setup](docs/d3734-t1-q
 ### FASTQ-to-report workflow
 
 <p align="center">
-  <img src="docs/assets/paired-workflow.svg" width="660" alt="Match NoEP and HiFi FASTQs by donor and replicate. Check the reads, assign targets by tBC, align with CRISPResso2 and group reads by pBC. Count indels four ways, estimate the NoEP and HiFi indel rates (%), calculate the paired difference (HiFi minus NoEP, in percentage points) and simulate detection power. Export the Dedud figure and Excel data, verify the outputs and return the report." />
+  <img src="docs/assets/paired-workflow.svg" width="660" alt="Match NoEP and HiFi FASTQs by donor and replicate. Check the reads, assign targets by tBC, align with CRISPResso2 and group reads by pBC. Count indels four ways, estimate the NoEP and HiFi indel rates (%), calculate the paired difference (HiFi minus NoEP, in percentage points) and simulate detection power. Save the rates and differences in paired_target_rates.tsv and power in power_estimates.tsv. Export the Dedud figure and Excel data, verify the outputs and return the report." />
 </p>
 
 Give the agent the FASTQ folder and sample sheet for your NoEP and HiFi libraries, or ask for the public D3734/T1 example. It matches samples by donor and replicate and asks which pair to use if several match.

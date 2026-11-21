@@ -1,6 +1,6 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="660" height="336" viewBox="0 0 660 336" role="img" aria-labelledby="title desc">
+<svg xmlns="http://www.w3.org/2000/svg" width="660" height="368" viewBox="0 0 660 368" role="img" aria-labelledby="title desc">
   <title id="title">Matched-pair FASTQ-to-report workflow</title>
-  <desc id="desc">Match the NoEP and HiFi FASTQs for one donor and replicate. Verify inputs and prepare reads. Assign targets by target barcode, align with CRISPResso2 and group reads by plasmid barcode. Count indels using four strategies. Estimate the NoEP and HiFi indel rates for each target and strategy, subtract the NoEP rate from the HiFi rate in percentage points, simulate detection power, export the Dedud figure and Excel source data, verify the outputs and write the report.</desc>
+  <desc id="desc">Match the NoEP and HiFi FASTQs for one donor and replicate. Verify inputs and prepare reads. Assign targets by target barcode, align with CRISPResso2 and group reads by plasmid barcode. Count indels using four strategies. Estimate the NoEP and HiFi indel rates for each target and strategy, subtract the NoEP rate from the HiFi rate in percentage points, save these rates and differences in paired_target_rates.tsv, simulate detection power and save it in power_estimates.tsv, export the Dedud figure and Excel source data, verify the outputs and write the report.</desc>
   <defs>
     <marker id="arrow" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="6" markerHeight="6" orient="auto">
       <path d="M0 0 L8 4 L0 8 Z" fill="#211f20"/>
@@ -18,7 +18,7 @@
     .label { font-weight: bold; }
     @media (max-width: 480px) { text { font-size: 19px; } }
   </style>
-  <rect width="660" height="336" rx="8" fill="white"/>
+  <rect width="660" height="368" rx="8" fill="white"/>
   <g aria-label="Inputs and preparation">
     <rect class="stage input" x="8" y="5" width="644" height="52" rx="10"/>
     <text class="label" x="330" y="26">Match NoEP and HiFi FASTQs by donor and replicate</text>
@@ -57,10 +57,15 @@
     <text x="330" y="234">79 targets × 4 strategies = 316 paired effects and 632 power estimates</text>
   </g>
   <path class="flow" d="M330 242 v12"/>
-  <g aria-label="Figure and report">
-    <rect class="output" x="8" y="257" width="644" height="73" rx="10"/>
-    <text x="330" y="278">Export the Dedud figure (PDF and PNG) and Excel source data</text>
-    <text x="330" y="299">Verify outputs and write the report</text>
-    <text class="label" x="330" y="321">Open results/report.md</text>
+  <g aria-label="Result tables, figure and report">
+    <rect class="output" x="8" y="257" width="644" height="105" rx="10"/>
+    <rect class="task" x="19" y="263" width="308" height="44" rx="9"/>
+    <text x="173" y="281">Indel rate (%) and Δindel rate (pp)</text>
+    <text x="173" y="301">paired_target_rates.tsv</text>
+    <rect class="task" x="333" y="263" width="308" height="44" rx="9"/>
+    <text x="487" y="281">Detection power estimates</text>
+    <text x="487" y="301">power_estimates.tsv</text>
+    <text x="330" y="329">Export the Dedud figure (PDF and PNG) and Excel source data</text>
+    <text class="label" x="330" y="351">Verify outputs and open results/report.md</text>
   </g>
 </svg>
