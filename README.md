@@ -80,6 +80,12 @@ For a real run, follow the [reference, manifest and FASTQ setup](docs/d3734-t1-q
   <img src="docs/assets/paired-workflow.svg" width="660" alt="Match NoEP and HiFi FASTQs by donor and replicate. Check the reads, assign targets by tBC, align with CRISPResso2 and group reads by pBC. Count indels four ways, estimate the NoEP and HiFi indel rates (%), calculate the paired difference (HiFi minus NoEP, in percentage points) and simulate detection power. Save the rates and differences in paired_target_rates.tsv and power in power_estimates.tsv. Export the Dedud figure and Excel data, verify the outputs and return the report." />
 </p>
 
+### Agent architecture
+
+<p align="center">
+  <img src="docs/assets/agent-architecture.svg" width="660" alt="A chat request selects the analysis or figure skill in Codex or Claude Code. The skills use the CLI directly. The local or Slurm workflow estimates NoEP and HiFi indel rates, calculates Δindel rate (HiFi minus NoEP) and simulates detection power. It exports indel rates and paired differences in paired_target_rates.tsv and detection power in power_estimates.tsv, alongside a report and a figure with Excel source data." />
+</p>
+
 Give the agent the FASTQ folder and sample sheet for your NoEP and HiFi libraries, or ask for the public D3734/T1 example. It matches samples by donor and replicate and asks which pair to use if several match.
 
 The analysis skill runs `paired.py` locally or on Slurm. The public setup indexes the target barcodes, reference amplicons, guides and plasmid barcode annotations used to process the reads. Codex and Claude Code call the CLI directly. [Analysis environment](docs/container.md)
@@ -91,15 +97,6 @@ The analysis skill runs `paired.py` locally or on Slurm. The public setup indexe
 **Detection power.** Using the observed depths and estimated NoEP background, the agent simulates 1,000 experiments at each of two assumed increases, **0.01 and 0.1 percentage points**. Power is the fraction of simulated one-sided tests with nominal *p* < 0.05. Open `results/power_estimates.tsv` for the 632 target/strategy/effect combinations, their status and Monte Carlo intervals. [Simulation method](docs/power.md)
 
 **Report and figure.** Open `results/report.md` for the four-strategy summary and links to the Dedud figure (PDF and PNG) and its Excel source data. The analysis skill waits for completion and checks the outputs before returning them.
-
-<details>
-<summary><strong>Agent architecture</strong></summary>
-
-<p align="center">
-  <img src="docs/assets/agent-architecture.svg" width="660" alt="A chat request selects the analysis or figure skill in Codex or Claude Code. The skills use the CLI directly. The local or Slurm workflow estimates NoEP and HiFi indel rates, calculates Δindel rate (HiFi minus NoEP) and simulates detection power. It exports indel rates and paired differences in paired_target_rates.tsv and detection power in power_estimates.tsv, alongside a report and a figure with Excel source data." />
-</p>
-
-</details>
 
 ## Example conversations
 
