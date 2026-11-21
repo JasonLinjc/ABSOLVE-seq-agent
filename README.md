@@ -81,10 +81,10 @@ For a real run, follow the [reference, manifest and FASTQ setup](docs/d3734-t1-q
 After target assignment by tBC, **CRISPResso2** aligns reads to each target’s reference amplicon and identifies insertions and deletions in the cut-site window. The agent then groups aligned reads by pBC and calculates indel rates under the four counting strategies.
 
 <p align="center">
-  <img src="docs/assets/agent-architecture.svg" width="660" alt="A chat request selects the analysis or figure skill in Codex or Claude Code. The skills use the CLI directly. The local or Slurm workflow assigns reads by tBC, uses CRISPResso2 to align them and identify cut-site indels, groups them by pBC, estimates NoEP and HiFi indel rates, calculates Δindel rate (HiFi minus NoEP) and simulates detection power. It exports indel rates and paired differences in paired_target_rates.tsv and detection power in power_estimates.tsv, alongside a report and a figure with Excel source data." />
+  <img src="docs/assets/agent-architecture.svg" width="660" alt="A chat request selects the analysis or figure skill in Codex or Claude Code. The skills use the CLI directly. Plasmid pool sequencing supplies the pBC annotation. The local or Slurm workflow assigns reads by tBC, uses CRISPResso2 to align them and identify cut-site indels, groups them by pBC, estimates NoEP and HiFi indel rates, calculates Δindel rate (HiFi minus NoEP) and simulates detection power. It exports indel rates and paired differences in paired_target_rates.tsv and detection power in power_estimates.tsv, alongside a report and a figure with Excel source data." />
 </p>
 
-**What to prepare.** Provide four FASTQ files (R1 and R2 for both NoEP and HiFi) from the same donor and replicate, plus a sample sheet or manifest that maps each file to its sample. To try the agent with public data, ask for the [D3734/T1 example](docs/d3734-t1-quick-start.md).
+**What to prepare.** Provide four FASTQ files (R1 and R2 for both NoEP and HiFi) from the same donor and replicate, plus a sample sheet or manifest that maps each file to its sample. The default run uses the published pBC annotation from the plasmid pool. To try the agent with public data, ask for the [D3734/T1 example](docs/d3734-t1-quick-start.md).
 
 **Where to find results.** Open `results/report.md` in your run directory. In the same folder, `paired_target_rates.tsv` gives indel rates and Δindel rates (HiFi minus NoEP), and `power_estimates.tsv` gives detection power by target and strategy. The PDF, PNG and Excel source data are in `results/figures/`.
 
@@ -128,7 +128,7 @@ In `results/paired_target_rates.tsv`, each row gives the NoEP and HiFi numerator
 
 When alleles tie for the highest read count, fast reads use the first allele encountered. Manuscript reads break the tie by aligned read sequence and then aligned reference sequence.
 
-The default `--maxi-method manuscript` uses the published plasmid barcode (pBC) annotation. To use historical membership, first build the reference from the six original Maxi FASTQs with `python setup_references.py --historical-maxi FASTQ_DIR --trimmomatic-jar JAR --output DIR`, then pass `--maxi-method historical --maxi-reference DIR` to the analysis. [Historical Maxi reference and validation](docs/historical-maxi.md)
+Plasmid pool sequencing identifies which plasmid barcodes (pBCs) qualify for each target. The default `--maxi-method manuscript` uses the published annotation derived from the study’s Maxi plasmid pool. To use historical membership, first build the reference from the six original Maxi FASTQs with `python setup_references.py --historical-maxi FASTQ_DIR --trimmomatic-jar JAR --output DIR`, then pass `--maxi-method historical --maxi-reference DIR` to the analysis. [Historical Maxi reference and validation](docs/historical-maxi.md)
 
 <details>
 <summary><strong>Compare pBC definitions or change the target filter</strong></summary>
