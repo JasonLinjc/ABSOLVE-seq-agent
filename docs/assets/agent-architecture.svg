@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="660" height="545" viewBox="0 0 660 545" role="img" aria-labelledby="title desc">
   <title id="title">ABSOLVE-seq agent architecture</title>
-  <desc id="desc">A chat request in Codex or Claude Code selects a repository skill. The skills invoke command-line tools without requiring an MCP server. A matched NoEP and HiFi pair supplies R1 and R2 FASTQs and a sample manifest. The reference index supplies target barcodes, amplicons and guides. For plasmid barcode (pBC) annotation, use the published reference by default or rebuild historical membership from the six original Maxi plasmid pool FASTQs. Conda or a container provides the software, and execution runs locally or on Slurm. Reads are assigned by target barcode, aligned to the target amplicon with CRISPResso2 to identify indels in the cut-site window, and grouped by plasmid barcode. For each target and strategy, the workflow estimates the NoEP and HiFi indel rates, calculates Δindel rate as HiFi minus NoEP in percentage points, and simulates detection power at increases of 0.01 and 0.1 percentage points. The paired_target_rates.tsv table contains indel rates and paired differences. The power_estimates.tsv table contains detection power estimates. The run also produces report.md, a PDF and PNG figure and Excel source data.</desc>
+  <desc id="desc">A chat request in Codex or Claude Code selects a repository skill. The skills invoke command-line tools without requiring an MCP server. A matched NoEP and HiFi pair supplies R1 and R2 FASTQs and a sample manifest. The reference index supplies target barcodes, amplicons and guides. For plasmid barcode (pBC) annotation, use the published annotation by default or generate an annotation from the six original Maxi plasmid pool FASTQs. If you have already generated it, reuse your saved annotation. Conda or a container provides the software, and execution runs locally or on Slurm. Reads are assigned by target barcode, aligned to the target amplicon with CRISPResso2 to identify indels in the cut-site window, and grouped by plasmid barcode. For each target and strategy, the workflow estimates the NoEP and HiFi indel rates, calculates Δindel rate as HiFi minus NoEP in percentage points, and simulates detection power at increases of 0.01 and 0.1 percentage points. The paired_target_rates.tsv table contains indel rates and paired differences. The power_estimates.tsv table contains detection power estimates. The run also produces report.md, a PDF and PNG figure and Excel source data.</desc>
   <defs>
     <marker id="arrow" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="6" markerHeight="6" orient="auto">
       <path d="M0 0 L8 4 L0 8 Z" fill="#211f20"/>
@@ -43,15 +43,12 @@
     <text x="495" y="50">Paired-end FASTQs (R1 and R2)</text>
     <text x="495" y="70">Sample manifest for NoEP and HiFi</text>
     <text x="495" y="90">tBCs, amplicons and guides</text>
-    <text class="label" x="495" y="122">Plasmid barcode (pBC) annotation</text>
-    <rect class="box" x="347" y="130" width="130" height="62" rx="10"/>
-    <text class="label" x="412" y="148">Default</text>
-    <text x="412" y="167">Use published</text>
-    <text x="412" y="185">annotation</text>
-    <rect class="box" x="483" y="130" width="160" height="62" rx="10"/>
-    <text class="label" x="563" y="148">Optional rebuild</text>
-    <text x="563" y="167">From the 6 original</text>
-    <text x="563" y="185">Maxi pool FASTQs</text>
+    <text class="label" x="495" y="118">Plasmid barcode (pBC) annotation</text>
+    <rect class="box" x="347" y="123" width="296" height="25" rx="9"/>
+    <text x="495" y="141"><tspan font-weight="bold">Default</tspan> · Use published annotation</text>
+    <rect class="box" x="347" y="151" width="296" height="44" rx="9"/>
+    <text x="495" y="169">Generate from plasmid pool FASTQs</text>
+    <text x="495" y="189">Already generated? Reuse it.</text>
   </g>
   <path class="flow" d="M165 201 v12"/>
   <path class="flow" d="M495 201 v12"/>
