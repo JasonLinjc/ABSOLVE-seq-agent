@@ -4,6 +4,8 @@ Choose manuscript mode to replay the original preprocessing with Trimmomatic 0.3
 
 ## Reproduce the submitted calls from the original FASTQs
 
+> I have all 26 libraries, their manifest and submitted Supplementary Tables 2–5. Check the historical software versions, run the manuscript workflow and summarize agreement for WT and HiFi by strategy. Estimate power from my counts, draw Figure 3b from the fitted Dedud estimates and simulated power, and return the report, PDF and Excel source data.
+
 Select `--manuscript-panel --read-mode historical --fresh` to process all 52 raw FASTQs. Each library goes through input SHA-256 verification, trimming, target assignment, paired-end alignment and counting in a new run directory. The panel uses the historical six-Maxi pBC membership and the existing cross-target filter.
 
 | Libraries | Target assignment after historical trimming | Paired reads and tied family representatives |
@@ -28,16 +30,17 @@ python verify_results.py power runs/historical-panel/results
 
 The workbook check independently computes BH-adjusted q-values within each editor and strategy. It checks all 632 calls and reports the largest absolute differences in the control rate, edited rate, Δ and q. The acceptance tolerances are 0.01 percentage points for rates and Δ, and 0.01 for q. The per-comparison values remain in `panel_comparison.tsv`.
 
+| Starting point | Effect estimate | Report path relative to `--output` |
+| --- | --- | --- |
+| Matched pair, fast or manuscript reads | Observed HiFi and NoEP rates for one donor and replicate | `results/report.md` |
+| Full panel, `--read-mode historical --fresh` | Arm-specific historical processing from the 52 FASTQs and equal donor weights | `results/report.md` |
+| Full panel, manuscript reads (default) | Three donors weighted equally on the logit scale | `results/report.md` |
+| Full panel, `--read-mode fast` | Donors weighted by observed pBC-family counts | `report.md` |
+| Full panel, `--refit-counts FILE --output DIR` | Three donors weighted equally on the logit scale, using the filtering already present in the counts | `report.md` |
+
 ### Full-panel acceptance on Luminary
 
-The fresh historical run processed **334,970,765 read pairs** across the 52 checksum-verified FASTQs. All 26 preparation tasks, 26 alignment tasks and the final report job completed. The 2,054 library/target records included new counts for all nine WT libraries. All 8,216 count rows matched the earlier encounter-order analysis, including indel numerators, denominators and pBC family counts. The count table and 632-row model table also matched the earlier accepted exports byte for byte.
-
-Independent checks against the original Supplementary Tables 2–5 recovered **632/632 classifications (63 positive, 569 negative)**. The maximum absolute errors were 0.00013319 percentage points for the NoEP rate, 0.00123016 percentage points for the edited rate, 0.00126482 percentage points for Δ (WT Unfiltered), and 0.00014981 for q (HiFi Dedup). Both the largest Δ and q differences occurred at `1450_OT_0235_ALT`. Historical combined WT allele tables at D3908/T1 omitted families present in individual alignment outputs. The fresh run counted them. All 1,264 independently simulated power records and the 158 Figure 3b source rows passed the output checks.
-
-| Fresh export | SHA-256 |
-| --- | --- |
-| `library_counts.tsv` | `285a86b3b72dc352589ecf4c1df101c3bf885b3080ba14e52ed4168216714018` |
-| `panel_comparison.tsv` | `13a906d81fa96b325e9bdc663b8ddc3ac15c373b5861c4c9148d48de5ceaa53f` |
+[Results against Supplementary Tables 2–5, the residual at `1450_OT_0235_ALT`, and export checksums](historical-panel-acceptance.md)
 
 ## Configure the runtime
 

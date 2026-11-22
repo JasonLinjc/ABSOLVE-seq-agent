@@ -179,39 +179,7 @@ python verify_results.py panel-refit runs/panel-refit
 
 ## Manuscript comparison
 
-The optional `--manuscript-panel` mode checks the agent against the submitted study results.
-
-<details>
-<summary><strong>Show reproduction inputs, commands and validation results</strong></summary>
-
-> I have all 26 libraries, their manifest and submitted Supplementary Tables 2–5. Check the historical software versions, run the manuscript workflow and summarize agreement for WT and HiFi by strategy. Estimate power from my counts, draw Figure 3b from the fitted Dedud estimates and simulated power, and return the report, PDF and Excel source data.
-
-If you already have a complete `library_counts.tsv` from a previous panel run, ask the agent to start with a [count refit](docs/historical-maxi.md#refit-existing-counts) and identify that starting point in the report.
-
-The manuscript panel pools replicate counts within each donor and treatment, then fits a Firth logistic regression for each target and strategy. It averages the three donor-specific logits equally and converts the result to a rate for each treatment. A primary positive call requires an editor-minus-NoEP difference above **0.1 percentage points** and **q < 0.05**. The q-values come from one-sided Wald tests with Benjamini–Hochberg correction across 79 targets within each editor and strategy.
-
-The full design covers 26 libraries and 79 targets. D3734/T3 has WT and NoEP without a matched HiFi library. For submission reproduction from raw FASTQs, configure the historical pBC reference and the arm-specific read-processing tools. HiFi and NoEP use CRISPResso2 2.2.13 with FLASH. WT uses CRISPResso2 2.3.2 with fastp 0.24.1. [Historical runtime and input setup](docs/manuscript-reads.md#reproduce-the-submitted-calls-from-the-original-fastqs)
-
-```bash
-python panel_report/references.py /path/to/submitted/workbooks "${ABSOLVE_DATA:-data}/submitted_model_reference" --full-model
-python paired.py --manuscript-panel --read-mode historical --fresh --output runs/manuscript-replay
-```
-
-The first command reads `SupplementaryTable2.xlsx` through `SupplementaryTable5.xlsx`. Run it once in a fresh reference directory. On a workstation the second command runs to completion. On a Slurm submission host it records the **prepare**, **align** and **finish** job IDs in `runs/manuscript-replay/jobs.json`. Wait for **finish** to succeed before opening the report.
-
-| Starting point | Effect estimate | Report path relative to `--output` |
-| --- | --- | --- |
-| Matched pair, fast or manuscript reads | Observed HiFi and NoEP rates for one donor and replicate | `results/report.md` |
-| Full panel, `--read-mode historical --fresh` | Arm-specific historical processing from the 52 FASTQs and equal donor weights | `results/report.md` |
-| Full panel, manuscript reads (default) | Three donors weighted equally on the logit scale | `results/report.md` |
-| Full panel, `--read-mode fast` | Donors weighted by observed pBC-family counts | `report.md` |
-| Full panel, `--refit-counts FILE --output DIR` | Three donors weighted equally on the logit scale, using the filtering already present in the counts | `report.md` |
-
-Open the tables linked from each report and the PDF, PNG and Excel files in the adjacent `figures/` directory. A count refit runs directly in the calling process. See the [refit command and required inputs](docs/historical-maxi.md#refit-existing-counts).
-
-See the [historical FASTQ replay](docs/manuscript-reads.md#luminary-validation) and [saved-count refit](docs/historical-maxi.md#historical-rule-rebuild-and-saved-count-refit) for comparisons with the submitted tables.
-
-</details>
+[Raw FASTQ reproduction of Supplementary Tables 2–5: acceptance results and run instructions](docs/historical-panel-acceptance.md)
 
 ## Local inputs and caches
 
