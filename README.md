@@ -90,7 +90,26 @@ After target assignment by tBC, **CRISPResso2** aligns reads to each target’s 
 
 ## Example conversations
 
-### Choose settings in chat
+### From paired FASTQs to a report
+
+The [one-message prompt](#start-with-one-message) runs the public example end to end. Here is the same analysis step by step, with results from the [verified D3734/T1 run](docs/d3734-t1-quick-start.md#verified-on-luminary).
+
+<table>
+<tbody>
+<tr><td><strong>👤 User</strong><br>Find the paired FASTQs for public D3734/T1. Verify their archive checksums and build my sample manifest.</td></tr>
+<tr><td><strong>🤖 Agent</strong><br>NoEP is <code>SRR39887646</code> and HiFi is <code>SRR39887695</code>. Both mates of each run passed the archive checksum check. The manifest records all four FASTQs and their SHA-256 digests.</td></tr>
+<tr><td><strong>👤 User</strong><br>Run all 79 targets from scratch with four local workers, fast read processing and the published pBC annotation. Save the results under <code>runs/D3734-T1</code> and wait for completion.</td></tr>
+<tr><td><strong>🤖 Agent</strong><br>The run produced 316 comparisons across four strategies. Read preparation retained 5,971,199 of 10,084,551 NoEP pairs and 6,979,407 of 9,868,448 HiFi pairs.</td></tr>
+<tr><td><strong>👤 User</strong><br>Is the HiFi minus NoEP difference positive at <code>1617_OT_0040_ALT</code> after Dedud+Dedup? Show me the counts.</td></tr>
+<tr><td><strong>🤖 Agent</strong><br>Yes. HiFi had 9 edited pBC families out of 675 (1.33%). NoEP had 0 out of 1,619 (0.00%). The difference was <strong>+1.33 percentage points</strong>.</td></tr>
+<tr><td><strong>👤 User</strong><br>Check the pair benchmark and power estimates. Where are my report, tables, figure and Excel data?</td></tr>
+<tr><td><strong>🤖 Agent</strong><br>Both checks passed. Open <code>runs/D3734-T1/results/report.md</code>. In the same folder, <code>paired_target_rates.tsv</code> contains the target-level rates and differences, and <code>power_estimates.tsv</code> contains the power estimates. The figure and its Excel source data are in <code>figures/</code>.</td></tr>
+</tbody>
+</table>
+
+<a id="choose-settings-in-chat"></a>
+<details>
+<summary><strong>Choose a pBC annotation</strong></summary>
 
 <table>
 <tbody>
@@ -110,24 +129,11 @@ After target assignment by tBC, **CRISPResso2** aligns reads to each target’s 
 
 You can also ask to choose among donor/replicate pairs in your manifest or to run on Slurm. For option 2, the agent checks the six compressed FASTQs against the [study file manifest](runtime/maxi/inputs.sha256).
 
-### From paired FASTQs to a report
+</details>
 
-The [one-message prompt](#start-with-one-message) runs the public example end to end. Here is the same analysis step by step, with results from the [verified D3734/T1 run](docs/d3734-t1-quick-start.md#verified-on-luminary).
-
-<table>
-<tbody>
-<tr><td><strong>👤 User</strong><br>Find the paired FASTQs for public D3734/T1. Verify their archive checksums and build my sample manifest.</td></tr>
-<tr><td><strong>🤖 Agent</strong><br>NoEP is <code>SRR39887646</code> and HiFi is <code>SRR39887695</code>. Both mates of each run passed the archive checksum check. The manifest records all four FASTQs and their SHA-256 digests.</td></tr>
-<tr><td><strong>👤 User</strong><br>Run all 79 targets from scratch with four local workers, fast read processing and the published pBC annotation. Save the results under <code>runs/D3734-T1</code> and wait for completion.</td></tr>
-<tr><td><strong>🤖 Agent</strong><br>The run produced 316 comparisons across four strategies. Read preparation retained 5,971,199 of 10,084,551 NoEP pairs and 6,979,407 of 9,868,448 HiFi pairs.</td></tr>
-<tr><td><strong>👤 User</strong><br>Is the HiFi minus NoEP difference positive at <code>1617_OT_0040_ALT</code> after Dedud+Dedup? Show me the counts.</td></tr>
-<tr><td><strong>🤖 Agent</strong><br>Yes. HiFi had 9 edited pBC families out of 675 (1.33%). NoEP had 0 out of 1,619 (0.00%). The difference was <strong>+1.33 percentage points</strong>.</td></tr>
-<tr><td><strong>👤 User</strong><br>Check the pair benchmark and power estimates. Where are my report, tables, figure and Excel data?</td></tr>
-<tr><td><strong>🤖 Agent</strong><br>Both checks passed. Open <code>runs/D3734-T1/results/report.md</code>. In the same folder, <code>paired_target_rates.tsv</code> contains the target-level rates and differences, and <code>power_estimates.tsv</code> contains the power estimates. The figure and its Excel source data are in <code>figures/</code>.</td></tr>
-</tbody>
-</table>
-
-### Validate pBC annotation reproducibility
+<a id="validate-pbc-annotation-reproducibility"></a>
+<details>
+<summary><strong>Validate pBC annotation reproducibility</strong></summary>
 
 <table>
 <tbody>
@@ -137,6 +143,8 @@ The [one-message prompt](#start-with-one-message) runs the public example end to
 </table>
 
 You can make this request in your preferred language in Codex or Claude Code. [One-time setup and output guide](docs/pbc-validation.md#run-from-codex-or-claude-code)
+
+</details>
 
 ## Quick start
 
