@@ -92,38 +92,51 @@ After target assignment by tBC, **CRISPResso2** aligns reads to each target’s 
 
 ### Choose settings in chat
 
-**You:** “Use the public D3734/T1 pair on my workstation. Let me choose the pBC annotation before you start.”
-
-**Agent:** “Which pBC annotation should I use for Dedud and Dedud+Dedup?”
-
-1. Use the published annotation (default).
-2. Rebuild from the original study’s six Maxi FASTQs using the published rule, or select the historical two-tBC exception.
-3. Reuse a saved Maxi rebuild with the rule recorded in its provenance.
-
-**You:** “Option 3. I rebuilt it on my last run.”
-
-**Agent:** “Where did you save the annotation directory?”
-
-**You:** “Use the annotation in `/data/annotations/maxi` and run the pair.”
+<table>
+<tbody>
+<tr><td><strong>👤 User</strong><br>Use the public D3734/T1 pair on my workstation. Let me choose the pBC annotation before you start.</td></tr>
+<tr><td><strong>🤖 Agent</strong><br>Which pBC annotation should I use for Dedud and Dedud+Dedup?
+<ol>
+<li>Use the published annotation (default).</li>
+<li>Rebuild from the original study’s six Maxi FASTQs. Use the published rule, or select the historical two-tBC exception.</li>
+<li>Reuse the annotation from a previous Maxi rebuild with its saved rule.</li>
+</ol>
+</td></tr>
+<tr><td><strong>👤 User</strong><br>Option 3. I rebuilt it on my last run.</td></tr>
+<tr><td><strong>🤖 Agent</strong><br>Where did you save the annotation directory?</td></tr>
+<tr><td><strong>👤 User</strong><br>Use the annotation in <code>/data/annotations/maxi</code> and run the pair.</td></tr>
+</tbody>
+</table>
 
 You can also ask to choose among donor/replicate pairs in your manifest or to run on Slurm. For option 2, the agent checks the six compressed FASTQs against the [study file manifest](runtime/maxi/inputs.sha256).
 
 ### From paired FASTQs to a report
 
-The first prompt above runs the whole example. To guide it step by step, send these messages in the same chat:
+The [one-message prompt](#start-with-one-message) runs the public example end to end. Here is the same analysis step by step, with results from the [verified D3734/T1 run](docs/d3734-t1-quick-start.md#verified-on-luminary).
 
-1. **Identify inputs.** “Show me which mates belong to NoEP and HiFi for public D3734/T1. Verify their archive checksums and build my sample manifest.”
-2. **Run the pair.** “Use four local workers, fast read processing and the manuscript plasmid barcode rule. Save all four strategies under `runs/D3734-T1` and wait for completion.”
-3. **Check a result.** “Compare raw and prepared read pairs in the two arms. Does `1617_OT_0040_ALT` still have a positive difference after Dedud+Dedup? Show the counts.”
-4. **Open the report.** “Give me the report, figure, target table and power estimates. Flag undefined rates and tell me whether the D3734/T1 benchmark passed.”
-
-**What a verified answer looks like.** For that target in the public pair, NoEP has **0/1,619** edited pBC families and HiFi has **9/675**. The rates are 0.00% and 1.33%, giving **+1.33 percentage points** for HiFi minus NoEP. You can check both counts in `paired_target_rates.tsv`.
+<table>
+<tbody>
+<tr><td><strong>👤 User</strong><br>Find the paired FASTQs for public D3734/T1. Verify their archive checksums and build my sample manifest.</td></tr>
+<tr><td><strong>🤖 Agent</strong><br>NoEP is <code>SRR39887646</code> and HiFi is <code>SRR39887695</code>. Both mates of each run passed the archive checksum check. The manifest records all four FASTQs and their SHA-256 digests.</td></tr>
+<tr><td><strong>👤 User</strong><br>Run all 79 targets from scratch with four local workers, fast read processing and the published pBC annotation. Save the results under <code>runs/D3734-T1</code> and wait for completion.</td></tr>
+<tr><td><strong>🤖 Agent</strong><br>The run produced 316 comparisons across four strategies. Read preparation retained 5,971,199 of 10,084,551 NoEP pairs and 6,979,407 of 9,868,448 HiFi pairs.</td></tr>
+<tr><td><strong>👤 User</strong><br>Is the HiFi minus NoEP difference positive at <code>1617_OT_0040_ALT</code> after Dedud+Dedup? Show me the counts.</td></tr>
+<tr><td><strong>🤖 Agent</strong><br>Yes. HiFi had 9 edited pBC families out of 675 (1.33%). NoEP had 0 out of 1,619 (0.00%). The difference was <strong>+1.33 percentage points</strong>.</td></tr>
+<tr><td><strong>👤 User</strong><br>Check the pair benchmark and power estimates. Where are my report, tables, figure and Excel data?</td></tr>
+<tr><td><strong>🤖 Agent</strong><br>Both checks passed. Open <code>runs/D3734-T1/results/report.md</code>. In the same folder, <code>paired_target_rates.tsv</code> contains the target-level rates and differences, and <code>power_estimates.tsv</code> contains the power estimates. The figure and its Excel source data are in <code>figures/</code>.</td></tr>
+</tbody>
+</table>
 
 ### Validate pBC annotation reproducibility
 
-> Validate pBC annotation reproducibility.
+<table>
+<tbody>
+<tr><td><strong>👤 User</strong><br>Validate pBC annotation reproducibility.</td></tr>
+<tr><td><strong>🤖 Agent</strong><br>I’ll use the configured Luminary archive to compare the published and rebuilt annotations across all 26 libraries in fast and manuscript reproduction modes. I’ll return the comparison summary, field-level differences and SHA-256 manifest.</td></tr>
+</tbody>
+</table>
 
-Ask in your preferred language in Codex or Claude Code. With the Luminary archive configured, the agent checks all 26 libraries in fast and manuscript reproduction modes and returns the comparison summary, field-level differences and SHA-256 manifest. [One-time setup and output guide](docs/pbc-validation.md#run-from-codex-or-claude-code)
+You can make this request in your preferred language in Codex or Claude Code. [One-time setup and output guide](docs/pbc-validation.md#run-from-codex-or-claude-code)
 
 ## Quick start
 
