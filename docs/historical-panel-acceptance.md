@@ -13,7 +13,11 @@ A positive call requires both Δindel rate (editor minus NoEP) **above 0.1 perce
 
 For WT Unfiltered, both estimates place the WT indel rate below NoEP. For HiFi Dedup, both q values meet the statistical cutoff, but both Δ estimates are below 0.1 percentage points. All eight editor–strategy comparisons at this target were negative in both analyses.
 
-The family audit traced a count difference to the historical combined allele tables for WT donor D3908, replicate T1. Eight pBC families present in the individual alignment outputs and retained by Dedud were absent from the combined tables. Including them added 2,946 reads, one carrying an indel. Across the full panel, the largest absolute differences were 0.001265 percentage points for Δ and 0.000150 for q. The corresponding maxima for the NoEP and edited rates were 0.000133 and 0.001230 percentage points, respectively.
+For WT donor D3908, replicate T1, the individual CRISPResso outputs matched the replay for all 10,929 aligned pBC families. The historical combined allele tables contained 9,997 of them. The 932 families omitted during aggregation accounted for 17,308 aligned reads, including four indel reads. The surviving logs do not identify the specific copy or collection operation responsible.
+
+Only eight of those 932 families had pBCs that qualified under the historical Dedud rule. Including them added 2,946 reads and one indel read, changing the Dedud count from 3/20,527 to 4/23,473 (indel reads / aligned reads). All eight families had an unmodified representative allele, so the Dedud+Dedup count changed from 0/93 to 0/101 (indel-positive families / retained families).
+
+Across the full panel, the largest absolute differences were 0.001265 percentage points for Δ and 0.000150 for q. The corresponding maxima for the NoEP and edited rates were 0.000133 and 0.001230 percentage points, respectively.
 
 ## Export checks
 
