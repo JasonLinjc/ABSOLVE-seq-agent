@@ -2,6 +2,43 @@
 
 Choose manuscript mode to replay the original preprocessing with Trimmomatic 0.36 and paired-end CRISPResso2 2.2.13. The default for ordinary NoEP/HiFi pairs is the fast workflow. A full manuscript panel defaults to manuscript read processing. The Maxi annotation choice and the read processing mode are separate options.
 
+## Reproduce the submitted calls from the original FASTQs
+
+Select `--manuscript-panel --read-mode historical --fresh` to process all 52 raw FASTQs. Each library goes through input SHA-256 verification, trimming, target assignment, paired-end alignment and counting in a new run directory. The panel uses the historical six-Maxi pBC membership and the existing cross-target filter.
+
+| Libraries | Target assignment after historical trimming | Paired reads and tied family representatives |
+| --- | --- | --- |
+| 8 HiFi and 9 NoEP | Exact tBC at offsets 39–47 and first occurrence of the 16-base constant motif at offset 16 in R1 (zero-based) | CRISPResso2 2.2.13 with single-threaded FLASH. Among equally abundant alleles, use the first encountered in the aligned FASTQ, including after cross-target filtering. |
+| 9 WT | Same tBC position and the 23-base constant rule (up to five no-calls) | CRISPResso2 2.3.2 with its default fastp 0.24.1 merger. Break abundance ties by aligned read and then aligned reference. |
+
+Configure the [runtime](#configure-the-runtime), the 26-library manifest and the four full-model workbook extracts. Set two additional paths. The WT environment must contain its working `bin/python3.12`, `bin/CRISPResso` and `bin/fastp`. The pBC directory comes from the [historical six-Maxi build](historical-maxi.md#build-the-reference-once).
+
+```bash
+export ABSOLVE_WT232_ENV=/shared/envs/crispresso2-2.3.2
+export ABSOLVE_HISTORICAL_MAXI_REFERENCE=/shared/references/historical-maxi
+python paired.py --manuscript-panel --read-mode historical --fresh --output runs/historical-panel
+```
+
+On Slurm, follow the three job IDs in `runs/historical-panel/jobs.json` through the finish job. For a local run add `--executor local --threads N`. When the report is ready, compare the calls directly against the four original workbooks and verify the power table, Figure 3b and its Excel source.
+
+```bash
+python verify_results.py panel-historical runs/historical-panel/results --workbooks /path/to/submitted/workbooks
+python verify_results.py power runs/historical-panel/results
+```
+
+The workbook check independently computes BH-adjusted q-values within each editor and strategy. It checks all 632 calls and reports the largest absolute differences in the control rate, edited rate, Δ and q. The acceptance tolerances are 0.01 percentage points for rates and Δ, and 0.01 for q. The per-comparison values remain in `panel_comparison.tsv`.
+
+### Full-panel acceptance on Luminary
+
+The fresh historical run processed **334,970,765 read pairs** across the 52 checksum-verified FASTQs. All 26 preparation tasks, 26 alignment tasks and the final report job completed. The 2,054 library/target records included new counts for all nine WT libraries. All 8,216 count rows matched the earlier encounter-order analysis, including indel numerators, denominators and pBC family counts. The count table and 632-row model table also matched the earlier accepted exports byte for byte.
+
+Independent checks against the original Supplementary Tables 2–5 recovered **632/632 classifications (63 positive, 569 negative)**. The maximum absolute errors were 0.00013319 percentage points for the NoEP rate, 0.00123016 percentage points for the edited rate, 0.00126482 percentage points for Δ (WT Unfiltered), and 0.00014981 for q (HiFi Dedup). Both the largest Δ and q differences occurred at `1450_OT_0235_ALT`. Historical combined WT allele tables at D3908/T1 omitted families present in individual alignment outputs. The fresh run counted them. All 1,264 independently simulated power records and the 158 Figure 3b source rows passed the output checks.
+
+| Fresh export | SHA-256 |
+| --- | --- |
+| `library_counts.tsv` | `285a86b3b72dc352589ecf4c1df101c3bf885b3080ba14e52ed4168216714018` |
+| `panel_comparison.tsv` | `13a906d81fa96b325e9bdc663b8ddc3ac15c373b5861c4c9148d48de5ceaa53f` |
+
 ## Configure the runtime
 
 Use Python 3.10 or later, Java and the upstream checkout and references from the main README. The cluster workflow uses Slurm and Apptainer. Local execution can use Apptainer on Linux or a native installation of the historical tools. Supply the original Trimmomatic 0.36 JAR and a Linux CRISPResso2 2.2.13 image. The final panel fit uses the agent analysis image when `ABSOLVE_IMAGE` is set, or an available `Rscript` with brglm2. All paths must be visible on the compute nodes. [Trimmomatic 0.36 distribution](https://anaconda.org/bioconda/trimmomatic/files) · [CRISPResso2 2.2.13 image](https://depot.galaxyproject.org/singularity/crispresso2:2.2.13--py310hd6be1da_0)

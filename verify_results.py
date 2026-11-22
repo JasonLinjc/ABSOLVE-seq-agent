@@ -165,11 +165,18 @@ def verify(profile, folder):
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("profile", choices=[*BASELINES, "power"])
+    parser.add_argument("profile", choices=[*BASELINES, "power", "panel-historical"])
     parser.add_argument("directory", type=Path, help="Directory containing the exported tables")
+    parser.add_argument("--workbooks", type=Path, help="Submitted workbook directory for panel-historical")
     args = parser.parse_args()
+    if (args.profile == "panel-historical") != bool(args.workbooks):
+        parser.error("--workbooks is required for panel-historical and only applies to that profile")
     try:
-        verify(args.profile, args.directory)
+        if args.profile == "panel-historical":
+            from panel_report.check_historical_panel import verify as verify_historical
+            verify_historical(args.directory, args.workbooks)
+        else:
+            verify(args.profile, args.directory)
     except (OSError, ValueError, KeyError, BadZipFile) as error:
         parser.exit(1, f"FAIL {args.profile}: {error}\n")
     print(f"PASS {args.profile}")

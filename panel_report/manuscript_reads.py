@@ -49,8 +49,8 @@ def digest(path):
     return h.hexdigest()
 
 
-def checked_version(command, version):
-    text = subprocess.check_output(command, stderr=subprocess.STDOUT, text=True)
+def checked_version(command, version, env=None):
+    text = subprocess.check_output(command, stderr=subprocess.STDOUT, text=True, env=env)
     if not re.search(r"(?<![\d.])" + re.escape(version) + r"(?![\d.])", text):
         raise ValueError(f"Expected version {version} for {command[0]}")
 
@@ -84,6 +84,7 @@ def demultiplex(cfg, sample_dir, dest):
     designs = table(Path(cfg["reference"])/"target_oligos_sequenes.csv", ",")
     barcodes = {r["Barcode"].encode(): r["OT"].replace("-", "_") for r in designs}
     constant = b"CCAACCTCATAGAACACTCATCC"
+    historical_split = cfg.get("library_profile") == "historical-hifi-noep"
     counts = Counter()
     with ExitStack() as stack:
         inputs = [records(stack.enter_context(gzip.open(sample_dir/"trim"/f"R{i}.gz", "rb"))) for i in (1,2)]
@@ -94,7 +95,12 @@ def demultiplex(cfg, sample_dir, dest):
             seq = one[1]
             fixed = seq[16:39]
             target = barcodes.get(seq[39:48])
-            if not target or (fixed != constant and
+            if not target:
+                continue
+            if historical_split:
+                if seq.find(constant[:16]) != 16:
+                    continue
+            elif (fixed != constant and
                     (fixed.count(b"N") > 5 or any(x != y and x != 78 for x,y in zip(fixed,constant)))):
                 continue
             if target not in writers:
@@ -121,6 +127,7 @@ def step(func, sample_dir, name, *args):
 def worker(config, action, index, threads=None):
     cfg=json.loads(config.read_text())
     sample=cfg["libraries"][index]
+    cfg["library_profile"] = sample.get("read_profile", "manuscript")
     root=config.parent/"work"/sample["sample_name"]
     if threads is None:
         threads = int(os.getenv("SLURM_CPUS_PER_TASK", "1"))
@@ -133,7 +140,7 @@ def worker(config, action, index, threads=None):
         raise ValueError(action)
 
 
-def summarize(target, families, labels, identity):
+def summarize(target, families, labels, identity, encounter_order=False):
     raw = [0,0]
     rep = [0,0]
     pre = [0,0]
@@ -142,7 +149,11 @@ def summarize(target, families, labels, identity):
     final_rep = [0,0]
     for barcode, alleles in families.items():
         # v2.2.13 sorts each family's allele table by abundance, aligned read, then reference.
-        order = sorted(alleles, key=lambda a: (-alleles[a], a[1], a[0]))
+        if encounter_order:
+            # Stable sorting retains the first occurrence in the annotated FASTQ stream.
+            order = sorted(alleles, key=alleles.get, reverse=True)
+        else:
+            order = sorted(alleles, key=lambda a: (-alleles[a], a[1], a[0]))
         k = sum(n for a,n in alleles.items() if a[2])
         n = sum(alleles.values())
         raw[0] += k
@@ -164,13 +175,29 @@ def summarize(target, families, labels, identity):
     return dict(zip(STRATEGIES,[raw,rep,final,final_rep])), dict(zip(STRATEGIES,[raw,rep,pre,pre_rep]))
 
 
+def wt_environment(cfg):
+    bindir = Path(cfg["wt_runtime"]) / "bin"
+    return dict(os.environ, PATH=str(bindir) + os.pathsep + os.environ["PATH"],
+                PYTHONNOUSERSITE="1", OPENBLAS_NUM_THREADS="1", OMP_NUM_THREADS="1", MPLBACKEND="Agg")
+
+
 def crispresso_command(cfg, root=None):
+    if cfg.get("library_profile") == "historical-wt":
+        bindir = Path(cfg["wt_runtime"]) / "bin"
+        return [str(bindir / "python3.12"), str(bindir / "CRISPResso")]
     if not cfg.get("image"):
         return [cfg["crispresso"]]
     command = ["apptainer", "exec", "--cleanenv"]
     if root is not None:
         command.extend(["--bind", str(root)])
     return command + [cfg["image"], "CRISPResso"]
+
+
+def check_wt_runtime(cfg):
+    env = wt_environment(cfg)
+    bindir = Path(cfg["wt_runtime"]) / "bin"
+    checked_version([str(bindir / "python3.12"), str(bindir / "CRISPResso"), "--version"], "2.3.2", env)
+    checked_version([str(bindir / "fastp"), "--version"], "0.24.1", env)
 
 
 def read_aligned_families(results, target, pair_count):
@@ -211,8 +238,12 @@ def count_target(cfg, root, spec, pair_count):
     final = root/"targets"/(target+".json")
     rebuilt = configured_reference(cfg)
     reference_hash = rebuilt.get("reference_sha256")
+    profile = cfg.get("library_profile", "manuscript")
     if final.exists():
-        if json.loads(final.read_text()).get("maxi_reference_sha256") != reference_hash:
+        cached = json.loads(final.read_text())
+        if cached.get("read_profile", "manuscript") != profile:
+            raise ValueError("Cached counts use a different read profile")
+        if cached.get("maxi_reference_sha256") != reference_hash:
             raise ValueError("Cached counts use a different Maxi reference")
         return
     families = defaultdict(Counter)
@@ -223,10 +254,15 @@ def count_target(cfg, root, spec, pair_count):
                 (work/f"R{i}.fq").symlink_to(root/"pairs"/f"{target}.R{i}.fq")
             command = crispresso_command(cfg, root) + ["--fastq_r1","R1.fq","--fastq_r2","R2.fq",
                        "--amplicon_seq",spec["amplicon_seq"],"--guide_seq",spec["guide_seq"],
-                       "--ignore_substitutions","--plot_window_size","10","--min_frequency_alleles_around_cut_to_plot","0","--name","family","--flash_command","flash -t 1",
+                       "--ignore_substitutions","--plot_window_size","10","--min_frequency_alleles_around_cut_to_plot","0","--name","family",
                        "--write_detailed_allele_table","--fastq_output","--suppress_plots","--suppress_report"]
+            env = None
+            if profile == "historical-wt":
+                env = dict(wt_environment(cfg), MPLCONFIGDIR=str(work / "mpl"))
+            else:
+                command.extend(["--flash_command", "flash -t 1"])
             with (work/"crispresso.log").open("w") as log:
-                proc = subprocess.run(command,cwd=work,stdout=log,stderr=log)
+                proc = subprocess.run(command,cwd=work,stdout=log,stderr=log,env=env)
             results = work/"CRISPResso_on_family"
             report = results/"CRISPResso_quantification_of_editing_frequency.txt"
             if proc.returncode or not report.is_file():
@@ -235,6 +271,10 @@ def count_target(cfg, root, spec, pair_count):
                 if "No reads" not in log or not re.search("No reads (were aligned|aligned|survived)",log,re.I):
                     raise RuntimeError(target+" CRISPResso failed: "+log[-3000:])
             else:
+                if profile == "historical-wt":
+                    metrics = json.loads((results / "fastp_report.json").read_text())["summary"]
+                    if metrics["fastp_version"] != "0.24.1" or metrics["before_filtering"]["total_reads"] != 2 * pair_count:
+                        raise ValueError(f"{target}: historical fastp version or input count mismatch")
                 families = read_aligned_families(results, target, pair_count)
         if rebuilt:
             labels = rebuilt_labels(rebuilt, target)
@@ -244,7 +284,7 @@ def count_target(cfg, root, spec, pair_count):
                 for ln in handle:
                     b,flag=ln.rstrip().split("\t");labels.setdefault(b,flag=="1")
         identity=TargetIdentity(Path(cfg["reference"])/"target_oligos_sequenes.csv")
-        counts, before=summarize(target,families,labels,identity)
+        counts, before=summarize(target,families,labels,identity,encounter_order=profile == "historical-hifi-noep")
         if target in ("1617_OT_0041_ALT","1450_OT_0274_ALT"):
             with gzip.open(work/"focal.tsv.gz","wt") as handle:
                 handle.write("pbc_hash\tindel\tdenominator\n")
@@ -255,14 +295,17 @@ def count_target(cfg, root, spec, pair_count):
                         tag=hashlib.sha256(b.encode()).hexdigest()[:16]
                         handle.write(f"{tag}\t{sum(n for a,n in retained.items() if a[2])}\t{sum(retained.values())}\n")
             (work/"focal.tsv.gz").replace(final.with_suffix(".families.tsv.gz"))
-        receipt=dict(target=target,paired_input=pair_count,counts=counts,before=before,
+        receipt=dict(read_profile=profile,target=target,paired_input=pair_count,counts=counts,before=before,
                      maxi_reference_sha256=reference_hash)
         (work/"result").write_text(json.dumps(receipt))
         (work/"result").replace(final)
 
 
 def align_library(cfg,sample,root,threads):
-    checked_version(crispresso_command(cfg) + ["--version"], "2.2.13")
+    if cfg.get("library_profile") == "historical-wt":
+        check_wt_runtime(cfg)
+    else:
+        checked_version(crispresso_command(cfg) + ["--version"], "2.2.13")
     (root/"targets").mkdir(exist_ok=True)
     specs=table(Path(cfg["reference"])/"OT_guide_amplicon_seq.csv",",")
     admitted=json.loads((root/"pairs/pairs.json").read_text())

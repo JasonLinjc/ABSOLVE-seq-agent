@@ -96,6 +96,8 @@ def finish(config):
             record=json.loads((base/"work"/s["sample_name"]/"targets"/(t+".json")).read_text())
             if record.get("maxi_reference_sha256") != rebuilt.get("reference_sha256"):
                 raise ValueError("Target counts use a different Maxi reference")
+            if record.get("read_profile", "manuscript") != s.get("read_profile", "manuscript"):
+                raise ValueError("Target counts use a different library profile")
             if record["target"]!=t: raise ValueError("Target mismatch")
             for strategy in STRATEGIES:
                 n,d=record["counts"][strategy]
@@ -112,12 +114,18 @@ def finish(config):
         for sample in libs:
             entry={k:sample[k] for k in ("sample_name","donor","replicate","arm","sha256_r1","sha256_r2")}
             entry["trim_steps"]=" ".join(sample.get("trim_steps", GITHUB_TRIM_STEPS))
+            if "read_profile" in sample:
+                entry["read_profile"] = sample["read_profile"]
             inventory.append(entry)
         save(stage/"sample_inventory.tsv",inventory)
         receipt=dict(read_mode="manuscript",crispresso_version="2.2.13",trimmomatic_version="0.36",
                      jar_sha256=digest(cfg["jar"]),adapters_sha256=digest(cfg["adapters"]),
                      libraries=len(libs),targets=len(targets),input_config_sha256=digest(config),
                      worker_sha256=digest(PANEL/"manuscript_reads.py"),model_sha256=digest(PANEL/"manuscript_model.R"))
+        if cfg.get("read_mode") == "historical":
+            receipt.update(read_mode="historical", crispresso_version={"WT":"2.3.2","HiFi":"2.2.13","NoEP":"2.2.13"},
+                           wt_fastp_version="0.24.1", wt_fastp_sha256=digest(Path(cfg["wt_runtime"]) / "bin/fastp"),
+                           wt_launcher_sha256=digest(Path(cfg["wt_runtime"]) / "bin/CRISPResso"))
         if cfg.get("image"):
             receipt["image_sha256"] = digest(cfg["image"])
         else:
@@ -150,7 +158,7 @@ def finish(config):
             raise ValueError("Unexpected manuscript library design")
         (stage/"provenance.json").write_text(json.dumps(receipt,indent=2)+"\n")
         if len(libs) == 26:
-            complete_report(stage, "manuscript reads with equal donor weights", panel=True, run_config="run.json", image=cfg.get("stats_image"))
+            complete_report(stage, receipt["read_mode"] + " reads with equal donor weights", panel=True, run_config="run.json", image=cfg.get("stats_image"))
         else:
             complete_report(stage, "manuscript", run_config="run.json", image=cfg.get("stats_image"))
         stage.rename(base/"results")
@@ -201,6 +209,19 @@ def start(args, *, local, workers):
     if args.maxi_reference:
         cfg[reference_key(args.maxi_method)] = reference(args.maxi_reference, args.maxi_method)
         del cfg["published"]
+    if args.read_mode == "historical":
+        cfg["read_mode"] = "historical"
+        runtime = os.getenv("ABSOLVE_WT232_ENV")
+        if not runtime:
+            raise ValueError("Set ABSOLVE_WT232_ENV to the historical CRISPResso2 2.3.2 / fastp 0.24.1 environment")
+        cfg["wt_runtime"] = str(Path(runtime).expanduser().resolve(strict=True))
+        for binary in ("python3.12", "CRISPResso", "fastp"):
+            if not os.access(Path(cfg["wt_runtime"]) / "bin" / binary, os.X_OK):
+                raise ValueError(f"Missing executable {binary} in {runtime}/bin")
+        from panel_report.manuscript_reads import check_wt_runtime
+        check_wt_runtime(cfg)
+        for sample in libs:
+            sample["read_profile"] = "historical-wt" if sample["arm"] == "WT" else "historical-hifi-noep"
     jar = os.environ.get("ABSOLVE_TRIMMOMATIC_JAR")
     if not jar:
         raise ValueError("Set ABSOLVE_TRIMMOMATIC_JAR to the Trimmomatic 0.36 JAR")

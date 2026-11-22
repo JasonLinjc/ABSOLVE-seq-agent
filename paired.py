@@ -136,12 +136,12 @@ def main():
     parser.add_argument('--target-filter', choices=['manuscript','pbc-only'], help='Cross-target identity check after Maxi filtering (default manuscript).')
     parser.add_argument('--donor')
     parser.add_argument('--replicate')
-    parser.add_argument('--maxi-method', choices=[DEFAULT_METHOD, 'historical', *REQUIRED], default=DEFAULT_METHOD)
+    parser.add_argument('--maxi-method', choices=[DEFAULT_METHOD, 'historical', *REQUIRED])
     parser.add_argument('--maxi-reference', type=Path, help='Saved Maxi FASTQ rebuild for the selected rule (manuscript or historical).')
     parser.add_argument('--min-exact-reads', type=int, help='Reconstructed Maxi methods only (default 1).')
     parser.add_argument('--output', type=Path, help='New output directory (default: a unique directory under runs/).')
     parser.add_argument('--fresh', action='store_true', help='Prepare and align full FASTQs again.')
-    parser.add_argument('--read-mode', choices=['fast','manuscript'], help='Read processing mode. Pairs default to fast and manuscript panels default to manuscript.')
+    parser.add_argument('--read-mode', choices=['fast','manuscript','historical'], help='Historical reproduces the arm-specific submission workflow from FASTQs. Pairs default to fast and manuscript panels default to manuscript.')
     parser.add_argument('--baseline-panel', type=Path, help='Earlier panel_comparison.tsv for tracking resolved, persistent and new disagreements.')
     parser.add_argument('--refit-counts', type=Path, help='Fit the equal-donor manuscript panel from a complete existing library_counts.tsv.')
     parser.add_argument('--finish-manuscript', type=Path, help=argparse.SUPPRESS)
@@ -149,6 +149,16 @@ def main():
                         help='Use the local machine when Slurm is absent, or force local execution.')
     parser.add_argument('--threads', type=int, help='Local worker limit (default 1).')
     args = parser.parse_args()
+    if args.read_mode == 'historical':
+        if not args.manuscript_panel or args.list or args.refit_counts or args.finish_manuscript:
+            parser.error('Historical reads require --manuscript-panel and raw FASTQs')
+        if args.maxi_method not in (None, 'historical'):
+            parser.error('Historical reads require the historical pBC rule')
+        args.maxi_method = 'historical'
+        args.maxi_reference = args.maxi_reference or os.getenv('ABSOLVE_HISTORICAL_MAXI_REFERENCE')
+        if not args.maxi_reference:
+            parser.error('Supply --maxi-reference or ABSOLVE_HISTORICAL_MAXI_REFERENCE for the historical six-Maxi rebuild')
+    args.maxi_method = args.maxi_method or DEFAULT_METHOD
     local = use_local(args.executor)
     if args.threads is not None and (args.threads < 1 or not local):
         parser.error('--threads requires local execution and a positive integer')
@@ -173,9 +183,9 @@ def main():
     if args.maxi_method == 'historical' and args.min_exact_reads is not None:
         parser.error('The historical rule has no adjustable read threshold')
     mode = args.read_mode or ('manuscript' if args.manuscript_panel else 'fast')
-    if args.baseline_panel and not (args.manuscript_panel and mode=='manuscript'):
+    if args.baseline_panel and not (args.manuscript_panel and mode in ('manuscript','historical')):
         parser.error('--baseline-panel requires a manuscript read-mode panel')
-    if mode == 'manuscript' and not args.list:
+    if mode in ('manuscript','historical') and not args.list:
         if args.maxi_method not in (DEFAULT_METHOD, "historical") or args.min_exact_reads is not None or args.target_filter == 'pbc-only':
             parser.error('Manuscript reads use manuscript or historical Maxi membership and cross-target filtering.')
         if args.manuscript_panel and (args.donor or args.replicate):
