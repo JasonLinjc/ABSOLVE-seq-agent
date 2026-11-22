@@ -31,7 +31,19 @@ The omissions clustered at the start of the batch. Times below are family comple
 
 The collector used four batch-level files to mark a target complete. It searched shared memory for each family's guide-window file, then used each match to read both the guide-window table and the full-length allele ZIP. It did not reconcile the matches with the successful pBC list. A missing guide-window file could therefore exclude a family from both tables even when its alignment had succeeded on disk.
 
-**Restart hypothesis.** On April 27, Slurm job 5010 was cancelled after 74 seconds, and job 5011 used the same script name. The preserved script enabled `--no_rerun`, which could skip a previously completed family without checking its guide-window file. The shared-memory file list from collection time is unavailable, so the records cannot establish whether copying, restart behavior or cleanup caused the omissions.
+### Three-family restart control on Luminary
+
+Job `21338617` used CRISPResso2 2.3.2, fastp 0.24.1 and the historical collector on three WT D3908/T1 families at `1450_OT_0235_ALT`. After a restart with all files present, we moved only the guide-window file for pBC `AAAGGATAAGGAATTG`, leaving its success record and full-length allele ZIP intact.
+
+| Condition | Families reported successful by CRISPRessoBatch | Families in guide-window table | Families in full-length table | Reads in each table |
+| --- | ---: | ---: | ---: | ---: |
+| All files present, restart with `--no_rerun` | 3/3 | 3 | 3 | 882 |
+| Window file removed, same restart command | 3/3 | 2 | 2 | 374 |
+| Window file restored, collection only | No new batch run | 3 | 3 | 882 |
+
+With the file missing, `--no_rerun` exited with code 0 and left the window file missing. Both tables omitted the family's 508 reads, including one indel read. Restoring that file alone and running the collector again recovered all 508 reads.
+
+**Cause of the 2025 omissions.** On April 27, Slurm job 5010 was cancelled after 74 seconds, and job 5011 used the same script name. The preserved script enabled `--no_rerun`. The control confirms that a missing window file is sufficient for a successful restart to yield incomplete tables. The shared-memory file list from the original collection is unavailable, so the specific operation responsible for the 932 historical omissions remains unknown.
 
 ## Export checks
 
