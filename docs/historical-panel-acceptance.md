@@ -15,6 +15,17 @@ For WT Unfiltered, both estimates place the WT indel rate below NoEP. For HiFi D
 
 Across the full panel, the largest absolute differences were 0.001265 percentage points for Δ and 0.000150 for q. The corresponding maxima for the NoEP and edited rates were 0.000133 and 0.001230 percentage points, respectively.
 
+### pBC completeness across all 711 WT batches
+
+The audit compared pBC identities in the archived guide-window and full-length allele tables for each donor, replicate and target (3 donors × 3 replicates × 79 targets). Luminary job `21338827` independently reconstructed the family lists for all 711 batches from the accepted FASTQ run’s target-split read pairs using CRISPResso2 2.3.2 and fastp 0.24.1.
+
+| Evidence available for the membership check | Batches | Result |
+| --- | ---: | --- |
+| Complete historical CRISPRessoBatch success list | 223 | Both tables matched the success list in 222 batches. At D3908/T1, `1450_OT_0235_ALT`, both omitted the same 932 successful pBCs. |
+| FASTQ reconstruction only (complete historical success list unavailable) | 488 | Both tables matched the reconstructed pBC list in all 488 batches. |
+
+Across the other **710 batches**, the audit found no additional missing pBCs. The archived and reconstructed numerators and denominators agreed exactly for both Dedud and Dedud+Dedup in every one of those batches.
+
 ### Full-batch pBC check for WT D3908/T1 at `1450_OT_0235_ALT`
 
 The individual CRISPResso outputs matched the replay for all 10,929 successful families. Luminary job `21338660` ran the membership check from commit `fdc16b2` against the two archived tables, comparing the unique pBCs in each table’s `UMI` column with the CRISPRessoBatch success list. The guide-window and full-length tables each contained the same 9,997 successful families and zero unexpected pBCs. The check exited with code 1 as expected and listed **the same 932 missing pBCs** for both tables. Every missing ID matched the earlier family audit.
