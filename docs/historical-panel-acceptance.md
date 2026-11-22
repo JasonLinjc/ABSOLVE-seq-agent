@@ -43,6 +43,8 @@ Job `21338617` used CRISPResso2 2.3.2, fastp 0.24.1 and the historical collector
 
 With the file missing, `--no_rerun` exited with code 0 and left the window file missing. Both tables omitted the family's 508 reads, including one indel read. Restoring that file alone and running the collector again recovered all 508 reads.
 
+Job `21338648` repeated this control with the [agent’s historical per-pBC collector](manuscript-reads.md#collect-a-historical-per-pbc-batch). With the window file removed, CRISPRessoBatch still reported three successes. The collector exited 1 before counting, named `AAAGGATAAGGAATTG` as missing from both the guide-window and full-length tables, and published neither table. After the file was restored, collection alone exited 0. Both tables contained all three families and 882 reads each. The verified exports matched the historical collector’s output byte for byte at baseline, after an intact restart and after restoration.
+
 **Cause of the 2025 omissions.** On April 27, Slurm job 5010 was cancelled after 74 seconds, and job 5011 used the same script name. The preserved script enabled `--no_rerun`. The control confirms that a missing window file is sufficient for a successful restart to yield incomplete tables. The shared-memory file list from the original collection is unavailable, so the specific operation responsible for the 932 historical omissions remains unknown.
 
 ## Export checks

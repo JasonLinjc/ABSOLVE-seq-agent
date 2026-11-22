@@ -42,6 +42,18 @@ The workbook check independently computes BH-adjusted q-values within each edito
 
 [Results against Supplementary Tables 2–5, the residual at `1450_OT_0235_ALT`, and export checksums](historical-panel-acceptance.md)
 
+## Collect a historical per-pBC batch
+
+Use this entry point when the starting material is one archived CRISPRessoBatch directory with a separate CRISPResso run per plasmid barcode. Supply the original library ID and group label from the sample metadata, and choose a new output directory. This example uses the WT D3908/T1 batch. The collector requires pandas (tested with 2.2.3).
+
+```bash
+python -m panel_report.collect_historical_families \
+  --batch /path/to/CRISPRessoBatch_on_WT_D3908_T1_1450-OT-0235-ALT_input \
+  --library-id LV-S24 --group WTCas9 --output runs/D3908-T1-WT-0235/alleles
+```
+
+The collector compares the unique pBCs in the `UMI` column of each combined table with `results.completed_batch_arr` in `CRISPResso2Batch_info.json`. It checks the guide-window and full-length tables independently, before computing read percentages. Exit 0 publishes both historical `*withUMI.txt` tables together for downstream counting. A membership mismatch exits 1, lists each affected filename and its missing or unexpected pBCs, and leaves the output directory uncreated. After restoring the inputs, rerun the same command. [Three-family restart control](historical-panel-acceptance.md#three-family-restart-control-on-luminary)
+
 ## Configure the runtime
 
 Use Python 3.10 or later, Java and the upstream checkout and references from the main README. The cluster workflow uses Slurm and Apptainer. Local execution can use Apptainer on Linux or a native installation of the historical tools. Supply the original Trimmomatic 0.36 JAR and a Linux CRISPResso2 2.2.13 image. The final panel fit uses the agent analysis image when `ABSOLVE_IMAGE` is set, or an available `Rscript` with brglm2. All paths must be visible on the compute nodes. [Trimmomatic 0.36 distribution](https://anaconda.org/bioconda/trimmomatic/files) · [CRISPResso2 2.2.13 image](https://depot.galaxyproject.org/singularity/crispresso2:2.2.13--py310hd6be1da_0)

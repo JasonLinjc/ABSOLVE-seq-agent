@@ -9,6 +9,8 @@ Work from the repository root in the environment described in the README. Use th
 
 For a public test dataset, follow the [D3734/T1 quick start](../../../docs/d3734-t1-quick-start.md#public-test-data-from-sra). Download both mates of NoEP `SRR39887646` and HiFi `SRR39887695` from study `SRP722226`. Use the example's `--ena` manifest option to verify the four files before submitting the pair with `--fresh`.
 
+For a historical per-pBC CRISPRessoBatch directory, use the [historical allele collector](../../../docs/manuscript-reads.md#collect-a-historical-per-pbc-batch). Start downstream counting only after the collector succeeds. If collection fails, report the named pBCs and affected tables.
+
 ### Validate pBC annotation reproducibility
 
 Route “Validate pBC annotation reproducibility” and equivalent requests in any language directly here, including a short Chinese request with no host, donor or mode specified. When offering tasks, list this as an optional full-panel check. The request selects Luminary, all 26 libraries and both read modes. It compares the published annotation with the saved six-Maxi rebuild under the published rule using existing alignments.
