@@ -64,6 +64,20 @@ Follow the [Figure 3b guide](manuscript-figures.md) to export the Dedud plot and
 
 Using the original six Maxi FASTQs with `--published-maxi` recovered all **5,190,216** published target/pBC keys. An independent set comparison against the published annotation found zero extra or missing keys for each of the 79 targets. A D3734/T1 fast pair using only the rebuilt pBC reference produced the same 316-row `paired_target_rates.tsv` as the default annotation, byte for byte (SHA-256 `0b0465ecc5aa244cc2a10654e153dbe8467322cbedd4f5bfc72806058018980b`). Both runs reused the same checksum-verified NoEP and HiFi alignments and independently counted all four strategies. The historical-rule pair also reproduced its earlier result.
 
-The production reference builder read the original six FASTQs and recovered 5,248,941 keys. All 79 per-target SHA-256 values matched the historical archive. The combined export reproduced the independently measured per-target comparison table. A fresh D3734/T1 NoEP–HiFi manuscript-mode run used this rebuilt membership. All 316 exported rows matched independent counts from the archived-label replay, including both arm numerators, denominators, rates and every defined difference.
+### Published-rule rebuild across 26 libraries
 
-The 26-library acceptance used the existing encounter-order analysis counts. The model-only command validated all 8,216 count cells and reproduced the preceding 632-row results file byte for byte. Compared with the submitted supplements, all 632 primary calls agree. The largest absolute Δ and q differences were 0.001265 percentage points and 0.000150, respectively. The two-library FASTQ test and the 26-library count refit exercise different stages.
+Both annotation runs started from the same archived fast-mode alignments for nine NoEP, nine WT and eight HiFi libraries. Each run independently counted all 79 targets under all four strategies. All 8,216 library/target/strategy rows matched in their indel numerators, denominators and pBC family counts.
+
+Each model fit produced 632 contrasts (79 targets × four strategies × two editors, WT and HiFi, each compared with NoEP). Within each donor-weighting scheme, the two annotations yielded identical control and edited indel rates, Δindel rates, one-sided p values, BH-adjusted q values and positive calls. The file digests confirm byte-for-byte agreement for each export.
+
+| Export | Rows | SHA-256 shared by both annotation runs |
+| --- | ---: | --- |
+| Library counts | 8,216 | `3db1f8203892c29edd231e2d88d942223b9c6a5b44a6d6d23aabc107f90a7a84` |
+| Model contrasts, three donors weighted equally on the logit scale | 632 | `627df9a661d2160184753c39a6bcf39dcef40449c42df7f867b229b1f0342755` |
+| Model contrasts, donors weighted by observed pBC family counts | 632 | `ff94527fbdf0a95bcfc59da57b708ed838692368c34ca69c046c01c537bfaa99` |
+
+### Historical-rule rebuild and saved-count refit
+
+The historical-rule build read the original six FASTQs and recovered 5,248,941 keys. All 79 per-target SHA-256 values matched the historical archive. The combined export reproduced the independently measured per-target comparison table. A fresh D3734/T1 NoEP–HiFi manuscript-mode run used this rebuilt membership. All 316 exported rows matched independent counts from the archived-label replay, including both arm numerators, denominators, rates and every defined difference.
+
+A separate 26-library model refit used the existing encounter-order analysis counts. The model-only command validated all 8,216 count cells and reproduced the preceding 632-row results file byte for byte. Compared with the submitted supplements, all 632 primary calls agree. The largest absolute Δ and q differences were 0.001265 percentage points and 0.000150, respectively. The two-library FASTQ test and the 26-library count refit exercise different stages.

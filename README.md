@@ -148,6 +148,8 @@ When alleles tie for the highest read count, fast reads use the first allele enc
 
 Plasmid pool sequencing identifies which plasmid barcodes (pBCs) qualify for each target. The default `--maxi-method manuscript` uses the published annotation derived from the study’s Maxi plasmid pool. To rebuild from the six original Maxi FASTQs, use `setup_references.py --published-maxi` for the published entropy threshold or `--historical-maxi` for the historical two-tBC exception. On later runs, pass the saved directory with `--maxi-reference DIR` and its matching `--maxi-method manuscript` or `--maxi-method historical`. [Build commands and rule comparison](docs/historical-maxi.md#build-the-reference-once)
 
+**Validation across all 26 study libraries.** On Luminary, we recounted the same fast-mode CRISPResso2 alignments using the default published pBC annotation and an annotation rebuilt from the six original Maxi FASTQs under the published rule. **All 8,216 library counts and all 632 model contrasts matched exactly**, including NoEP and edited indel rates, Δindel rates, and BH-adjusted q values. The historical rule remains available separately via `--historical-maxi`. [Validation details and checksums](docs/historical-maxi.md#published-rule-rebuild-across-26-libraries)
+
 <details>
 <summary><strong>Compare pBC definitions or change the target filter</strong></summary>
 
