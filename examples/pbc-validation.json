@@ -1,0 +1,10 @@
+{
+  "data": "/data/absolve/panel-data",
+  "fast_inventory": "/data/absolve/fast-panel/sample_inventory.tsv",
+  "manuscript_alignments": "/data/absolve/retained-pe/alignments",
+  "manuscript_archive": "/data/absolve/original-manuscript-run/results",
+  "rebuilt_reference": "/data/absolve/references/published-maxi",
+  "submitted_tables": "/data/absolve/submitted_model_reference",
+  "fast_stats_image": "/data/absolve/images/fast-panel.sif",
+  "manuscript_stats_image": "/data/absolve/images/manuscript-statistics.sif"
+}

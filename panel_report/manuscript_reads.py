@@ -173,6 +173,39 @@ def crispresso_command(cfg, root=None):
     return command + [cfg["image"], "CRISPResso"]
 
 
+def read_aligned_families(results, target, pair_count):
+    """Read paired-end CRISPResso annotations and reconcile them with its totals."""
+    families = defaultdict(Counter)
+    report = results/"CRISPResso_quantification_of_editing_frequency.txt"
+    cache = {}
+    with gzip.open(results/"CRISPResso_output.fastq.gz","rb") as f:
+        for header in f:
+            f.readline()
+            ann = f.readline()
+            if not f.readline():
+                raise ValueError("Truncated CRISPResso FASTQ")
+            if b" ALN=NA " in ann:
+                continue
+            # Repeated reads share the same short alignment annotation.
+            allele = cache.get(ann)
+            if allele is None:
+                fields = dict(re.findall(rb"(?:^|\s)([A-Z_]+)=([^\s]*)",ann))
+                if fields[b"ALN"] != b"Reference" or fields[b"CLASS"] not in (b"Reference_MODIFIED",b"Reference_UNMODIFIED"):
+                    raise ValueError("Unexpected aligned read annotation")
+                allele=(fields[b"ALN_REF"].decode(),fields[b"ALN_SEQ"].decode(),fields[b"CLASS"]==b"Reference_MODIFIED")
+                cache[ann]=allele
+            barcode=header.split()[0].split(b"|")[-1].decode()
+            if len(barcode)!=16:
+                raise ValueError("Lost original pBC during FLASH merging")
+            families[barcode][allele]+=1
+    q,=table(report)
+    k=sum(n for vs in families.values() for a,n in vs.items() if a[2])
+    total=sum(sum(vs.values()) for vs in families.values())
+    if (k,total,pair_count)!=(int(q["Modified"]),int(q["Reads_aligned"]),int(q["Reads_in_input"])):
+        raise ValueError(f"Read conservation failed for {target}: {k,total,pair_count} vs {q}")
+    return families
+
+
 def count_target(cfg, root, spec, pair_count):
     target = spec["OT_name"]
     final = root/"targets"/(target+".json")
@@ -202,32 +235,7 @@ def count_target(cfg, root, spec, pair_count):
                 if "No reads" not in log or not re.search("No reads (were aligned|aligned|survived)",log,re.I):
                     raise RuntimeError(target+" CRISPResso failed: "+log[-3000:])
             else:
-                cache = {}
-                with gzip.open(results/"CRISPResso_output.fastq.gz","rb") as f:
-                    for header in f:
-                        f.readline()
-                        ann = f.readline()
-                        if not f.readline():
-                            raise ValueError("Truncated CRISPResso FASTQ")
-                        if b" ALN=NA " in ann:
-                            continue
-                        # Repeated reads share the same short alignment annotation.
-                        allele = cache.get(ann)
-                        if allele is None:
-                            fields = dict(re.findall(rb"(?:^|\s)([A-Z_]+)=([^\s]*)",ann))
-                            if fields[b"ALN"] != b"Reference" or fields[b"CLASS"] not in (b"Reference_MODIFIED",b"Reference_UNMODIFIED"):
-                                raise ValueError("Unexpected aligned read annotation")
-                            allele=(fields[b"ALN_REF"].decode(),fields[b"ALN_SEQ"].decode(),fields[b"CLASS"]==b"Reference_MODIFIED")
-                            cache[ann]=allele
-                        barcode=header.split()[0].split(b"|")[-1].decode()
-                        if len(barcode)!=16:
-                            raise ValueError("Lost original pBC during FLASH merging")
-                        families[barcode][allele]+=1
-                q,=table(report)
-                k=sum(n for vs in families.values() for a,n in vs.items() if a[2])
-                total=sum(sum(vs.values()) for vs in families.values())
-                if (k,total,pair_count)!=(int(q["Modified"]),int(q["Reads_aligned"]),int(q["Reads_in_input"])):
-                    raise ValueError(f"Read conservation failed for {target}: {k,total,pair_count} vs {q}")
+                families = read_aligned_families(results, target, pair_count)
         if rebuilt:
             labels = rebuilt_labels(rebuilt, target)
         else:
