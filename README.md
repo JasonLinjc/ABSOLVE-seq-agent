@@ -148,7 +148,7 @@ When alleles tie for the highest read count, fast reads use the first allele enc
 
 Plasmid pool sequencing identifies which plasmid barcodes (pBCs) qualify for each target. The default `--maxi-method manuscript` uses the published annotation derived from the study’s Maxi plasmid pool. To rebuild from the six original Maxi FASTQs, use `setup_references.py --published-maxi` for the published entropy threshold or `--historical-maxi` for the historical two-tBC exception. On later runs, pass the saved directory with `--maxi-reference DIR` and its matching `--maxi-method manuscript` or `--maxi-method historical`. [Build commands and rule comparison](docs/historical-maxi.md#build-the-reference-once)
 
-**Validation across all 26 study libraries.** On Luminary, we recounted the same fast-mode CRISPResso2 alignments using the default published pBC annotation and an annotation rebuilt from the six original Maxi FASTQs under the published rule. **All 8,216 library counts and all 632 model contrasts matched exactly**, including NoEP and edited indel rates, Δindel rates, and BH-adjusted q values. The historical rule remains available separately via `--historical-maxi`. [Validation details and checksums](docs/historical-maxi.md#published-rule-rebuild-across-26-libraries)
+[Full-panel pBC validation in fast and manuscript reproduction modes](docs/pbc-validation.md)
 
 <details>
 <summary><strong>Compare pBC definitions or change the target filter</strong></summary>
@@ -202,10 +202,7 @@ The first command reads `SupplementaryTable2.xlsx` through `SupplementaryTable5.
 
 Open the tables linked from each report and the PDF, PNG and Excel files in the adjacent `figures/` directory. A count refit runs directly in the calling process. See the [refit command and required inputs](docs/historical-maxi.md#refit-existing-counts).
 
-| Validation starting point | Agreement with submitted primary calls |
-| --- | --- |
-| Historical-trimming FASTQ replay | 628/632 (four WT differences). [Historical replay and four discordant calls](docs/manuscript-reads.md#luminary-validation) |
-| Saved encounter-order counts, equal-donor refit | 632/632. [Refit validation and numerical differences](docs/historical-maxi.md#luminary-acceptance) |
+See the [historical FASTQ replay](docs/manuscript-reads.md#luminary-validation) and [saved-count refit](docs/historical-maxi.md#historical-rule-rebuild-and-saved-count-refit) for comparisons with the submitted tables.
 
 </details>
 

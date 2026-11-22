@@ -66,15 +66,7 @@ Using the original six Maxi FASTQs with `--published-maxi` recovered all **5,190
 
 ### Published-rule rebuild across 26 libraries
 
-Both annotation runs started from the same archived fast-mode alignments for nine NoEP, nine WT and eight HiFi libraries. Each run independently counted all 79 targets under all four strategies. All 8,216 library/target/strategy rows matched in their indel numerators, denominators and pBC family counts.
-
-Each model fit produced 632 contrasts (79 targets × four strategies × two editors, WT and HiFi, each compared with NoEP). Within each donor-weighting scheme, the two annotations yielded identical control and edited indel rates, Δindel rates, one-sided p values, BH-adjusted q values and positive calls. The file digests confirm byte-for-byte agreement for each export.
-
-| Export | Rows | SHA-256 shared by both annotation runs |
-| --- | ---: | --- |
-| Library counts | 8,216 | `3db1f8203892c29edd231e2d88d942223b9c6a5b44a6d6d23aabc107f90a7a84` |
-| Model contrasts, three donors weighted equally on the logit scale | 632 | `627df9a661d2160184753c39a6bcf39dcef40449c42df7f867b229b1f0342755` |
-| Model contrasts, donors weighted by observed pBC family counts | 632 | `ff94527fbdf0a95bcfc59da57b708ed838692368c34ca69c046c01c537bfaa99` |
+[Full-panel validation in fast and manuscript reproduction modes, including the manuscript archive check and export checksums](pbc-validation.md)
 
 ### Historical-rule rebuild and saved-count refit
 
