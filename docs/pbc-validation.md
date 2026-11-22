@@ -19,6 +19,30 @@ sbatch --wait -p cpu1,cpu2 validate_pbc_panel.sbatch
 
 The job reads `data/pbc-validation.json`, allocates 32 CPUs and writes a new `runs/pbc-validation-*/` directory each time. The first line of the Slurm log gives its absolute path. To use another configuration or a specific new output directory, append `--config /path/to/config.json --output /path/to/new-run` to the same command.
 
+### Run from Codex or Claude Code
+
+In either client, open the repository and ask **“Validate pBC annotation reproducibility.”** You can ask in your own language. The agent uses the SSH alias `luminary` and the archive checkout registered for your account.
+
+To register a checkout once, run this command on Luminary from the repository with the [archive configuration](#configure-the-archives-once).
+
+```bash
+test -r data/pbc-validation.json && mkdir -p ~/.config/absolve-seq && pwd -P > ~/.config/absolve-seq/pbc-validation-repo
+```
+
+The client machine needs Python 3.9 or later and noninteractive SSH access to Luminary. The launcher runs the existing Slurm check and waits for its job. You can also invoke it directly from the client checkout.
+
+```bash
+python3 luminary_pbc.py
+```
+
+Use `--host ALIAS` for another SSH alias, `--repo /absolute/remote/checkout` to select a configured checkout explicitly, or `--output NEW_LOCAL_DIRECTORY` to choose the delivery location. By default the launcher creates a separate local `runs/pbc-delivery-*/` directory and records the job ID, remote results path and log path in `job.json`. After a disconnect, use the printed local directory to follow the same job.
+
+```bash
+python3 luminary_pbc.py --resume /path/to/local/delivery
+```
+
+Once the job finishes, the launcher checks every entry in the remote SHA-256 manifest, downloads the two comparison tables and the manifest, and verifies both local tables against it. Open `summary.tsv` for the result by mode and `differences.tsv` for the affected fields. The count and model exports listed in `SHA256SUMS` are in the remote results directory recorded in `job.json`. Completed comparisons with differences also deliver all three files.
+
 ### Configure the archives once
 
 Copy the [example configuration](../examples/pbc-validation.json) to `data/pbc-validation.json` and set the paths below. Relative paths resolve from the config file's directory. The compute node needs Python 3.9 or later and Apptainer with read access to the archives.

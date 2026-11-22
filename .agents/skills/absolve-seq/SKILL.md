@@ -1,6 +1,6 @@
 ---
 name: absolve-seq
-description: Analyze original ABSOLVE-seq pooled reporter FASTQs end to end and deliver a report locally or on Slurm. Select a matched donor and replicate, compare plasmid barcode filtering criteria, export four indel-rate strategies, simulate detection power, deliver the report and figure, or reproduce manuscript treatment margins across the 79-target panel.
+description: Analyze original ABSOLVE-seq pooled reporter FASTQs end to end and deliver a report locally or on Slurm. Select a matched donor and replicate, compare plasmid barcode filtering criteria, export four indel-rate strategies, simulate detection power, deliver the report and figure, or reproduce manuscript treatment margins across the 79-target panel. Use this skill for requests in any language to validate pBC annotation reproducibility on Luminary.
 ---
 
 # ABSOLVE-seq analysis
@@ -8,6 +8,14 @@ description: Analyze original ABSOLVE-seq pooled reporter FASTQs end to end and 
 Work from the repository root in the environment described in the README. Use the user's configured manifest and reference inputs. When neither a Slurm allocation nor `sbatch` is available, run the Python entry point directly on the local machine. Honor a request for local execution with `--executor local`.
 
 For a public test dataset, follow the [D3734/T1 quick start](../../../docs/d3734-t1-quick-start.md#public-test-data-from-sra). Download both mates of NoEP `SRR39887646` and HiFi `SRR39887695` from study `SRP722226`. Use the example's `--ena` manifest option to verify the four files before submitting the pair with `--fresh`.
+
+### Validate pBC annotation reproducibility
+
+Route “Validate pBC annotation reproducibility” and equivalent requests in any language directly here, including a short Chinese request with no host, donor or mode specified. When offering tasks, list this as an optional full-panel check. The request selects Luminary, all 26 libraries and both read modes. It compares the published annotation with the saved six-Maxi rebuild under the published rule using existing alignments.
+
+1. From the client checkout run `python3 luminary_pbc.py`. The launcher uses the configured Luminary checkout and prints the job ID and local delivery directory. If the user supplies a checkout or SSH alias, pass `--repo` or `--host`. For a missing configuration, follow the [one-time setup](../../../docs/pbc-validation.md#run-from-codex-or-claude-code). Skip donor selection, annotation rebuilding and local execution for this request.
+2. Follow that process through completion. If monitoring or delivery was interrupted, run `python3 luminary_pbc.py --resume LOCAL_DELIVERY_DIR` with the directory from the same request. If submission was interrupted before a job ID was recorded, check the Luminary queue and accounting before attempting another submission.
+3. Read `summary.tsv` and `differences.tsv` from the verified delivery. In the user's language, give the job ID, counts and model rows checked per mode and observed differences. Link the local `summary.tsv`, `differences.tsv` and `SHA256SUMS`. Exit 1 delivers completed comparisons with differences. For exit 2, identify the failed stage using the job receipt and Slurm log when available.
 
 ### Choices in chat
 

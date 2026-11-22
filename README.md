@@ -119,6 +119,12 @@ The first prompt above runs the whole example. To guide it step by step, send th
 
 **What a verified answer looks like.** For that target in the public pair, NoEP has **0/1,619** edited pBC families and HiFi has **9/675**. The rates are 0.00% and 1.33%, giving **+1.33 percentage points** for HiFi minus NoEP. You can check both counts in `paired_target_rates.tsv`.
 
+### Validate pBC annotation reproducibility
+
+> Validate pBC annotation reproducibility.
+
+Ask in your preferred language in Codex or Claude Code. With the Luminary archive configured, the agent checks all 26 libraries in fast and manuscript reproduction modes and returns the comparison summary, field-level differences and SHA-256 manifest. [One-time setup and output guide](docs/pbc-validation.md#run-from-codex-or-claude-code)
+
 ## Quick start
 
 Prefer the terminal? Follow the [D3734/T1 walkthrough](docs/d3734-t1-quick-start.md) to install the environment, fetch the pinned upstream references, verify both mates and create the manifest. The public runs are NoEP `SRR39887646` and HiFi `SRR39887695`. The same donor and replicate also have a [WT library](https://www.ebi.ac.uk/ena/browser/view/SRR39887693) for the [full-panel comparison](#manuscript-comparison).
