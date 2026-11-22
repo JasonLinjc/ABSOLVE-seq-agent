@@ -10,6 +10,7 @@ from tempfile import TemporaryDirectory
 
 from panel_report.manuscript_reads import GITHUB_TRIM_STEPS, HISTORICAL_TRIM_STEPS, ROOT, STRATEGIES, digest, save, table
 from analysis_report import complete_report
+from historical_maxi import configured_reference, reference, reference_key
 from settings import DATA, MANIFEST, PUBLIC, PUBLISHED, RUNS
 
 ARM = {"WTCas9":"WT","HiFiCas9":"HiFi","noEP":"NoEP"}
@@ -88,11 +89,12 @@ def finish(config):
     libs=cfg["libraries"]
     if len(targets)!=len(set(targets)) or len(targets)!=79:
         raise ValueError("Incomplete reference")
+    rebuilt = configured_reference(cfg)
     rows=[]; paired={}
     for s in libs:
         for t in targets:
             record=json.loads((base/"work"/s["sample_name"]/"targets"/(t+".json")).read_text())
-            if record.get("maxi_reference_sha256") != cfg.get("historical_reference", {}).get("reference_sha256"):
+            if record.get("maxi_reference_sha256") != rebuilt.get("reference_sha256"):
                 raise ValueError("Target counts use a different Maxi reference")
             if record["target"]!=t: raise ValueError("Target mismatch")
             for strategy in STRATEGIES:
@@ -122,8 +124,8 @@ def finish(config):
             receipt["crispresso_executable_sha256"] = digest(cfg["crispresso"])
         receipt["executor"] = cfg.get("executor", "slurm")
         receipt["maxi_method"] = cfg.get("maxi_method", "manuscript")
-        if "historical_reference" in cfg:
-            receipt["historical_reference"] = cfg["historical_reference"]
+        if rebuilt:
+            receipt[reference_key(cfg.get("maxi_method", "historical"))] = rebuilt
         if len(libs)==26:
             refs=Path(cfg["refs"]).resolve(strict=True)
             receipt.update(fit_panel(stage, refs, cfg.get("stats_image")))
@@ -197,8 +199,7 @@ def start(args, *, local, workers):
              baseline=str(Path(args.baseline_panel).resolve()) if args.baseline_panel else None)
     cfg["maxi_method"] = args.maxi_method
     if args.maxi_reference:
-        from historical_maxi import reference
-        cfg["historical_reference"] = reference(args.maxi_reference)
+        cfg[reference_key(args.maxi_method)] = reference(args.maxi_reference, args.maxi_method)
         del cfg["published"]
     jar = os.environ.get("ABSOLVE_TRIMMOMATIC_JAR")
     if not jar:

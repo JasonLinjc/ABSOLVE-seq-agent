@@ -16,6 +16,7 @@ from tempfile import TemporaryDirectory
 from analysis_report import complete_report
 from maxi_qc import PUBLISHED_SHA256, sha256
 from pilot import PUBLIC
+from historical_maxi import rebuilt_labels, reference_key
 from target_identity import TargetIdentity, filtered_counts
 
 AGENT = Path(__file__).resolve().parents[1]
@@ -119,8 +120,7 @@ def read_good_families(folder, target, good):
 def recount_target(task):
     target, samples, published, historical = task
     if historical:
-        from historical_maxi import historical_labels
-        good = historical_labels({'historical_reference': historical}, target)
+        good = rebuilt_labels(historical, target)
     else:
         with (published/(target+'.tsv')).open() as f:
             good = {}
@@ -183,7 +183,9 @@ def run_panel(output, historical=None, *, workers, job_id):
                        implementation_sha256={p.name:sha256(p) for p in (Path(__file__),PANEL/'manuscript_model.R',AGENT/'target_identity.py')})
         if historical:
             receipt.pop('published_sha256')
-            receipt.update(maxi_method='historical', historical_reference=historical)
+            method = historical.get('method', 'historical')
+            receipt.update(maxi_method=method)
+            receipt[reference_key(method)] = historical
         (stage/'provenance.json').write_text(json.dumps(receipt,indent=2)+'\n')
         complete_report(stage, "fast panel with family-weighted donor margins", panel=True)
         stage.rename(output)

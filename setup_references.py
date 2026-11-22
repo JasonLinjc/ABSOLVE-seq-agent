@@ -1,4 +1,4 @@
-"""Build the local reporter-panel index from the pinned upstream ABSOLVE-seq checkout."""
+"""Build the published reporter-panel index or rebuild its pBC membership from original Maxi FASTQs."""
 import argparse
 import csv
 import gzip
@@ -79,17 +79,22 @@ def build(upstream):
 if __name__=='__main__':
     parser=argparse.ArgumentParser(description=__doc__)
     parser.add_argument('upstream',type=Path,nargs='?',default=DATA/'upstream')
-    parser.add_argument('--historical-maxi', type=Path, metavar='FASTQ_DIR', help='Rebuild the historical reference from the six original Maxi FASTQs.')
+    rebuild = parser.add_mutually_exclusive_group()
+    rebuild.add_argument('--published-maxi', type=Path, metavar='FASTQ_DIR', help='Rebuild qualifying pBCs from the six original Maxi FASTQs using the published entropy rule.')
+    rebuild.add_argument('--historical-maxi', type=Path, metavar='FASTQ_DIR', help='Rebuild the historical reference from the six original Maxi FASTQs.')
     parser.add_argument('--trimmomatic-jar', type=Path)
     parser.add_argument('--output', type=Path)
     parser.add_argument('--threads', type=int, default=3)
     args = parser.parse_args()
-    if args.historical_maxi:
-        from historical_maxi import build as build_historical
+    if args.historical_maxi or args.published_maxi:
+        from historical_maxi import build as build_maxi
         if not args.trimmomatic_jar:
-            parser.error('--historical-maxi requires --trimmomatic-jar')
-        build_historical(args.historical_maxi, args.trimmomatic_jar, args.output or DATA/'historical-maxi', args.threads)
+            parser.error('A Maxi FASTQ rebuild requires --trimmomatic-jar')
+        method = 'manuscript' if args.published_maxi else 'historical'
+        default_dir = DATA / ('published-maxi' if args.published_maxi else 'historical-maxi')
+        build_maxi(args.published_maxi or args.historical_maxi, args.trimmomatic_jar,
+                   args.output or default_dir, args.threads, method)
     elif args.trimmomatic_jar or args.output:
-        parser.error('--trimmomatic-jar and --output apply to --historical-maxi')
+        parser.error('--trimmomatic-jar and --output require --published-maxi or --historical-maxi')
     else:
         build(args.upstream)

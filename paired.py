@@ -14,7 +14,7 @@ import sys
 import tempfile
 
 from maxi_qc import DEFAULT_METHOD, MERGED, POOLS, REQUIRED, reconstructed_call, sha256, verified_reference
-from historical_maxi import reference as historical_reference
+from historical_maxi import reference as maxi_reference, reference_key
 from pilot import CUT, PUBLIC, table
 
 AGENT = Path(__file__).resolve().parent
@@ -84,6 +84,7 @@ def execute(args, samples, workers, job_id):
     published_targets = {r['OT'].replace('-', '_'): r['Barcode'] for r in table(PUBLIC/'target_oligos_sequenes.csv')}
     if len(targets) != 79 or targets != published_targets:
         raise ValueError('Target map disagrees with the published 79-target panel.')
+    rebuilt = maxi_reference(args.maxi_reference, args.maxi_method) if args.maxi_reference else None
     work = args.output.resolve() if args.output else RUNS / f"paired_{job_id or ('local_' + uuid4().hex)}"
     work.mkdir(parents=True, exist_ok=False)
     previous = None if args.fresh else previous_alignment(args.donor, args.replicate, samples)
@@ -106,14 +107,14 @@ def execute(args, samples, workers, job_id):
             list(pool.map(run, indices))
 
     with tempfile.TemporaryDirectory(dir=work, prefix='maxi_') as tmp:
-        if args.maxi_method == DEFAULT_METHOD:
+        if rebuilt:
+            config[reference_key(args.maxi_method)] = rebuilt
+            config['references'] = [rebuilt]
+        elif args.maxi_method == DEFAULT_METHOD:
             published = PUBLISHED
             if (published/'source.sha256').read_text().strip() != PUBLISHED_SHA256:
                 raise ValueError('Manuscript reference checksum mismatch.')
             config.update(published=str(published), references=[dict(path=str(published), source_sha256=PUBLISHED_SHA256)])
-        elif args.maxi_method == 'historical':
-            config['historical_reference'] = historical_reference(args.maxi_reference)
-            config['references'] = [config['historical_reference']]
         else:
             folders = [MERGED] if args.maxi_method == 'merged' else POOLS
             config['reference_dirs'] = [str(Path(tmp)/f.name) for f in folders]
@@ -136,7 +137,7 @@ def main():
     parser.add_argument('--donor')
     parser.add_argument('--replicate')
     parser.add_argument('--maxi-method', choices=[DEFAULT_METHOD, 'historical', *REQUIRED], default=DEFAULT_METHOD)
-    parser.add_argument('--maxi-reference', type=Path, help='Folder containing the pBC annotation you generated with setup_references.py --historical-maxi. Reuse it across runs.')
+    parser.add_argument('--maxi-reference', type=Path, help='Saved Maxi FASTQ rebuild for the selected rule (manuscript or historical).')
     parser.add_argument('--min-exact-reads', type=int, help='Reconstructed Maxi methods only (default 1).')
     parser.add_argument('--output', type=Path, help='New output directory (default: a unique directory under runs/).')
     parser.add_argument('--fresh', action='store_true', help='Prepare and align full FASTQs again.')
@@ -165,8 +166,10 @@ def main():
         from panel_report.manuscript_run import finish
         finish(args.finish_manuscript.resolve())
         return
-    if (args.maxi_method == 'historical') != bool(args.maxi_reference):
-        parser.error('--maxi-method historical and --maxi-reference must be supplied together')
+    if args.maxi_method == 'historical' and not args.maxi_reference:
+        parser.error('--maxi-method historical requires --maxi-reference')
+    if args.maxi_reference and args.maxi_method not in (DEFAULT_METHOD, 'historical'):
+        parser.error('--maxi-reference requires the manuscript or historical rule')
     if args.maxi_method == 'historical' and args.min_exact_reads is not None:
         parser.error('The historical rule has no adjustable read threshold')
     mode = args.read_mode or ('manuscript' if args.manuscript_panel else 'fast')
@@ -188,7 +191,7 @@ def main():
         if not local and not job_id:
             parser.error('Submit the panel with sbatch paired.sbatch --manuscript-panel.')
         from panel_report.reproduce import run_panel
-        run_panel(args.output, historical_reference(args.maxi_reference) if args.maxi_reference else None, workers=workers, job_id=job_id)
+        run_panel(args.output, maxi_reference(args.maxi_reference, args.maxi_method) if args.maxi_reference else None, workers=workers, job_id=job_id)
         return
     args.target_filter = args.target_filter or 'manuscript'
     groups = discover()

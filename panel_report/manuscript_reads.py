@@ -17,6 +17,7 @@ from tempfile import TemporaryDirectory
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
+from historical_maxi import configured_reference, rebuilt_labels
 from target_identity import TargetIdentity
 
 STRATEGIES = ("Unfiltered", "Dedup", "Dedud", "Dedud+Dedup")
@@ -175,7 +176,8 @@ def crispresso_command(cfg, root=None):
 def count_target(cfg, root, spec, pair_count):
     target = spec["OT_name"]
     final = root/"targets"/(target+".json")
-    reference_hash = cfg.get("historical_reference", {}).get("reference_sha256")
+    rebuilt = configured_reference(cfg)
+    reference_hash = rebuilt.get("reference_sha256")
     if final.exists():
         if json.loads(final.read_text()).get("maxi_reference_sha256") != reference_hash:
             raise ValueError("Cached counts use a different Maxi reference")
@@ -226,9 +228,8 @@ def count_target(cfg, root, spec, pair_count):
                 total=sum(sum(vs.values()) for vs in families.values())
                 if (k,total,pair_count)!=(int(q["Modified"]),int(q["Reads_aligned"]),int(q["Reads_in_input"])):
                     raise ValueError(f"Read conservation failed for {target}: {k,total,pair_count} vs {q}")
-        if cfg.get("historical_reference"):
-            from historical_maxi import historical_labels
-            labels = historical_labels(cfg, target)
+        if rebuilt:
+            labels = rebuilt_labels(rebuilt, target)
         else:
             labels={}
             with (Path(cfg["published"])/(target+".tsv")).open() as handle:

@@ -13,6 +13,7 @@ sys.path.insert(0,str(root.parent))
 from pilot import CUT, PUBLIC, fastq, one
 from target_identity import TargetIdentity, filtered_counts, family_counts
 from maxi_qc import sha256, PUBLISHED_SHA256, REQUIRED, DEFAULT_METHOD
+from historical_maxi import configured_reference, rebuilt_labels
 from settings import RUNTIME
 sys.path.insert(0,str(RUNTIME/'src'))
 import pipeline as cut
@@ -76,7 +77,10 @@ if total:
 else:
     aligned=indels=0
 
-if method == DEFAULT_METHOD:
+rebuilt = configured_reference(pair)
+if rebuilt:
+    labels = rebuilt_labels(rebuilt, tid)
+elif method == DEFAULT_METHOD:
     # The published table can repeat a target/pBC. Repository step 5 takes the first row.
     published = Path(pair.get('published', published))
     assert (published/'source.sha256').read_text().strip()==PUBLISHED_SHA256
@@ -86,9 +90,6 @@ if method == DEFAULT_METHOD:
             pbc,good=line.rstrip().split('\t')
             if pbc in families:
                 labels.setdefault(pbc,good=='1')
-elif method == 'historical':
-    from historical_maxi import historical_labels
-    labels = historical_labels(pair, tid)
 else:
     # Each file holds the Good pBCs for one target in one independently evaluated reference.
     votes = Counter()
