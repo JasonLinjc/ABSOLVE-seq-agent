@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="660" height="545" viewBox="0 0 660 545" role="img" aria-labelledby="title desc">
   <title id="title">ABSOLVE-seq agent architecture</title>
-  <desc id="desc">A chat request in Codex or Claude Code selects a repository skill. The skills invoke command-line tools without requiring an MCP server. A matched NoEP and HiFi pair supplies R1 and R2 FASTQs and a sample manifest. The reference index supplies target barcodes, amplicons and guides. For plasmid barcode (pBC) annotation, use the published annotation by default or rebuild from the original study’s six Maxi FASTQs using the published or historical entropy rule. Later runs can reuse that saved annotation directory. Conda or a container provides the software, and execution runs locally or on Slurm. Reads are assigned by target barcode, merged with FLASH and aligned to the target amplicon with CRISPResso2 2.2.13 to identify indels in the cut-site window, and grouped by plasmid barcode. For each target and strategy, the workflow estimates the NoEP and HiFi indel rates, calculates Δindel rate as HiFi minus NoEP in percentage points, and simulates detection power at increases of 0.01 and 0.1 percentage points. The paired_target_rates.tsv table contains indel rates and paired differences. The power_estimates.tsv table contains detection power estimates. The run also produces report.md, a PDF and PNG figure and Excel source data.</desc>
+  <desc id="desc">Codex, Claude Code and DeepSeek Harness use the repository skills. The analysis runs through the CLI, with an optional site MCP bridge for remote execution. A matched NoEP and HiFi pair supplies R1 and R2 FASTQs and a sample manifest. The reference index supplies target barcodes, amplicons and guides. For plasmid barcode (pBC) annotation, use the published annotation by default or rebuild from the original study’s six Maxi FASTQs using the published or historical entropy rule. Later runs can reuse that saved annotation directory. Conda or a container provides the software, and execution runs locally or on Slurm. Reads are assigned by target barcode, merged with FLASH and aligned to the target amplicon with CRISPResso2 2.2.13 to identify indels in the cut-site window, and grouped by plasmid barcode. For each target and strategy, the workflow estimates the NoEP and HiFi indel rates, calculates Δindel rate as HiFi minus NoEP in percentage points, and simulates detection power at increases of 0.01 and 0.1 percentage points. The paired_target_rates.tsv table contains indel rates and paired differences. The power_estimates.tsv table contains detection power estimates. The run also produces report.md, a PDF and PNG figure and Excel source data.</desc>
   <defs>
     <marker id="arrow" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="6" markerHeight="6" orient="auto">
       <path d="M0 0 L8 4 L0 8 Z" fill="#211f20"/>
@@ -25,7 +25,7 @@
     <rect class="stage input" x="8" y="6" width="314" height="71" rx="10"/>
     <text class="label" x="165" y="25">Input</text>
     <rect class="box" x="17" y="32" width="296" height="37" rx="10"/>
-    <text x="165" y="56">Chat request in Codex or Claude Code</text>
+    <text x="165" y="56">Codex · Claude Code · dsh</text>
   </g>
   <path class="flow" d="M165 78 v12"/>
   <g aria-label="Skills and tool access">
@@ -34,7 +34,7 @@
     <rect class="box" x="17" y="121" width="296" height="49" rx="10"/>
     <text x="165" y="141">absolve-seq · analysis</text>
     <text x="165" y="161">absolve-seq-figures · plotting</text>
-    <text x="165" y="190">CLI access · no MCP server required</text>
+    <text x="165" y="190">Analysis CLI · optional MCP bridge</text>
   </g>
   <g aria-label="Data">
     <rect class="stage data" x="338" y="6" width="314" height="194" rx="10"/>

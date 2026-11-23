@@ -1,0 +1,19 @@
+- id: agent-default-model
+  config:
+    provider: study-gateway
+    model: !!js process.env.ABSOLVE_LLM_MODEL
+- id: llm-pi-ai
+  config:
+    providers:
+      study-gateway:
+        api: openai-completions
+        baseURL: !!js process.env.ABSOLVE_LLM_BASE_URL
+        apiKeyEnv: ABSOLVE_LLM_API_KEY
+        compat:
+          thinkingFormat: deepseek
+        models:
+          - id: !!js process.env.ABSOLVE_LLM_MODEL
+            contextWindow: 65536
+            maxTokens: 4096
+- id: session-log-deepseek
+  disabled: true

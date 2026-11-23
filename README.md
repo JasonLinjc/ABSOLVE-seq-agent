@@ -8,7 +8,7 @@
 <h1 align="center">Quantify off-target gene editing with ABSOLVE-seq</h1>
 
 <p align="center">
-  A conversational analysis agent for the original 79-target reporter panel, available in Codex and Claude Code.
+  A conversational analysis agent for the original 79-target reporter panel, available in Codex, Claude Code and DeepSeek Harness.
 </p>
 
 <p align="center">
@@ -26,7 +26,7 @@
 
 ### Start with one message
 
-Open a folder in Codex or Claude Code and send the **User** message below. The agent can use your study manifest or download the 52 public FASTQs. The current panel workflow also needs the model references extracted from Supplementary Tables 2–5, or the four workbooks to prepare them. [Full-panel setup](docs/manuscript-reads.md#analyze-all-study-samples) · [DeepSeek Harness FASTQ-to-report acceptance](docs/dsh-panel-acceptance.md)
+Send the **User** message below in Codex, Claude Code or a [configured DeepSeek Harness](#configure-deepseek-harness). The agent can use your study manifest or download the 52 public FASTQs. The current panel workflow also needs the model references extracted from Supplementary Tables 2–5, or the four workbooks to prepare them. [Full-panel setup](docs/manuscript-reads.md#analyze-all-study-samples)
 
 <table>
 <tbody>
@@ -103,7 +103,7 @@ For remote execution, include the cluster’s SSH alias and a shared working dir
 ### Agent architecture
 
 <p align="center">
-  <img src="docs/assets/agent-architecture.svg" width="660" alt="Codex and Claude Code use shared skills to run the analysis locally or on Slurm. The workflow connects sequencing and barcode inputs to editing and power estimates, a report, a figure and Excel data." />
+  <img src="docs/assets/agent-architecture.svg" width="660" alt="The chat clients use shared skills to run the analysis locally or on Slurm. The workflow connects sequencing and barcode inputs to editing and power estimates, a report, a figure and Excel data." />
 </p>
 
 **Inputs.** Each library contributes an R1 and an R2 FASTQ. The manifest maps both files to the sample and records their SHA-256 checksums. [Manifest template](examples/manifest.example.tsv)
@@ -143,9 +143,11 @@ The four strategies below use the same alignments. By default, the published pla
 
 The paired workflow selects the most frequent allele in each family for deduplication. It breaks ties by aligned read sequence, then by aligned reference sequence. Library counts, sample identity and processing settings are recorded in `library_counts.tsv`, `sample_inventory.tsv` and `provenance.json`.
 
-## Set up in Codex or Claude Code
+<a id="set-up-in-codex-or-claude-code"></a>
 
-For manual setup, clone the repository and open the checkout in your signed-in client.
+## Set up your chat client
+
+Clone the repository and start your client from the checkout.
 
 ```bash
 git clone https://github.com/JasonLinjc/ABSOLVE-seq-agent.git
@@ -156,6 +158,7 @@ cd ABSOLVE-seq-agent
 | --- | --- |
 | Codex | Open the folder in the Codex app or run `codex` in the checkout. Ask for the ABSOLVE-seq skill or type `$absolve-seq` in the CLI. [Codex quick start](https://developers.openai.com/codex/quickstart/) |
 | Claude Code | Run `claude` in the checkout and enter `/absolve-seq` followed by your request. [Claude Code quick start](https://code.claude.com/docs/en/quickstart) |
+| DeepSeek Harness | Set up the model gateway below, then pass the one-message prompt to the headless CLI from the checkout. |
 
 For the analysis runtime, download the prebuilt Linux x86-64 Docker or Apptainer image, or install the locked Conda environment. [Download v0.2.0](https://github.com/JasonLinjc/ABSOLVE-seq-agent/releases/tag/v0.2.0) · [Load and run the image](docs/container.md#download-a-prebuilt-image) · [Conda setup](docs/d3734-t1-quick-start.md#1-get-the-agent-and-create-an-environment)
 
@@ -169,6 +172,34 @@ ABSOLVE_MANIFEST=examples/manifest.example.tsv python paired.py --list
 The example manifest lists `NoEP_pool_D3734_T1` and `HiFi_pool_D3734_T1`. Its FASTQ paths are placeholders.
 
 </details>
+
+### Configure DeepSeek Harness
+
+DeepSeek Harness (`dsh`) successfully reproduced the default full-panel analysis on Luminary. Starting from raw FASTQs for 26 libraries across all 79 targets, it reproduced the archived count and model tables byte for byte. Power, Figure 3b and its Excel source data also passed verification. [Acceptance record and comparison with the submitted tables](docs/dsh-panel-acceptance.md)
+
+1. With Node.js 24.9 or later, install the CLI version used for that run. Run the following from the repository checkout.
+
+   ```bash
+   npm install --global @deepseek-ai/dsh@0.2.2-rc.1
+   ```
+
+2. Set the base URL and model ID supplied by your OpenAI-compatible DeepSeek gateway. In Bash, the last two lines read and export the API key without displaying it. [Gateway configuration template](examples/dsh-gateway.yml)
+
+   ```bash
+   export ABSOLVE_LLM_BASE_URL='https://your-gateway.example/v1'
+   export ABSOLVE_LLM_MODEL='your-deepseek-model-id'
+   read -rsp 'Gateway API key: ' ABSOLVE_LLM_API_KEY && printf '\n'
+   export ABSOLVE_LLM_API_KEY
+   ```
+
+3. On the machine that will run the analysis, prepare the [full-panel runtime and inputs](docs/manuscript-reads.md#analyze-all-study-samples). Run the first line below, paste the [one-message prompt](#start-with-one-message), and press Enter. Then run the second line.
+
+   ```bash
+   read -rp 'Analysis request: ' study_prompt
+   dsh --profile headless --patch examples/dsh-gateway.yml "$study_prompt"
+   ```
+
+For a remote cluster, the tested setup used a site-provided MCP server with tools to submit the panel and check its Slurm status. To use your site's bridge from a workstation, add `--patch /path/to/cluster-bridge.yml` before `"$study_prompt"`. The model gateway supplies the model connection. Your cluster bridge supplies remote execution.
 
 ## Quick start
 
@@ -205,7 +236,7 @@ The three main commands live at the top level. Use [setup_references.py](setup_r
 | Directory | What you’ll find |
 | --- | --- |
 | [examples/](examples/) and [docs/](docs/) | Sample manifests, public FASTQ links, walkthroughs and acceptance records |
-| [.agents/skills/](.agents/skills/) and [.claude/skills/](.claude/skills/) | Analysis and figure instructions for Codex and Claude Code |
+| [.agents/skills/](.agents/skills/) and [.claude/skills/](.claude/skills/) | Shared analysis and figure instructions, with Claude Code entry points |
 | [absolve/](absolve/) | Barcode filtering, target identity, power estimation, figures and reports |
 | [panel_report/](panel_report/), [workers/](workers/) and [runtime/](runtime/) | Library and target processing, manuscript panel models and archived workflow components |
 | [tools/](tools/) | Optional manifest import, pilot runs and archive audits |
