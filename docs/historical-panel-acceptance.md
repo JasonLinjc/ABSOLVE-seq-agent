@@ -65,6 +65,12 @@ Job `21338648` repeated this control with the [agent’s historical per-pBC coll
 
 **Cause of the 2025 omissions.** On April 27, Slurm job 5010 was cancelled after 74 seconds, and job 5011 used the same script name. The preserved script enabled `--no_rerun`. The control confirms that a missing window file is sufficient for a successful restart to yield incomplete tables. The shared-memory file list from the original collection is unavailable, so the specific operation responsible for the 932 historical omissions remains unknown.
 
+## pBC completeness across all NoEP and HiFi batches
+
+The audit covered 1,343 donor–replicate–target batches across 79 targets: 711 from nine NoEP libraries and 632 from eight HiFi libraries. The archive search found no complete historical per-pBC success list for any of these batches. Luminary job `21341762` reconstructed the family IDs from the target-split paired FASTQs. In every batch, the archived guide-window and full-length allele tables each contained exactly the reconstructed set of pBCs.
+
+All **2,686 batch-by-strategy comparisons** matched the historical filtered tables in both numerator and denominator. For Dedud, the audit compared indel reads and total retained reads. For Dedud+Dedup, it compared families with an indel-positive representative and total retained families.
+
 ## Export checks
 
 The fresh run produced 2,054 library–target records. Its 8,216-row count table and 632-row model table matched the previously accepted historical analysis byte for byte. The power and figure checks also passed for 1,264 independently simulated power estimates and 158 Figure 3b source rows.
