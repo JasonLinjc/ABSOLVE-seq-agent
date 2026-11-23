@@ -29,7 +29,7 @@
 
 The agent downloads four FASTQ files (1.58 GB) and analyzes all 79 targets using both ends of each read pair and the published plasmid barcode annotation. Before handing you the report, it checks the editing rates against the verified example and checks the power estimates for detecting small editing differences. Start with `results/report.md` for the figure and links to the tables. [Public dataset](https://trace.ncbi.nlm.nih.gov/Traces/?view=study&acc=SRP722226) · [Verified example results](docs/d3734-t1-quick-start.md#verified-on-luminary) · [Docker acceptance](docs/container.md#d3734t1-docker-acceptance)
 
-You’ll need a signed-in client, Git, internet access and either Conda/Mamba or a supported container runtime. [Setup options](docs/container.md)
+You’ll need a signed-in client, Git, internet access and either Conda/Mamba or a supported container runtime. [Download the Docker or Apptainer image](https://github.com/JasonLinjc/ABSOLVE-seq-agent/releases/tag/v0.2.0) · [Container setup](docs/container.md#download-a-prebuilt-image)
 
 **Using a cluster from your laptop?** Add the cluster’s SSH name and an empty shared folder to your message so the agent knows where to run the analysis. [Cluster setup and transfer](docs/container.md#stage-public-inputs-from-a-networked-machine)
 

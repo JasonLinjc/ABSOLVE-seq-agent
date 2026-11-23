@@ -2,20 +2,61 @@
 
 The Linux x86-64 Dockerfile builds the paired-end analysis environment and includes the agent source, CRISPResso2 2.2.13, Python and R with brglm2. Keep FASTQs, the sample manifest, reference tables and results on mounted storage.
 
-## Run the default paired workflow in Docker
+## Download a prebuilt image
 
-Build from this checkout for the unified 2.2.13 runtime. The image uses the same package lock as the [paired quick start](d3734-t1-quick-start.md). With the example references and manifest prepared, mount the checkout at the same absolute path used by the manifest. Mount any external input directories at their original paths too.
+The [v0.2.0 release](https://github.com/JasonLinjc/ABSOLVE-seq-agent/releases/tag/v0.2.0) packages the Linux x86-64 image from the D3734/T1 acceptance run at commit `b7964ed`. Choose Docker or Apptainer below. Run the commands in a writable project directory. The image includes the analysis code and software. The reference files, sample manifest, FASTQs and outputs live in the project directory.
+
+Set the release URL and download the checksum manifest once:
 
 ```bash
-docker build --platform linux/amd64 -t absolve-seq-agent:local .
+release=https://github.com/JasonLinjc/ABSOLVE-seq-agent/releases/download/v0.2.0
+curl -fLO "$release/SHA256SUMS"
+```
+
+### Docker
+
+```bash
+curl -fLO "$release/absolve-linux-amd64.tar.gz"
+awk '$2 == "absolve-linux-amd64.tar.gz"' SHA256SUMS | shasum -a 256 -c -
+docker load -i absolve-linux-amd64.tar.gz
+image=absolve-seq-agent:b7964edb00a5b7c61f1e3db922630e21c12e20ff
 run_agent() {
     docker run --rm --platform linux/amd64 --user "$(id -u):$(id -g)" \
-        --volume "$PWD:$PWD" --workdir "$PWD" absolve-seq-agent:local "$@"
+        --volume "$PWD:$PWD" --env "ABSOLVE_DATA=$PWD/data" --env HOME=/tmp \
+        --env MPLCONFIGDIR=/tmp/matplotlib "$image" "$@"
 }
-run_agent python paired.py --executor local --donor D3734 --replicate T1 --threads 4 --output runs/D3734-T1
-run_agent python verify_results.py pair-manuscript runs/D3734-T1/results
-run_agent python verify_results.py power runs/D3734-T1/results
+run_agent python paired.py --help
 ```
+
+### Apptainer
+
+On a Linux x86-64 workstation or compute node:
+
+```bash
+curl -fLO "$release/absolve-linux-amd64.sif"
+awk '$2 == "absolve-linux-amd64.sif"' SHA256SUMS | sha256sum -c -
+run_agent() {
+    apptainer exec --cleanenv --bind "$PWD:$PWD" --pwd /opt/absolve \
+        --env "ABSOLVE_DATA=$PWD/data" "$PWD/absolve-linux-amd64.sif" "$@"
+}
+run_agent python paired.py --help
+```
+
+### Analyze the public pair
+
+With either `run_agent` function defined, fetch the upstream reference checkout and four FASTQs using the [public dataset walkthrough](d3734-t1-quick-start.md). Its [ENA download table](../examples/d3734_t1_ena.tsv) lists both mates for each library. From a fresh project with those inputs staged, run:
+
+```bash
+fastqs="$PWD/data/sra/SRP722226"
+out="$PWD/runs/D3734-T1"
+run_agent python setup_references.py
+run_agent python examples/d3734_t1_manifest.py --ena "$fastqs" "$PWD/data/sample_manifest.tsv"
+run_agent python paired.py --executor local --donor D3734 --replicate T1 --threads 4 --output "$out"
+run_agent python verify_results.py pair-manuscript "$out/results"
+run_agent python verify_results.py power "$out/results"
+```
+
+Open `runs/D3734-T1/results/report.md` for the report, figure and Excel source data. For inputs outside the project, mount their directories at the same absolute paths recorded in the manifest.
 
 For an existing Linux cluster installation, the default workflow also supports Trimmomatic 0.36 on the host and a separate CRISPResso2 2.2.13 Apptainer image. [Cluster runtime configuration](manuscript-reads.md#configure-the-runtime)
 
