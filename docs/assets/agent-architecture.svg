@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="660" height="545" viewBox="0 0 660 545" role="img" aria-labelledby="title desc">
   <title id="title">ABSOLVE-seq agent architecture</title>
-  <desc id="desc">Codex, Claude Code and DeepSeek Harness use the repository skills. The analysis runs through the CLI, with an optional site MCP bridge for remote execution. A matched NoEP and HiFi pair supplies R1 and R2 FASTQs and a sample manifest. The reference index supplies target barcodes, amplicons and guides. For plasmid barcode (pBC) annotation, use the published annotation by default or rebuild from the original study’s six Maxi FASTQs using the published or historical entropy rule. Later runs can reuse that saved annotation directory. Conda or a container provides the software, and execution runs locally or on Slurm. Reads are assigned by target barcode, merged with FLASH and aligned to the target amplicon with CRISPResso2 2.2.13 to identify indels in the cut-site window, and grouped by plasmid barcode. For each target and strategy, the workflow estimates the NoEP and HiFi indel rates, calculates Δindel rate as HiFi minus NoEP in percentage points, and simulates detection power at increases of 0.01 and 0.1 percentage points. The paired_target_rates.tsv table contains indel rates and paired differences. The power_estimates.tsv table contains detection power estimates. The run also produces report.md, a PDF and PNG figure and Excel source data.</desc>
+  <desc id="desc">Codex, Claude Code and DeepSeek Harness use shared skills to run the analysis locally or on Slurm. A manifest identifies R1 and R2 for the NoEP, WT and HiFi libraries. The plasmid barcode annotation can be published, rebuilt from the six original Maxi FASTQs or reused. The target barcode assigns read pairs to targets, CRISPResso2 calls indels and the plasmid barcode groups reads. The study panel compares WT and HiFi separately with NoEP and reports editing effects and detection power for 79 targets and four counting strategies. Outputs include the report, statistical tables, Figure 3b and Excel source data.</desc>
   <defs>
     <marker id="arrow" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="6" markerHeight="6" orient="auto">
       <path d="M0 0 L8 4 L0 8 Z" fill="#211f20"/>
@@ -41,7 +41,7 @@
     <text class="label" x="495" y="27">Data</text>
     <rect class="box" x="347" y="32" width="296" height="68" rx="10"/>
     <text x="495" y="50">Paired-end FASTQs (R1 and R2)</text>
-    <text x="495" y="70">Sample manifest for NoEP and HiFi</text>
+    <text x="495" y="70">Manifest for NoEP, WT and HiFi</text>
     <text x="495" y="90">tBCs, amplicons and guides</text>
     <text class="label" x="495" y="118">Plasmid barcode (pBC) annotation</text>
     <rect class="box" x="347" y="123" width="296" height="25" rx="9"/>
@@ -71,7 +71,7 @@
     <path class="flow" d="M316 365 h27"/>
     <rect class="box" x="347" y="335" width="296" height="65" rx="10"/>
     <text x="495" y="353">Estimate indel rates (%)</text>
-    <text x="495" y="373">Δindel rate = HiFi − NoEP (pp)</text>
+    <text x="495" y="373">Δ = editor rate − NoEP rate (pp)</text>
     <text x="495" y="393">Simulate power (+0.01 and +0.1 pp)</text>
     <text x="330" y="414">79 targets × 4 counting strategies</text>
   </g>
@@ -81,10 +81,10 @@
     <text class="label" x="330" y="459">Output</text>
     <rect class="box" x="17" y="464" width="297" height="46" rx="10"/>
     <text x="165.5" y="482">Indel rate (%) and Δindel rate (pp)</text>
-    <text x="165.5" y="503">paired_target_rates.tsv</text>
+    <text x="165.5" y="503">panel_comparison.tsv</text>
     <rect class="box" x="347" y="464" width="296" height="46" rx="10"/>
     <text x="495" y="482">Detection power estimates</text>
     <text x="495" y="503">power_estimates.tsv</text>
-    <text x="330" y="530">report.md · Dedud figure (PDF and PNG) · Excel source data</text>
+    <text x="330" y="530">report.md · Figure 3b (PDF and PNG) · Excel source data</text>
   </g>
 </svg>

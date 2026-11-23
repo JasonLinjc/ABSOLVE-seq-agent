@@ -13,12 +13,12 @@
 
 <p align="center">
   <a href="#start-with-one-message">💬 <strong>Start in chat</strong></a> &nbsp;·&nbsp;
-  <a href="docs/d3734-t1-quick-start.md">🧬 Public dataset tutorial</a> &nbsp;·&nbsp;
+  <a href="#set-up-your-chat-client">⚙️ Set up a client</a> &nbsp;·&nbsp;
   <a href="#study-panel-results">📊 Read the results</a> &nbsp;·&nbsp;
-  <a href="#figure-3b-and-reproducibility">📄 Manuscript Figure 3b</a>
+  <a href="docs/manuscript-reads.md#analyze-all-study-samples">🧬 Full-panel walkthrough</a>
 </p>
 
-**What is ABSOLVE-seq?** ABSOLVE-seq (Assessment By Stand-in Off-target LentiViral Ensemble with sequencing) measures insertions and deletions (indels) in reporters carrying reference or variant sequences from candidate CRISPR off-target sites. The agent estimates how much editing differs between each Cas9 treatment (WT or HiFi) and the NoEP control at each target, and how likely the experiment is to detect a small increase. [Original study](https://doi.org/10.1101/2024.07.24.605019)
+**What is ABSOLVE-seq?** ABSOLVE-seq (Assessment By Stand-in Off-target LentiViral Ensemble with sequencing) measures insertions and deletions (indels) in reporters carrying reference or variant sequences from candidate CRISPR off-target sites. The agent compares wild-type (WT) and HiFi Cas9 with the NoEP control at each target and estimates the power to detect small increases in editing. [Original study](https://doi.org/10.1101/2024.07.24.605019)
 
 ## Example conversations
 
@@ -26,11 +26,11 @@
 
 ### Start with one message
 
-Send the **User** message below in Codex, Claude Code or a [configured DeepSeek Harness](#configure-deepseek-harness). The agent can use your study manifest or download the 52 public FASTQs. The current panel workflow also needs the model references extracted from Supplementary Tables 2–5, or the four workbooks to prepare them. [Full-panel setup](docs/manuscript-reads.md#analyze-all-study-samples)
+Paste the **User** message below into your configured client. Use a manifest pointing to your FASTQs or ask the agent to download the 52 public files. For the full study, also provide Supplementary Tables 2–5 or the model reference files extracted from them. [Full-panel input guide](docs/manuscript-reads.md#analyze-all-study-samples)
 
 <table>
 <tbody>
-<tr><td><strong>👤 User · One-message prompt</strong><br>Set up https://github.com/JasonLinjc/ABSOLVE-seq-agent and analyze all 79 targets in all 26 original study libraries from raw FASTQs. Use my configured data or fetch the public reads. Include every donor and replicate. For each of the four filtering strategies, compare WT and HiFi separately with NoEP. Report indel rates, differences in percentage points, p-values, adjusted q-values and detection power. Verify the outputs, summarize the findings here, and link the report, complete tables, Figure 3b and its Excel source data.</td></tr>
+<tr><td><strong>👤 User · One-message prompt</strong><br>Set up https://github.com/JasonLinjc/ABSOLVE-seq-agent and analyze all 79 targets in all 26 original study libraries from raw FASTQs. Use my configured data or fetch the public reads, including every donor and replicate. For each of the four filtering strategies, compare WT and HiFi separately with NoEP. Report indel rates, differences in percentage points, p-values, adjusted q-values and detection power. Verify the outputs, summarize the findings here, and link the report, complete tables, Figure 3b and its Excel source data.</td></tr>
 <tr><td><strong>🤖 Agent · Example result</strong><br>Across 9 NoEP, 9 WT and 8 HiFi libraries from three donors, all three positive controls passed the Dedud thresholds (Δ &gt; 0.1 percentage points and q &lt; 0.05) for both editors versus NoEP. These were the two on-target controls, <code>1450_OT_0000_REF</code> and <code>1617_OT_0000_REF</code>, and the previously validated off-target control, <code>1617_OT_0040_ALT</code>.<br><br>At the off-target control, the estimated indel rate was 0.01% for NoEP, 51.77% for WT and 4.49% for HiFi. One additional target, <code>1450_OT_0071_REF</code>, passed the Dedud thresholds for WT only.<br><br>Open <code>runs/study-panel/results/report.md</code> for the results across all targets and strategies, including detection power and the figure source data.</td></tr>
 </tbody>
 </table>
@@ -47,8 +47,6 @@ Send the **User** message below in Codex, Claude Code or a [configured DeepSeek 
 
 The public pair uses four FASTQs (1.58 GB). [Paired tutorial](docs/d3734-t1-quick-start.md) · [Docker acceptance record](docs/container.md#d3734t1-docker-acceptance)
 
-For remote execution, include the cluster’s SSH alias and a shared working directory. Give paths that the compute nodes can read. [Cluster setup and transfer](docs/container.md#stage-public-inputs-from-a-networked-machine)
-
 </details>
 
 <a id="choose-settings-in-chat"></a>
@@ -57,8 +55,8 @@ For remote execution, include the cluster’s SSH alias and a shared working dir
 
 <table>
 <tbody>
-<tr><td><strong>👤 User</strong><br>I generated a pBC annotation from the study’s plasmid pools last week. Can I reuse it for this pair?</td></tr>
-<tr><td><strong>🤖 Agent</strong><br>Yes. Give me the saved annotation directory and I’ll use the rule recorded there. You can also use the published annotation or ask me to rebuild it from the original study’s six Maxi FASTQs using the published entropy threshold or the historical two-tBC rule.</td></tr>
+<tr><td><strong>👤 User</strong><br>I previously generated a plasmid barcode (pBC) annotation for this study. Can I reuse it?</td></tr>
+<tr><td><strong>🤖 Agent</strong><br>Yes. Give me the directory where you saved it and I’ll use the rule recorded there. The default is the published annotation. To rebuild it, I can use the original study’s six Maxi FASTQs with the published entropy threshold or the optional historical two-tBC rule.</td></tr>
 </tbody>
 </table>
 
@@ -96,53 +94,6 @@ For remote execution, include the cluster’s SSH alias and a shared working dir
 
 </details>
 
-## How the agent works
-
-<a id="fastq-to-report-workflow"></a>
-
-### Agent architecture
-
-<p align="center">
-  <img src="docs/assets/agent-architecture.svg" width="660" alt="The chat clients use shared skills to run the analysis locally or on Slurm. The workflow connects sequencing and barcode inputs to editing and power estimates, a report, a figure and Excel data." />
-</p>
-
-**Inputs.** Each library contributes an R1 and an R2 FASTQ. The manifest maps both files to the sample and records their SHA-256 checksums. [Manifest template](examples/manifest.example.tsv)
-
-**Processing.** Trimmomatic 0.36 trims both mates. The target barcode (tBC) assigns each read pair to a target. CRISPResso2 2.2.13 uses FLASH to merge the mates, aligns the merged reads to the target amplicon and calls indels in the cut-site window. Reads from the same sample and target are grouped by plasmid barcode (pBC) for counting.
-
-## Study panel results
-
-Open `results/report.md` in the run directory. The model accounts for donor and gives the three donors equal weight when estimating each treatment’s indel rate.
-
-| File in `results/` | What it contains |
-| --- | --- |
-| `library_counts.tsv` | 8,216 indel counts and denominators (26 libraries × 79 targets × 4 strategies). |
-| `panel_comparison.tsv` | 632 contrasts (WT or HiFi versus NoEP). Each row gives the fitted rates, Δ, one-sided p-value, and Benjamini–Hochberg q-value adjusted across 79 targets within that editor and strategy. |
-| `power_estimates.tsv` | 1,264 estimates of detection power, one for each contrast at assumed increases of 0.01 and 0.1 percentage points. |
-| `figures/Figure3b.pdf` and `figures/Figure3b_source_data.xlsx` | Dedud results for both editors, with 158 target/editor combinations in the figure and workbook. |
-
-## Paired results
-
-Open the `results/` folder inside your run directory.
-
-| File | What it tells you |
-| --- | --- |
-| `report.md` | Start here for the summary and links to each output. |
-| `paired_target_rates.tsv` | Indel counts, denominators and rates (%) for both arms. Δindel rate is HiFi minus NoEP in **percentage points**. A zero denominator leaves the rate undefined. |
-| `power_estimates.tsv` | Estimated probability of detecting an increase of 0.01 or 0.1 percentage points at the observed depth for each target and strategy. [Power method](docs/power.md) |
-| `figures/paired_effect_power.{pdf,png,xlsx}` | The Dedud figure for this pair and the Excel table containing the values plotted. |
-
-The four strategies below use the same alignments. By default, the published plasmid barcode annotation determines which pBCs qualify for each target.
-
-| Strategy | What counts toward the indel rate |
-| --- | --- |
-| Unfiltered | All aligned reads |
-| Dedup | One representative allele per sample, target and pBC |
-| Dedud | Reads with a qualifying pBC that pass cross-target filtering |
-| Dedud+Dedup | One representative allele per retained pBC family |
-
-The paired workflow selects the most frequent allele in each family for deduplication. It breaks ties by aligned read sequence, then by aligned reference sequence. Library counts, sample identity and processing settings are recorded in `library_counts.tsv`, `sample_inventory.tsv` and `provenance.json`.
-
 <a id="set-up-in-codex-or-claude-code"></a>
 
 ## Set up your chat client
@@ -158,26 +109,18 @@ cd ABSOLVE-seq-agent
 | --- | --- |
 | Codex | Open the folder in the Codex app or run `codex` in the checkout. Ask for the ABSOLVE-seq skill or type `$absolve-seq` in the CLI. [Codex quick start](https://developers.openai.com/codex/quickstart/) |
 | Claude Code | Run `claude` in the checkout and enter `/absolve-seq` followed by your request. [Claude Code quick start](https://code.claude.com/docs/en/quickstart) |
-| DeepSeek Harness | Set up the model gateway below, then pass the one-message prompt to the headless CLI from the checkout. |
+| DeepSeek Harness | Configure the gateway, then send the prompt with the headless CLI. [DeepSeek Harness setup](#configure-deepseek-harness) |
 
 For the analysis runtime, download the prebuilt Linux x86-64 Docker or Apptainer image, or install the locked Conda environment. [Download v0.2.0](https://github.com/JasonLinjc/ABSOLVE-seq-agent/releases/tag/v0.2.0) · [Load and run the image](docs/container.md#download-a-prebuilt-image) · [Conda setup](docs/d3734-t1-quick-start.md#1-get-the-agent-and-create-an-environment)
 
-<details>
-<summary><strong>Check sample discovery before downloading data</strong></summary>
-
-```bash
-ABSOLVE_MANIFEST=examples/manifest.example.tsv python paired.py --list
-```
-
-The example manifest lists `NoEP_pool_D3734_T1` and `HiFi_pool_D3734_T1`. Its FASTQ paths are placeholders.
-
-</details>
-
 ### Configure DeepSeek Harness
 
-DeepSeek Harness (`dsh`) successfully reproduced the default full-panel analysis on Luminary. Starting from raw FASTQs for 26 libraries across all 79 targets, it reproduced the archived count and model tables byte for byte. Power, Figure 3b and its Excel source data also passed verification. [Acceptance record and comparison with the submitted tables](docs/dsh-panel-acceptance.md)
+On Luminary, `dsh` reproduced the default full-panel count and model tables byte for byte from raw FASTQs. The power, Figure 3b and Excel checks also passed. [Acceptance record and comparison with the submitted tables](docs/dsh-panel-acceptance.md)
 
-1. With Node.js 24.9 or later, install the CLI version used for that run. Run the following from the repository checkout.
+<details>
+<summary><strong>Install and configure the tested CLI</strong></summary>
+
+1. From the checkout, install the tested CLI with Node.js 24.9 or later.
 
    ```bash
    npm install --global @deepseek-ai/dsh@0.2.2-rc.1
@@ -199,23 +142,77 @@ DeepSeek Harness (`dsh`) successfully reproduced the default full-panel analysis
    dsh --profile headless --patch examples/dsh-gateway.yml "$study_prompt"
    ```
 
-For a remote cluster, the tested setup used a site-provided MCP server with tools to submit the panel and check its Slurm status. To use your site's bridge from a workstation, add `--patch /path/to/cluster-bridge.yml` before `"$study_prompt"`. The model gateway supplies the model connection. Your cluster bridge supplies remote execution.
+For a remote cluster, the tested setup used a site-provided MCP server with tools to submit the panel and check its Slurm status. To use your site's bridge from a workstation, add `--patch /path/to/cluster-bridge.yml` before `"$study_prompt"`.
 
-## Quick start
+</details>
 
-For all 26 libraries, follow the [full-panel walkthrough](docs/manuscript-reads.md#analyze-all-study-samples).
+## How the agent works
 
-For a terminal run, follow the [D3734/T1 walkthrough](docs/d3734-t1-quick-start.md) to prepare the reference index and manifest and verify the NoEP (`SRR39887646`) and HiFi (`SRR39887695`) FASTQs. Run the following in the paired environment after preparing those inputs.
+<a id="fastq-to-report-workflow"></a>
+
+### Agent architecture
+
+<p align="center">
+  <img src="docs/assets/agent-architecture.svg" width="660" alt="The chat clients use shared skills to run the analysis locally or on Slurm. The workflow connects sequencing and barcode inputs to editing and power estimates, a report, a figure and Excel data." />
+</p>
+
+Supply R1 and R2 for each library. The manifest links each pair to its sample and records the file checksums. [Manifest template](examples/manifest.example.tsv)
+
+In the default workflow, Trimmomatic trims both mates and the target barcode (tBC) assigns each pair to a target. CRISPResso2 merges the mates with FLASH, aligns them to the amplicon and calls indels in the cut-site window. Within each sample and target, the plasmid barcode (pBC) identifies reads from the same family.
+
+The four strategies share the same alignments. The published annotation determines which pBCs qualify by default.
+
+| Strategy | What counts toward the indel rate |
+| --- | --- |
+| Unfiltered | All aligned reads |
+| Dedup | One representative allele per sample, target and pBC |
+| Dedud | Reads with a qualifying pBC that pass cross-target filtering |
+| Dedud+Dedup | One representative allele per retained pBC family |
+
+## Study panel results
+
+Open **`results/report.md`** inside your run directory. For each target, the model estimates indel rates for NoEP, WT and HiFi, weighting the three donors equally on the logit scale. Δ is the edited rate minus the NoEP rate, in percentage points.
+
+| File in `results/` | What it contains |
+| --- | --- |
+| `library_counts.tsv` | 8,216 indel counts and denominators (26 libraries × 79 targets × 4 strategies). |
+| `panel_comparison.tsv` | 632 contrasts (WT or HiFi versus NoEP). Each row gives the fitted rates, Δ, one-sided p-value, and Benjamini–Hochberg q-value adjusted across 79 targets within that editor and strategy. |
+| `power_estimates.tsv` | 1,264 estimates of detection power, one for each contrast at assumed increases of 0.01 and 0.1 percentage points. |
+| `figures/Figure3b.pdf` and `figures/Figure3b_source_data.xlsx` | Dedud results for both editors, with 158 target/editor combinations in the figure and workbook. |
+
+Sample identities and processing settings are in `sample_inventory.tsv` and `provenance.json`. [Statistical model and power estimates](docs/power.md)
+
+<a id="paired-results"></a>
+<details>
+<summary><strong>Results for a single matched pair</strong></summary>
+
+For a single donor and replicate, `paired_target_rates.tsv` gives the observed HiFi and NoEP counts, denominators, indel rates and Δ for all 316 target/strategy combinations. Rates with a zero denominator are undefined. The run also writes 632 power estimates and a Dedud figure with Excel source data under `figures/paired_effect_power.{pdf,png,xlsx}`. [D3734/T1 example](docs/d3734-t1-quick-start.md)
+
+</details>
+
+<a id="figure-3b-and-reproducibility"></a>
+<details>
+<summary><strong>Redraw the published Figure 3b</strong></summary>
+
+The routine panel figure uses power simulated from the run's counts. To use the original submitted power values, ask for **“Figure 3b with submitted power.”** [Figure 3b commands and verification](docs/manuscript-figures.md)
+
+</details>
+
+<a id="quick-start"></a>
+
+## Run from the terminal
+
+After preparing the runtime, manifest and references, run the full study in a new output directory. [Full-panel walkthrough](docs/manuscript-reads.md#analyze-all-study-samples)
 
 ```bash
-python paired.py --executor local --donor D3734 --replicate T1 --threads 4 --output runs/D3734-T1
-python verify_results.py pair-manuscript runs/D3734-T1/results
-python verify_results.py power runs/D3734-T1/results
+python paired.py --manuscript-panel --read-mode manuscript --fresh --output runs/study-panel
 ```
 
-The second command checks the public pair against its accepted count and rate tables. The third checks the simulated power estimates, figure data and Excel values. Use a new output directory for each analysis.
+On a workstation the command returns after aggregation. On Slurm, wait for the finish job listed in `runs/study-panel/jobs.json`. Then verify the power table, plotted values and Excel workbook.
 
-On a Slurm submission host, omit `--executor local` and `--threads 4`. The agent submits preparation, alignment and reporting jobs. Wait for the finish job recorded in `jobs.json` before opening the report. [Slurm instructions](docs/d3734-t1-quick-start.md#slurm-submission)
+```bash
+python verify_results.py power runs/study-panel/results
+```
 
 <a id="local-inputs-and-caches"></a>
 <details>
@@ -224,10 +221,6 @@ On a Slurm submission host, omit `--executor local` and `--threads 4`. The agent
 `ABSOLVE_DATA` selects the data directory (default `data/` in the checkout). `ABSOLVE_MANIFEST` defaults to `$ABSOLVE_DATA/sample_manifest.tsv`. For the original laboratory files, `python -m tools.resolve_inputs INVENTORY.tsv METADATA.xlsx OUTPUT.tsv` joins both mate filenames from the checksum-verified inventory to the submission workbook’s `SRA_data` sheet.
 
 </details>
-
-## Figure 3b and reproducibility
-
-The full panel combines three donors to generate `Figure3b.pdf` and `Figure3b_source_data.xlsx`, with 158 plotted target/editor rows. The default panel figure uses newly simulated power. To redraw the published graphic with its original power values, ask for **“Figure 3b with submitted power.”** [Figure 3b commands and verification](docs/manuscript-figures.md)
 
 ## Repository layout
 
