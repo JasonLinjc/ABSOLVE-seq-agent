@@ -5,8 +5,8 @@ import json
 import tempfile
 import unittest
 from pathlib import Path
-from historical_maxi import RULE_MANIFESTS, build_lists, configured_reference, load_labels, reference
-from maxi_qc import sha256
+from absolve.historical_maxi import RULE_MANIFESTS, build_lists, configured_reference, load_labels, reference
+from absolve.maxi_qc import sha256
 
 
 class HistoricalMaxiTest(unittest.TestCase):

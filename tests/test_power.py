@@ -2,7 +2,7 @@ import unittest
 
 import numpy as np
 
-from power_analysis import estimate, panel_wald
+from absolve.power_analysis import estimate, panel_wald
 
 
 class ConditionalPowerTest(unittest.TestCase):

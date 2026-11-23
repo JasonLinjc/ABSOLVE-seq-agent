@@ -5,8 +5,8 @@ import os
 from pathlib import Path
 import re
 
-from maxi_qc import DEFAULT_METHOD
-from settings import MANIFEST, use_local
+from absolve.maxi_qc import DEFAULT_METHOD
+from absolve.settings import MANIFEST, use_local
 
 CONDITIONS = ('NoEP', 'HiFi')
 

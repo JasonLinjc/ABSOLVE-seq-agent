@@ -6,7 +6,7 @@ from pathlib import Path
 import tempfile
 import unittest
 
-from analysis_report import STRATEGIES, write_report
+from absolve.analysis_report import STRATEGIES, write_report
 from verify_results import verify
 
 

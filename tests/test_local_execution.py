@@ -37,7 +37,7 @@ class LocalExecutionTest(unittest.TestCase):
                 self.assertEqual(output.rstrip(), " ".join(["-u", str(checkout / "paired.py"), *args]))
 
     def test_auto_uses_local_workers_without_slurm(self):
-        with patch.dict(os.environ, {}, clear=True), patch("settings.shutil.which", return_value=None):
+        with patch.dict(os.environ, {}, clear=True), patch("absolve.settings.shutil.which", return_value=None):
             self.assertEqual(self.run_pair("--threads", "2"), {"local": True, "workers": 2})
 
     def test_existing_allocation_and_local_override(self):
@@ -46,7 +46,7 @@ class LocalExecutionTest(unittest.TestCase):
             self.assertEqual(self.run_pair("--executor", "local"), {"local": True, "workers": 1})
 
     def test_login_node_dispatches_default_pair_to_slurm(self):
-        with patch.dict(os.environ, {}, clear=True), patch("settings.shutil.which", return_value="/bin/sbatch"):
+        with patch.dict(os.environ, {}, clear=True), patch("absolve.settings.shutil.which", return_value="/bin/sbatch"):
             self.assertEqual(self.run_pair(), {"local": False, "workers": 1})
 
     def test_removed_mode_is_rejected_before_processing_inputs(self):
@@ -59,7 +59,7 @@ class LocalExecutionTest(unittest.TestCase):
             self.assertIn("historical", result.stderr)
 
     def test_manuscript_panel_uses_same_local_stages(self):
-        with patch.dict(os.environ, {}, clear=True), patch("settings.shutil.which", return_value=None), \
+        with patch.dict(os.environ, {}, clear=True), patch("absolve.settings.shutil.which", return_value=None), \
                 patch.object(sys, "argv", ["paired.py", "--manuscript-panel", "--read-mode", "manuscript", "--threads", "3"]), \
                 patch.object(manuscript_run, "start") as start:
             paired.main()

@@ -9,9 +9,9 @@ import matplotlib.pyplot as plt
 import numpy as np
 from openpyxl import Workbook
 
-from analysis_report import read_table
+from absolve.analysis_report import read_table
 
-FIGURE_SKILL = Path(__file__).resolve().parent / ".agents/skills/absolve-seq-figures/scripts"
+FIGURE_SKILL = Path(__file__).resolve().parents[1] / ".agents/skills/absolve-seq-figures/scripts"
 sys.path.insert(0, str(FIGURE_SKILL))
 import manuscript_figures as manuscript
 

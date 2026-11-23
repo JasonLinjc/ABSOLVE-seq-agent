@@ -4,5 +4,5 @@
 #SBATCH --mem=64G
 #SBATCH --time=04:00:00
 set -eu
-cd "${SLURM_SUBMIT_DIR:-$(dirname "$0")}"
-exec python3 -u validate_pbc_panel.py "$@"
+cd "${SLURM_SUBMIT_DIR:-$(cd "$(dirname "$0")/.." && pwd)}"
+exec python3 -u -m tools.validate_pbc_panel "$@"

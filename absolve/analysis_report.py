@@ -152,12 +152,12 @@ def complete_report(folder, mode, *, panel=False, run_config=None, image=None):
     """Generate power, figure and source data inside the caller's staging directory."""
     import subprocess
     import sys
-    script = Path(__file__).with_name("power_analysis.py").resolve()
-    command = [sys.executable, str(script), str(folder.resolve())]
+    from absolve.settings import ROOT
+    command = [sys.executable, "-m", "absolve.power_analysis", str(folder.resolve())]
     if panel:
         command.append("--panel")
     if image:
-        binds = ",".join(str(p) for p in (script.parent, folder.resolve()))
-        command = ["apptainer", "exec", "--cleanenv", "--bind", binds, image, "python", *command[1:]]
-    subprocess.run(command, check=True)
+        binds = ",".join(str(p) for p in (ROOT, folder.resolve()))
+        command = ["apptainer", "exec", "--cleanenv", "--bind", binds, "--pwd", str(ROOT), image, "python", *command[1:]]
+    subprocess.run(command, cwd=ROOT, check=True)
     write_report(folder, mode, panel=panel, run_config=run_config)

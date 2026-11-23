@@ -33,8 +33,10 @@ def submit(host, repo, dest):
         raise ValueError("Expected an absolute Luminary checkout path (see --repo)")
     run = str(PurePosixPath(repo, "runs", "pbc-validation-" + uuid4().hex))
     command = (f"cd -- {quote(repo)} && test -r data/pbc-validation.json && "
-               f"sbatch --parsable -p cpu1,cpu2 --output=slurm-%j.out "
-               f"validate_pbc_panel.sbatch --output {quote(run)}")
+               'job_script=tools/validate_pbc_panel.sbatch && '
+               '{ test -f "$job_script" || job_script=validate_pbc_panel.sbatch; } && '
+               "sbatch --parsable -p cpu1,cpu2 --output=slurm-%j.out "
+               f'"$job_script" --output {quote(run)}')
     reply = remote(host, command).decode().strip()
     job = reply.partition(";")[0]
     if not job.isdigit():

@@ -1,6 +1,10 @@
 **
 !Dockerfile
 !/*.py
+!absolve/
+!absolve/*.py
+!tools/
+!tools/*.py
 !docs/
 !docs/paired-linux-64.lock
 !examples/

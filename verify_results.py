@@ -76,7 +76,7 @@ def check_excel(folder, rows, receipt):
 
 
 def verify_power(folder):
-    from analysis_report import check_coverage, read_table
+    from absolve.analysis_report import check_coverage, read_table
     from openpyxl import load_workbook
 
     receipt = json.loads((folder / "power_provenance.json").read_text())

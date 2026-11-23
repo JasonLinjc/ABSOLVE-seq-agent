@@ -12,7 +12,7 @@ from tempfile import TemporaryDirectory
 
 from panel_report.family_audit import METRICS, PRESENCE, RUN_DIRS, audit_batch
 
-TARGETS = Path(__file__).resolve().parent / "runtime/maxi/reference_sha256.tsv"
+TARGETS = Path(__file__).resolve().parents[1] / "runtime/maxi/reference_sha256.tsv"
 # Portable fingerprints of the independently cross-checked historical audit.
 STUDY = {
     "batch_summary.tsv": "19c936c12db4367db787b67033b5843f9ffed0ddd8dea480795ef48ec16c41f1",

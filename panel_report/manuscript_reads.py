@@ -17,8 +17,8 @@ from tempfile import TemporaryDirectory
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
-from historical_maxi import configured_reference, rebuilt_labels
-from target_identity import TargetIdentity
+from absolve.historical_maxi import configured_reference, rebuilt_labels
+from absolve.target_identity import TargetIdentity
 
 STRATEGIES = ("Unfiltered", "Dedup", "Dedud", "Dedud+Dedup")
 GITHUB_TRIM_STEPS = ("LEADING:3", "TRAILING:3", "AVGQUAL:20", "MINLEN:48")

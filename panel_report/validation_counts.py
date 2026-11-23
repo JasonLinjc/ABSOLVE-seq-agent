@@ -8,10 +8,10 @@ from concurrent.futures import ProcessPoolExecutor
 from functools import partial
 from pathlib import Path
 
-from historical_maxi import rebuilt_labels, reference, targets
-from maxi_qc import PUBLISHED_SHA256, sha256
+from absolve.historical_maxi import rebuilt_labels, reference, targets
+from absolve.maxi_qc import PUBLISHED_SHA256, sha256
 from panel_report.manuscript_reads import STRATEGIES, read_aligned_families, summarize, table
-from target_identity import TargetIdentity
+from absolve.target_identity import TargetIdentity
 
 AGENT = Path(__file__).resolve().parents[1]
 SOURCES = ("default", "rebuilt")

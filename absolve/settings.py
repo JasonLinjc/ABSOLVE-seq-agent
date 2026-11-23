@@ -14,7 +14,7 @@ def location(variable, default):
     return Path(os.environ.get(variable, default)).expanduser().resolve()
 
 
-ROOT = Path(__file__).resolve().parent
+ROOT = Path(__file__).resolve().parents[1]
 RUNS = location('ABSOLVE_RUNS', ROOT / 'runs')
 DATA = location('ABSOLVE_DATA', ROOT / 'data')
 REFERENCES = DATA / 'references'

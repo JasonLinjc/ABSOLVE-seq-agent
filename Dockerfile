@@ -11,7 +11,9 @@ ENV PATH="/opt/absolve-env/bin:${PATH}" \
     OMP_NUM_THREADS=1 \
     MKL_NUM_THREADS=1
 WORKDIR /opt/absolve
-COPY *.py ./
+COPY paired.py setup_references.py verify_results.py ./
+COPY absolve/ absolve/
+COPY tools/ tools/
 COPY runtime/ runtime/
 COPY workers/ workers/
 COPY panel_report/ panel_report/

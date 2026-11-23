@@ -6,7 +6,7 @@ import math
 
 from openpyxl import load_workbook
 
-from analysis_report import check_coverage, read_table
+from absolve.analysis_report import check_coverage, read_table
 
 
 def bh(values):

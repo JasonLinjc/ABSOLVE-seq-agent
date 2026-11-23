@@ -10,11 +10,11 @@ from pathlib import Path
 
 root=Path(__file__).resolve().parent
 sys.path.insert(0,str(root.parent))
-from pilot import CUT, PUBLIC, fastq, one
-from target_identity import TargetIdentity, filtered_counts, family_counts
-from maxi_qc import sha256, PUBLISHED_SHA256, REQUIRED, DEFAULT_METHOD
-from historical_maxi import configured_reference, rebuilt_labels
-from settings import RUNTIME
+from tools.pilot import CUT, PUBLIC, fastq, one
+from absolve.target_identity import TargetIdentity, filtered_counts, family_counts
+from absolve.maxi_qc import sha256, PUBLISHED_SHA256, REQUIRED, DEFAULT_METHOD
+from absolve.historical_maxi import configured_reference, rebuilt_labels
+from absolve.settings import RUNTIME
 sys.path.insert(0,str(RUNTIME/'src'))
 import pipeline as cut
 

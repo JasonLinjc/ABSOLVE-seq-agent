@@ -9,9 +9,9 @@ import sys
 from tempfile import TemporaryDirectory
 
 from panel_report.manuscript_reads import GITHUB_TRIM_STEPS, HISTORICAL_TRIM_STEPS, ROOT, STRATEGIES, digest, save, table
-from analysis_report import complete_report
-from historical_maxi import configured_reference, reference, reference_key
-from settings import DATA, MANIFEST, PUBLIC, PUBLISHED, RUNS
+from absolve.analysis_report import complete_report
+from absolve.historical_maxi import configured_reference, reference, reference_key
+from absolve.settings import DATA, MANIFEST, PUBLIC, PUBLISHED, RUNS
 
 ARM = {"WTCas9":"WT","HiFiCas9":"HiFi","noEP":"NoEP"}
 PANEL = ROOT/"panel_report"
@@ -202,7 +202,7 @@ def start(args, *, local, workers):
                          trim_steps=HISTORICAL_TRIM_STEPS[arm]))
     if len(libs)!=(26 if args.manuscript_panel else 2) or len({s["sample_name"] for s in libs})!=len(libs):
         raise ValueError("Incomplete or duplicated manuscript design")
-    from maxi_qc import PUBLISHED_SHA256
+    from absolve.maxi_qc import PUBLISHED_SHA256
     if not args.maxi_reference and (PUBLISHED/"source.sha256").read_text().strip()!=PUBLISHED_SHA256:
         raise ValueError("Published Maxi annotation checksum mismatch")
     cfg=dict(libraries=libs,reference=str(PUBLIC),published=str(PUBLISHED),refs=str(DATA/"submitted_model_reference"),

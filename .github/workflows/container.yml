@@ -29,6 +29,8 @@ jobs:
           docker run --rm "absolve-seq-agent:$GITHUB_SHA" Rscript -e 'stopifnot(requireNamespace("brglm2", quietly=TRUE))'
           docker run --rm -e ABSOLVE_MANIFEST=/opt/absolve/examples/manifest.example.tsv \
             "absolve-seq-agent:$GITHUB_SHA" python /opt/absolve/paired.py --list
+          docker run --rm "absolve-seq-agent:$GITHUB_SHA" python -m absolve.power_analysis --help
+          docker run --rm "absolve-seq-agent:$GITHUB_SHA" python -m tools.validate_family_panel --help
       - name: Export the Docker image and convert it to SIF
         run: |
           sudo add-apt-repository -y ppa:apptainer/ppa

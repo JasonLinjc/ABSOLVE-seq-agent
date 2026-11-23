@@ -12,9 +12,9 @@ import subprocess
 import sys
 import time
 
-import maxi_qc
+from absolve import maxi_qc
 
-from settings import PUBLIC, REFERENCES as CUT, RUNTIME as FROZEN, use_local
+from absolve.settings import PUBLIC, REFERENCES as CUT, RUNTIME as FROZEN, use_local
 
 
 def table(path):
@@ -31,7 +31,7 @@ def public_library(sample):
     accession = sample.get('run_accession')
     if not accession:
         return None
-    catalog = Path(__file__).parent / 'examples' / 'd3734_t1_ena.tsv'
+    catalog = Path(__file__).resolve().parents[1] / 'examples' / 'd3734_t1_ena.tsv'
     with catalog.open() as handle:
         run = next((r for r in csv.DictReader(handle, delimiter='\t')
                     if r['run_accession'] == accession and r['sample_name'] == sample['sample_name']), None)
@@ -148,7 +148,7 @@ if __name__=='__main__':
     parser.add_argument('--executor', choices=['auto', 'local'], default='auto')
     args=parser.parse_args()
     if not use_local(args.executor) and not os.environ.get('SLURM_JOB_ID'):
-        parser.error('Submit pilot.sbatch on Slurm or select --executor local.')
+        parser.error('Submit tools/pilot.sbatch on Slurm or select --executor local.')
     if args.skip_maxi_qc and args.maxi_method:
         parser.error('--skip-maxi-qc conflicts with --maxi-method.')
     methods = args.maxi_method or [maxi_qc.DEFAULT_METHOD]

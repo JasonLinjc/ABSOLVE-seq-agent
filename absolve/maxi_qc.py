@@ -8,7 +8,7 @@ import json
 from pathlib import Path
 import tempfile
 
-from settings import DATA, location
+from absolve.settings import DATA, location
 
 MERGED = location('ABSOLVE_MAXI_MERGED', DATA/'maxi'/'Maxi_merged')
 INDIVIDUAL = location('ABSOLVE_MAXI_POOLS', DATA/'maxi'/'pool_qc')

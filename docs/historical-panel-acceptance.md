@@ -78,7 +78,7 @@ All **2,686 batch-by-strategy comparisons** matched the historical filtered tabl
 From the agent checkout, run the command below where the historical archive and the saved FASTQ family replays are readable. It uses Python and pandas and can run locally or in a Slurm allocation. Set the three input paths to your copies and choose a new output directory.
 
 ```bash
-python validate_family_panel.py \
+python -m tools.validate_family_panel \
   --archive-root "$HISTORICAL_PROJECT" \
   --replay-root "$WT_REPLAY" --replay-root "$NOEP_HIFI_REPLAY" \
   --expect-study --output family-audit

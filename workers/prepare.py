@@ -10,8 +10,8 @@ agent = root.parent
 root = Path.cwd() if (Path.cwd()/"pair.json").is_file() else root
 pair = json.loads((root/"pair.json").read_text()) if (root/"pair.json").is_file() else {"donor":"D3734","replicate":"T1"}
 sys.path.insert(0, str(agent))
-from settings import MANIFEST, REFERENCES
-from pilot import FROZEN, PUBLIC, one, public_library, table
+from absolve.settings import MANIFEST, REFERENCES
+from tools.pilot import FROZEN, PUBLIC, one, public_library, table
 sys.path.insert(0, str(FROZEN/'src'))
 import prepare_crispresso as prep
 import barcode_core as bc

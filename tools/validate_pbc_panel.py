@@ -9,7 +9,7 @@ import sys
 from pathlib import Path
 from tempfile import TemporaryDirectory, mkdtemp
 
-from maxi_qc import sha256
+from absolve.maxi_qc import sha256
 from panel_report.manuscript_reads import save, table
 from panel_report.validation_counts import AGENT, SOURCES, recount
 

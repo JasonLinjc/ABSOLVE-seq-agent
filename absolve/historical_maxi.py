@@ -12,9 +12,9 @@ from itertools import groupby
 from pathlib import Path
 from tempfile import TemporaryDirectory
 
-from maxi_qc import sha256
+from absolve.maxi_qc import sha256
 
-ASSETS = Path(__file__).resolve().parent / 'runtime' / 'maxi'
+ASSETS = Path(__file__).resolve().parents[1] / 'runtime' / 'maxi'
 MANIFEST = ASSETS / 'reference_sha256.tsv'
 
 

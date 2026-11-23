@@ -9,7 +9,7 @@ from tempfile import TemporaryDirectory
 
 root=Path(__file__).resolve().parent
 sys.path.insert(0, str(root.parent))
-from analysis_report import complete_report
+from absolve.analysis_report import complete_report
 pair={'donor':'D3734','replicate':'T1'}
 if (Path.cwd()/'pair.json').is_file():
     root=Path.cwd()

@@ -6,7 +6,7 @@ import tempfile
 import unittest
 from unittest.mock import patch
 
-import luminary_pbc as launcher
+from tools import luminary_pbc as launcher
 
 
 class LuminaryDeliveryTests(unittest.TestCase):

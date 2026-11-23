@@ -4,7 +4,7 @@ import unittest
 from pathlib import Path
 
 from panel_report.manuscript_reads import save
-from validate_pbc_panel import compare
+from tools.validate_pbc_panel import compare
 
 
 class PanelValidationTest(unittest.TestCase):

@@ -203,10 +203,24 @@ To reproduce the paper, ask “Reproduce Supplementary Tables 2–5 from the ori
 
 [Raw FASTQ reproduction of Supplementary Tables 2–5: acceptance results and run instructions](docs/historical-panel-acceptance.md)
 
+## Repository layout
+
+The three main commands live at the top level. Use [setup_references.py](setup_references.py) to prepare the reference data, [paired.py](paired.py) to run the analysis, and [verify_results.py](verify_results.py) to check the results.
+
+| Directory | What you’ll find |
+| --- | --- |
+| [examples/](examples/) and [docs/](docs/) | Sample manifests, public FASTQ links, walkthroughs and acceptance records |
+| [.agents/skills/](.agents/skills/) and [.claude/skills/](.claude/skills/) | Analysis and figure instructions for Codex and Claude Code |
+| [absolve/](absolve/) | Barcode filtering, target identity, power estimation, figures and reports |
+| [panel_report/](panel_report/), [workers/](workers/) and [runtime/](runtime/) | Library and target processing, manuscript panel models and archived workflow components |
+| [tools/](tools/) | Optional manifest import, pilot runs and archive audits |
+
+Run optional tools from the checkout root, for example `python -m tools.luminary_pbc --help`. In the v0.2.0 release these utilities are top-level scripts.
+
 ## Local inputs and caches
 
 Keep inputs on storage visible to the workers. `ABSOLVE_DATA` selects the data directory (default `data/` in the checkout). `ABSOLVE_MANIFEST` defaults to `$ABSOLVE_DATA/sample_manifest.tsv`. Use a new output directory for each paired-end run.
 
-For laboratory files, follow the [manifest template](examples/manifest.example.tsv). Supply the original study sample names, absolute R1 and R2 paths and their SHA-256 digests. The importer `resolve_inputs.py INVENTORY.tsv METADATA.xlsx OUTPUT.tsv` joins a checksum-verified inventory to the submission workbook’s `SRA_data` sheet by both original filenames. The public quick start builds a manifest for the D3734/T1 NoEP and HiFi pair from the four ENA downloads.
+For laboratory files, follow the [manifest template](examples/manifest.example.tsv). Supply the original study sample names, absolute R1 and R2 paths and their SHA-256 digests. The importer `python -m tools.resolve_inputs INVENTORY.tsv METADATA.xlsx OUTPUT.tsv` joins a checksum-verified inventory to the submission workbook’s `SRA_data` sheet by both original filenames. The public quick start builds a manifest for the D3734/T1 NoEP and HiFi pair from the four ENA downloads.
 
 The analysis uses a pinned revision of the [upstream ABSOLVE-seq repository](https://github.com/pellinlab/ABSOLVE-seq/tree/271355dfe40cf46b952e82b88dd4521f23f9feb4). Its code and reference assets are covered by the [upstream license](https://github.com/pellinlab/ABSOLVE-seq/blob/271355dfe40cf46b952e82b88dd4521f23f9feb4/LICENSE.md).

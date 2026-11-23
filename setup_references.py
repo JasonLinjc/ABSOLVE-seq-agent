@@ -8,8 +8,8 @@ from contextlib import ExitStack
 from pathlib import Path
 from tempfile import TemporaryDirectory
 
-from maxi_qc import PUBLISHED_SHA256, sha256
-from settings import DATA, REFERENCES
+from absolve.maxi_qc import PUBLISHED_SHA256, sha256
+from absolve.settings import DATA, REFERENCES
 
 BLOBS = {
     'NovaSeq3_sample_info.csv': '303737304a0f2785cf7fa8fc2945a823412241a7',
@@ -87,7 +87,7 @@ if __name__=='__main__':
     parser.add_argument('--threads', type=int, default=3)
     args = parser.parse_args()
     if args.historical_maxi or args.published_maxi:
-        from historical_maxi import build as build_maxi
+        from absolve.historical_maxi import build as build_maxi
         if not args.trimmomatic_jar:
             parser.error('A Maxi FASTQ rebuild requires --trimmomatic-jar')
         method = 'manuscript' if args.published_maxi else 'historical'

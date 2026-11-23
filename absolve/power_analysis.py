@@ -9,7 +9,7 @@ from statistics import NormalDist
 
 import numpy as np
 
-from analysis_report import check_coverage, read_table
+from absolve.analysis_report import check_coverage, read_table
 
 EFFECTS = (0.01, 0.1)
 DRAWS = 1000
@@ -171,7 +171,7 @@ if __name__ == "__main__":
     parser.add_argument("folder", type=Path)
     parser.add_argument("--panel", action="store_true")
     args = parser.parse_args()
-    from result_figures import render
+    from absolve.result_figures import render
     from verify_results import verify_power
     if any((args.folder / name).exists() for name in ("power_estimates.tsv", "power_provenance.json", "figures")):
         parser.error("Power or figure outputs already exist. Use a new results directory.")

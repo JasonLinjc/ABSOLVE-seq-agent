@@ -13,14 +13,13 @@ from uuid import uuid4
 from pathlib import Path
 from tempfile import TemporaryDirectory
 
-from analysis_report import complete_report
-from maxi_qc import PUBLISHED_SHA256, sha256
-from pilot import PUBLIC
-from historical_maxi import rebuilt_labels, reference_key
-from target_identity import TargetIdentity, filtered_counts
+from absolve.analysis_report import complete_report
+from absolve.maxi_qc import PUBLISHED_SHA256, sha256
+from absolve.historical_maxi import rebuilt_labels, reference_key
+from absolve.target_identity import TargetIdentity, filtered_counts
 
 AGENT = Path(__file__).resolve().parents[1]
-from settings import DEPLOYMENT, MANIFEST, DATA, PUBLISHED, RUNS
+from absolve.settings import DEPLOYMENT, MANIFEST, DATA, PUBLIC, PUBLISHED, RUNS
 PANEL = AGENT/'panel_report'
 ARMS = {'WTCas9':'WT', 'noEP':'NoEP', 'HiFiCas9':'HiFi'}
 STRATEGIES = ('Unfiltered','Dedup','Dedud','Dedud+Dedup')
@@ -180,7 +179,7 @@ def run_panel(output, historical=None, *, workers, job_id):
                        published_sha256=PUBLISHED_SHA256,oligo_sha256=sha256(REFERENCE),
                        manifest_sha256=sha256(MANIFEST),
                        submitted_workbooks=json.loads((refs/'source_sha256.json').read_text()),
-                       implementation_sha256={p.name:sha256(p) for p in (Path(__file__),PANEL/'manuscript_model.R',AGENT/'target_identity.py')})
+                       implementation_sha256={p.name:sha256(p) for p in (Path(__file__),PANEL/'manuscript_model.R',AGENT/'absolve/target_identity.py')})
         if historical:
             receipt.pop('published_sha256')
             method = historical.get('method', 'historical')
