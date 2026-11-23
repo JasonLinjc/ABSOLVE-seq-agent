@@ -27,6 +27,8 @@
 
 > Set up https://github.com/JasonLinjc/ABSOLVE-seq-agent and run the public D3734/T1 example from the raw sequencing reads. How much editing do we see with HiFi compared with its control at each target? Show me the report, figure and Excel data.
 
+[See the example conversation and results](#from-paired-fastqs-to-a-report)
+
 The agent downloads four FASTQ files (1.58 GB) and analyzes all 79 targets using both ends of each read pair and the published plasmid barcode annotation. Before handing you the report, it checks the editing rates against the verified example and checks the power estimates for detecting small editing differences. Start with `results/report.md` for the figure and links to the tables. [Public dataset](https://trace.ncbi.nlm.nih.gov/Traces/?view=study&acc=SRP722226) · [Verified example results](docs/d3734-t1-quick-start.md#verified-on-luminary) · [Docker acceptance](docs/container.md#d3734t1-docker-acceptance)
 
 You’ll need a signed-in client, Git, internet access and either Conda/Mamba or a supported container runtime. [Download the Docker or Apptainer image](https://github.com/JasonLinjc/ABSOLVE-seq-agent/releases/tag/v0.2.0) · [Container setup](docs/container.md#download-a-prebuilt-image)
@@ -94,18 +96,10 @@ The default workflow trims both mates with Trimmomatic 0.36 and assigns each rea
 
 ### From paired FASTQs to a report
 
-The [one-message prompt](#start-with-one-message) runs the public example end to end. Here is the same analysis step by step, with results from the [verified D3734/T1 run](docs/d3734-t1-quick-start.md#verified-on-luminary).
-
 <table>
 <tbody>
-<tr><td><strong>👤 User</strong><br>Can you get the public D3734/T1 example? Which sample is the control?</td></tr>
-<tr><td><strong>🤖 Agent</strong><br>NoEP is the control (<code>SRR39887646</code>). Its matched HiFi sample is <code>SRR39887695</code>. I checked all four sequencing files against the archive and recorded them in the sample list.</td></tr>
-<tr><td><strong>👤 User</strong><br>Analyze all 79 targets from those reads and show me how the two samples compare.</td></tr>
-<tr><td><strong>🤖 Agent</strong><br>I used both ends of each read pair and the published pBC annotation to compare HiFi with its matched NoEP control at all 79 targets. The report shows 316 comparisons, one per target and counting strategy.</td></tr>
-<tr><td><strong>👤 User</strong><br>At <code>1617_OT_0040_ALT</code>, do we still see more editing with HiFi if we count each qualifying plasmid barcode just once?</td></tr>
-<tr><td><strong>🤖 Agent</strong><br>Yes. With that counting method (Dedud+Dedup), HiFi had 11 edited barcode families out of 691 (1.59%). NoEP had 0 out of 1,694 (0.00%). The difference was <strong>+1.59 percentage points</strong>.</td></tr>
-<tr><td><strong>👤 User</strong><br>Did my results match the public example? Where can I see the figure and the numbers behind it?</td></tr>
-<tr><td><strong>🤖 Agent</strong><br>Yes. All 316 editing comparisons matched the verified example. I also checked the power estimates and the data used for the figure. Open <code>runs/D3734-T1/results/report.md</code> for the figure and links to the editing rates, power estimates and Excel file.</td></tr>
+<tr><td><strong>👤 User</strong> · <a href="#start-with-one-message">One-message prompt</a><br>Set up https://github.com/JasonLinjc/ABSOLVE-seq-agent and run the public D3734/T1 example from the raw sequencing reads. How much editing do we see with HiFi compared with its control at each target? Show me the report, figure and Excel data.</td></tr>
+<tr><td><strong>🤖 Agent</strong><br>I checked all four FASTQs and analyzed both ends of each read pair using the published plasmid barcode annotation. All 316 comparisons (79 targets × four counting strategies) and all 632 power estimates matched the verified public example.<br><br>For example, at <code>1617_OT_0040_ALT</code>, counting each qualifying barcode once (Dedud+Dedup) gave 11 edited families out of 691 with HiFi and 0 out of 1,694 with NoEP. HiFi was <strong>1.59 percentage points higher</strong> at this target.<br><br>Open <code>runs/D3734-T1/results/report.md</code> for the full results. It links to the per-target rates and differences, the detection power table, and the Dedud figure with its Excel source data.</td></tr>
 </tbody>
 </table>
 
