@@ -14,11 +14,11 @@
 <p align="center">
   <a href="#start-with-one-message">💬 <strong>Start in chat</strong></a> &nbsp;·&nbsp;
   <a href="docs/d3734-t1-quick-start.md">🧬 Public dataset tutorial</a> &nbsp;·&nbsp;
-  <a href="#paired-results">📊 Read the results</a> &nbsp;·&nbsp;
+  <a href="#study-panel-results">📊 Read the results</a> &nbsp;·&nbsp;
   <a href="#figure-3b-and-reproducibility">📄 Manuscript Figure 3b</a>
 </p>
 
-**What is ABSOLVE-seq?** ABSOLVE-seq (Assessment By Stand-in Off-target LentiViral Ensemble with sequencing) measures insertions and deletions (indels) in reporters carrying reference or variant sequences from candidate CRISPR off-target sites. The agent estimates how much editing differs between HiFi Cas9 and a matched NoEP control at each target, and how likely the experiment is to detect a small increase. [Original study](https://doi.org/10.1101/2024.07.24.605019)
+**What is ABSOLVE-seq?** ABSOLVE-seq (Assessment By Stand-in Off-target LentiViral Ensemble with sequencing) measures insertions and deletions (indels) in reporters carrying reference or variant sequences from candidate CRISPR off-target sites. The agent estimates how much editing differs between each Cas9 treatment (WT or HiFi) and the NoEP control at each target, and how likely the experiment is to detect a small increase. [Original study](https://doi.org/10.1101/2024.07.24.605019)
 
 ## Example conversations
 
@@ -26,25 +26,26 @@
 
 ### Start with one message
 
-Open an empty folder in Codex or Claude Code and copy the **User** message below. The public example downloads four FASTQs (1.58 GB). You’ll need Git, internet access and a machine with Docker, Apptainer or Conda/Mamba. [Setup options](#set-up-in-codex-or-claude-code)
+Open a folder in Codex or Claude Code and send the **User** message below. The agent can use your study manifest or download the 52 public FASTQs. The current panel workflow also needs the model references extracted from Supplementary Tables 2–5, or the four workbooks to prepare them. [Full-panel setup](docs/manuscript-reads.md#analyze-all-study-samples)
 
 <table>
 <tbody>
-<tr><td><strong>👤 User · One-message prompt</strong><br>Set up https://github.com/JasonLinjc/ABSOLVE-seq-agent and analyze all 79 targets from the public D3734/T1 raw FASTQs. For each of the four filtering strategies, report the HiFi and NoEP indel rates, their difference (HiFi minus NoEP), and the estimated power to detect increases of 0.01 and 0.1 percentage points. Run the analysis through verification, summarize the findings here, and link the report, complete result tables, figure and Excel source data.</td></tr>
-<tr><td><strong>🤖 Agent</strong><br>All 79 targets passed the public example checks across four strategies, giving 316 rate comparisons and 632 power estimates.<br><br>With one vote per qualifying plasmid barcode (Dedud+Dedup), the median HiFi minus NoEP difference across targets was 0 percentage points. At <code>1617_OT_0040_ALT</code>, HiFi had 11 edited families out of 691 (1.59%) and NoEP had 0 out of 1,694 (0%). At this target’s depth, 76 of 1,000 simulations detected an increase of 0.1 percentage points (7.6% power).<br><br>Open <code>runs/D3734-T1/results/report.md</code> for the full rate and power tables, the Dedud figure and its Excel source data.</td></tr>
+<tr><td><strong>👤 User · One-message prompt</strong><br>Set up https://github.com/JasonLinjc/ABSOLVE-seq-agent and analyze all 79 targets in all 26 original study libraries from raw FASTQs. Use my configured data or fetch the public reads. Include every donor and replicate. For each of the four filtering strategies, compare WT and HiFi separately with NoEP. Report indel rates, differences in percentage points, p-values, adjusted q-values and detection power. Verify the outputs, summarize the findings here, and link the report, complete tables, Figure 3b and its Excel source data.</td></tr>
+<tr><td><strong>🤖 Agent · Example result</strong><br>The analysis covered 9 NoEP, 9 WT and 8 HiFi libraries across three donors. At <code>1617_OT_0040_ALT</code>, the Dedud model estimated indel rates of 0.01% for NoEP, 51.77% for WT and 4.49% for HiFi. Both increases met the calling thresholds (Δ &gt; 0.1 percentage points and q &lt; 0.05).<br><br>Open <code>runs/study-panel/results/report.md</code> for the results across all targets and strategies, including detection power and the figure source data.</td></tr>
 </tbody>
 </table>
-
-[Public sequencing data](https://trace.ncbi.nlm.nih.gov/Traces/?view=study&acc=SRP722226) · [Docker acceptance record](docs/container.md#d3734t1-docker-acceptance)
 
 <details>
-<summary><strong>Analyze original-study FASTQs on your machine or cluster</strong></summary>
+<summary><strong>Try a smaller example or select one matched pair</strong></summary>
 
 <table>
 <tbody>
-<tr><td><strong>👤 User</strong><br>My FASTQs are in <code>/path/to/fastqs</code> and my sample sheet is at <code>/path/to/sample-sheet</code>. Find the matched HiFi and NoEP pairs. If several are available, let me choose one, then run it through to the report.</td></tr>
+<tr><td><strong>👤 User</strong><br>Run the public D3734/T1 HiFi and NoEP example from FASTQs and show me the report.</td></tr>
+<tr><td><strong>👤 User · With local data</strong><br>My FASTQs are in <code>/path/to/fastqs</code> and my sample sheet is at <code>/path/to/sample-sheet</code>. Find the matched HiFi and NoEP pairs. If several are available, let me choose one, then run it through to the report.</td></tr>
 </tbody>
 </table>
+
+The public pair uses four FASTQs (1.58 GB). [Paired tutorial](docs/d3734-t1-quick-start.md) · [Docker acceptance record](docs/container.md#d3734t1-docker-acceptance)
 
 For remote execution, include the cluster’s SSH alias and a shared working directory. Give paths that the compute nodes can read. [Cluster setup and transfer](docs/container.md#stage-public-inputs-from-a-networked-machine)
 
@@ -105,9 +106,20 @@ For remote execution, include the cluster’s SSH alias and a shared working dir
   <img src="docs/assets/agent-architecture.svg" width="660" alt="Codex and Claude Code use shared skills to run the analysis locally or on Slurm. The workflow connects sequencing and barcode inputs to editing and power estimates, a report, a figure and Excel data." />
 </p>
 
-**Inputs.** A paired analysis uses R1 and R2 for both arms from the same donor and replicate. The manifest maps the four FASTQs to their samples and records their SHA-256 checksums. [Manifest template](examples/manifest.example.tsv)
+**Inputs.** Each library contributes an R1 and an R2 FASTQ. The manifest maps both files to the sample and records their SHA-256 checksums. [Manifest template](examples/manifest.example.tsv)
 
 **Processing.** Trimmomatic 0.36 trims both mates. The target barcode (tBC) assigns each read pair to a target. CRISPResso2 2.2.13 uses FLASH to merge the mates, aligns the merged reads to the target amplicon and calls indels in the cut-site window. Reads from the same sample and target are grouped by plasmid barcode (pBC) for counting.
+
+## Study panel results
+
+Open `results/report.md` in the run directory. The model accounts for donor and gives the three donors equal weight when estimating each treatment’s indel rate.
+
+| File in `results/` | What it contains |
+| --- | --- |
+| `library_counts.tsv` | 8,216 indel counts and denominators (26 libraries × 79 targets × 4 strategies). |
+| `panel_comparison.tsv` | 632 contrasts (WT or HiFi versus NoEP). Each row gives the fitted rates, Δ, one-sided p-value, and Benjamini–Hochberg q-value adjusted across 79 targets within that editor and strategy. |
+| `power_estimates.tsv` | 1,264 estimates of detection power, one for each contrast at assumed increases of 0.01 and 0.1 percentage points. |
+| `figures/Figure3b.pdf` and `figures/Figure3b_source_data.xlsx` | Dedud results for both editors, with 158 target/editor combinations in the figure and workbook. |
 
 ## Paired results
 
@@ -159,6 +171,8 @@ The example manifest lists `NoEP_pool_D3734_T1` and `HiFi_pool_D3734_T1`. Its FA
 </details>
 
 ## Quick start
+
+For all 26 libraries, follow the [full-panel walkthrough](docs/manuscript-reads.md#analyze-all-study-samples).
 
 For a terminal run, follow the [D3734/T1 walkthrough](docs/d3734-t1-quick-start.md) to prepare the reference index and manifest and verify the NoEP (`SRR39887646`) and HiFi (`SRR39887695`) FASTQs. Run the following in the paired environment after preparing those inputs.
 

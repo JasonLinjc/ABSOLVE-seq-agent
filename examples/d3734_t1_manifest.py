@@ -1,4 +1,4 @@
-"""Create a D3734/T1 manifest from laboratory FASTQs or the public ENA downloads."""
+"""Create a D3734/T1 or full study panel manifest from laboratory FASTQs or the public ENA downloads."""
 import argparse
 import csv
 import hashlib
@@ -18,8 +18,9 @@ def sha256(path, expected_md5=None):
     return digest.hexdigest()
 
 
-def make_manifest(root, output, ena=False):
-    with Path(__file__).with_name("d3734_t1_ena.tsv").open() as handle:
+def make_manifest(root, output, ena=False, panel=False):
+    catalog = "study_panel_ena.tsv" if panel else "d3734_t1_ena.tsv"
+    with Path(__file__).with_name(catalog).open() as handle:
         libraries = list(csv.DictReader(handle, delimiter="\t"))
     rows = []
     for record in libraries:
@@ -54,8 +55,9 @@ def make_manifest(root, output, ena=False):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("fastq_root", type=Path, help="Directory containing NoEP/ and HiFi/, or the four ENA FASTQs")
+    parser.add_argument("fastq_root", type=Path, help="Directory containing library folders by condition, or the ENA FASTQs")
     parser.add_argument("output", type=Path, help="New manifest TSV")
-    parser.add_argument("--ena", action="store_true", help="Verify the four ENA files against their archive MD5 values")
+    parser.add_argument("--ena", action="store_true", help="Verify the ENA files against their archive MD5 values")
+    parser.add_argument("--panel", action="store_true", help="Include all 26 study libraries across NoEP, WT and HiFi")
     args = parser.parse_args()
-    make_manifest(args.fastq_root, args.output, args.ena)
+    make_manifest(args.fastq_root, args.output, args.ena, args.panel)

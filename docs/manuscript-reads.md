@@ -2,6 +2,30 @@
 
 For matched NoEP/HiFi pairs the agent uses Trimmomatic 0.36 and paired-end CRISPResso2 2.2.13. A raw `--manuscript-panel` run defaults to the historical processing for the submitted workbooks. The Maxi annotation choice and the read processing mode are separate options.
 
+## Analyze all study samples
+
+The full panel covers 26 libraries from D3734, D3742 and D3908. The design has nine NoEP, nine WT and eight HiFi libraries. D3734/T3 includes WT and NoEP only. All 26 contribute to the donor-adjusted model.
+
+Use the [paired runtime and published reference setup](d3734-t1-quick-start.md#1-get-the-agent-and-create-an-environment). For the model fit, use R with brglm2 or configure the analysis image as described under [runtime setup](#configure-the-runtime). Point `ABSOLVE_MANIFEST` at an existing full study manifest, or run these commands from the current checkout to prepare the public inputs. The [ENA file list](../examples/study_panel_ena.tsv) identifies both mates and their archive MD5 checksums for every library in the original panel. [Public study](https://trace.ncbi.nlm.nih.gov/Traces/?view=study&acc=SRP722226)
+
+```bash
+export ABSOLVE_DATA="${ABSOLVE_DATA:-$PWD/data}"
+export FASTQ_ROOT="$ABSOLVE_DATA/sra/study-panel"
+export ABSOLVE_MANIFEST="$ABSOLVE_DATA/study-panel-manifest.tsv"
+mkdir -p "$FASTQ_ROOT"
+awk -F '\t' 'NR > 1 {print $4; print $6}' examples/study_panel_ena.tsv |
+  (cd "$FASTQ_ROOT" && xargs -P 4 -n 1 curl -fLsS --retry 4 -C - -O)
+python examples/d3734_t1_manifest.py --panel --ena "$FASTQ_ROOT" "$ABSOLVE_MANIFEST"
+```
+
+The manifest builder verifies both mates against ENA and records their SHA-256 digests. The panel entry point reads full-model reference extracts from `$ABSOLVE_DATA/submitted_model_reference`. If those extracts are missing, prepare them once from the four original workbooks with `python panel_report/references.py /path/to/workbooks "$ABSOLVE_DATA/submitted_model_reference" --full-model`.
+
+```bash
+python paired.py --manuscript-panel --read-mode manuscript --fresh --output runs/study-panel
+```
+
+On Slurm, wait for the finish job in `runs/study-panel/jobs.json`. A local run returns after aggregation. Run `python verify_results.py power runs/study-panel/results` and open `runs/study-panel/results/report.md`. [Full-panel result files](../README.md#study-panel-results)
+
 ## Reproduce the submitted calls from the original FASTQs
 
 > I have all 26 libraries, their manifest and submitted Supplementary Tables 2–5. Check the historical software versions, reproduce the submitted tables and summarize agreement for WT and HiFi by strategy. Estimate power from my counts, draw Figure 3b from the fitted Dedud estimates and simulated power, and return the report, PDF and Excel source data.
