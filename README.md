@@ -101,7 +101,7 @@ The [one-message prompt](#start-with-one-message) runs the public example end to
 <tr><td><strong>👤 User</strong><br>Can you get the public D3734/T1 example? Which sample is the control?</td></tr>
 <tr><td><strong>🤖 Agent</strong><br>NoEP is the control (<code>SRR39887646</code>). Its matched HiFi sample is <code>SRR39887695</code>. I checked all four sequencing files against the archive and recorded them in the sample list.</td></tr>
 <tr><td><strong>👤 User</strong><br>Analyze all 79 targets from those reads and show me how the two samples compare.</td></tr>
-<tr><td><strong>🤖 Agent</strong><br>I compared HiFi with its matched NoEP control at 79 targets. The report shows 316 comparisons, one per target and counting strategy.</td></tr>
+<tr><td><strong>🤖 Agent</strong><br>I used both ends of each read pair and the published pBC annotation to compare HiFi with its matched NoEP control at all 79 targets. The report shows 316 comparisons, one per target and counting strategy.</td></tr>
 <tr><td><strong>👤 User</strong><br>At <code>1617_OT_0040_ALT</code>, do we still see more editing with HiFi if we count each qualifying plasmid barcode just once?</td></tr>
 <tr><td><strong>🤖 Agent</strong><br>Yes. With that counting method (Dedud+Dedup), HiFi had 11 edited barcode families out of 691 (1.59%). NoEP had 0 out of 1,694 (0.00%). The difference was <strong>+1.59 percentage points</strong>.</td></tr>
 <tr><td><strong>👤 User</strong><br>Did my results match the public example? Where can I see the figure and the numbers behind it?</td></tr>
@@ -133,6 +133,18 @@ You can also ask to choose among donor/replicate pairs in your manifest or to ru
 
 </details>
 
+<details>
+<summary><strong>Reproduce Supplementary Tables 2–5</strong></summary>
+
+<table>
+<tbody>
+<tr><td><strong>👤 User</strong><br>I have the original 26 libraries and the submitted workbooks. Can you reproduce Supplementary Tables 2–5 and show me any differences?</td></tr>
+<tr><td><strong>🤖 Agent</strong><br>I’ll use the historical processing recorded for WT, NoEP and HiFi. I’ll check the historical pBC annotation, compare all 632 target, strategy and editor combinations with the workbooks, and report differences in rates, q-values and positive calls.</td></tr>
+</tbody>
+</table>
+
+</details>
+
 <a id="validate-pbc-annotation-reproducibility"></a>
 <details>
 <summary><strong>Validate pBC annotation reproducibility</strong></summary>
@@ -140,7 +152,7 @@ You can also ask to choose among donor/replicate pairs in your manifest or to ru
 <table>
 <tbody>
 <tr><td><strong>👤 User</strong><br>Validate pBC annotation reproducibility.</td></tr>
-<tr><td><strong>🤖 Agent</strong><br>I’ll use the configured Luminary archive to compare the published and rebuilt annotations across all 26 libraries in fast and manuscript reproduction modes. I’ll return the comparison summary, field-level differences and SHA-256 manifest.</td></tr>
+<tr><td><strong>🤖 Agent</strong><br>I’ll compare the published and rebuilt annotations against the saved alignments for all 26 libraries in the Luminary archive. I’ll return the comparison summary, field-level differences and SHA-256 manifest.</td></tr>
 </tbody>
 </table>
 
@@ -179,23 +191,15 @@ When alleles tie for the highest read count, the paired-end workflow breaks the 
 
 Plasmid pool sequencing identifies which plasmid barcodes (pBCs) qualify for each target. The default `--maxi-method manuscript` uses the published annotation derived from the study’s Maxi plasmid pool. To rebuild from the six original Maxi FASTQs, use `setup_references.py --published-maxi` for the published entropy threshold or `--historical-maxi` for the historical two-tBC exception. On later runs, pass the saved directory with `--maxi-reference DIR` and its matching `--maxi-method manuscript` or `--maxi-method historical`. [Build commands and rule comparison](docs/historical-maxi.md#build-the-reference-once)
 
-[Full-panel pBC validation in fast and manuscript reproduction modes](docs/pbc-validation.md)
+[Full-panel pBC annotation validation using archived alignments](docs/pbc-validation.md)
 
 ## Figure 3b and reproducibility
 
 The panel workflow writes `figures/Figure3b.pdf` and `figures/Figure3b_source_data.xlsx` using its fitted effects and freshly simulated power. To reproduce the published graphic, ask for **Figure 3b with submitted power**. The redraw can use submitted or refitted effects while retaining the original Supplementary Table 2 power values. Both versions export 158 plotted target/editor rows and record the power source. [Figure commands and verification](docs/manuscript-figures.md)
 
-Use the benchmark for the pBC annotation and data used in your run. The first command checks the public D3734/T1 example with the default published annotation.
-
-```bash
-python verify_results.py pair-manuscript runs/D3734-T1/results
-python verify_results.py pair-historical runs/paired-historical/results
-python verify_results.py panel-refit runs/panel-refit
-```
-
 ## Manuscript comparison
 
-To reproduce the paper, ask “Reproduce Supplementary Tables 2–5 from the original 26 libraries.” The agent uses the historical processing recorded for each study arm.
+To reproduce the paper, ask “Reproduce Supplementary Tables 2–5 from the original 26 libraries.” The full-panel command `python paired.py --manuscript-panel` selects `historical` processing for each study arm. Supply the historical pBC annotation and WT runtime as described in the guide below.
 
 [Raw FASTQ reproduction of Supplementary Tables 2–5: acceptance results and run instructions](docs/historical-panel-acceptance.md)
 

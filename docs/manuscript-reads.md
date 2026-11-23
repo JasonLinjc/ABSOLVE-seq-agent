@@ -1,10 +1,10 @@
 # Original paired-end read processing
 
-Choose manuscript mode to replay the original preprocessing with Trimmomatic 0.36 and paired-end CRISPResso2 2.2.13. Matched NoEP/HiFi pairs and full panels both default to uniform paired-end processing. The Maxi annotation choice and the read processing mode are separate options.
+For matched NoEP/HiFi pairs the agent uses Trimmomatic 0.36 and paired-end CRISPResso2 2.2.13. A raw `--manuscript-panel` run defaults to the historical processing for the submitted workbooks. The Maxi annotation choice and the read processing mode are separate options.
 
 ## Reproduce the submitted calls from the original FASTQs
 
-> I have all 26 libraries, their manifest and submitted Supplementary Tables 2–5. Check the historical software versions, run the manuscript workflow and summarize agreement for WT and HiFi by strategy. Estimate power from my counts, draw Figure 3b from the fitted Dedud estimates and simulated power, and return the report, PDF and Excel source data.
+> I have all 26 libraries, their manifest and submitted Supplementary Tables 2–5. Check the historical software versions, reproduce the submitted tables and summarize agreement for WT and HiFi by strategy. Estimate power from my counts, draw Figure 3b from the fitted Dedud estimates and simulated power, and return the report, PDF and Excel source data.
 
 Select `--manuscript-panel --read-mode historical --fresh` to process all 52 raw FASTQs. Each library goes through input SHA-256 verification, trimming, target assignment, paired-end alignment and counting in a new run directory. The panel uses the historical six-Maxi pBC membership and the existing cross-target filter.
 
@@ -32,10 +32,9 @@ The workbook check independently computes BH-adjusted q-values within each edito
 
 | Starting point | Effect estimate | Report path relative to `--output` |
 | --- | --- | --- |
-| Matched pair, fast or manuscript reads | Observed HiFi and NoEP rates for one donor and replicate | `results/report.md` |
+| Matched pair, uniform paired-end reads | Observed HiFi and NoEP rates for one donor and replicate | `results/report.md` |
 | Full panel, `--read-mode historical --fresh` | Arm-specific historical processing from the 52 FASTQs and equal donor weights | `results/report.md` |
-| Full panel, manuscript reads (default) | Three donors weighted equally on the logit scale | `results/report.md` |
-| Full panel, `--read-mode fast` | Donors weighted by observed pBC-family counts | `report.md` |
+| Full panel, explicit `--read-mode manuscript` | Three donors weighted equally on the logit scale | `results/report.md` |
 | Full panel, `--refit-counts FILE --output DIR` | Three donors weighted equally on the logit scale, using the filtering already present in the counts | `report.md` |
 
 ### Full-panel acceptance on Luminary
@@ -70,7 +69,7 @@ python paired.py --manuscript-panel --read-mode manuscript \
 
 Omit `--baseline-panel` to compare directly with the submitted workbooks. Choose a new run directory. On Slurm, set site-specific scheduler defaults with variables such as `SBATCH_PARTITION` and `SBATCH_ACCOUNT`. The launcher submits a preparation array, a corresponding alignment array and a final aggregation job, and records their IDs in `jobs.json`. The two arrays use six CPUs, 18 GB memory and an eight-hour limit per library by default. Allow shared scratch for trimmed pairs and uncompressed per-target FASTQs.
 
-For a single complete donor/replicate pair, run `python paired.py --donor D3734 --replicate T1 --read-mode manuscript --output runs/pair-replay`. Pair output contains 316 target/strategy rows. For a fast panel, submit `sbatch paired.sbatch --manuscript-panel --read-mode fast`.
+For a single complete donor/replicate pair, run `python paired.py --donor D3734 --replicate T1 --read-mode manuscript --output runs/pair-replay`. Pair output contains 316 target/strategy rows.
 
 ## Run locally
 
@@ -84,7 +83,7 @@ unset ABSOLVE_CRISPRESSO2213_IMAGE ABSOLVE_IMAGE
 export PATH="/software/crispresso-2.2.13/bin:$PATH"
 python paired.py --executor local --read-mode manuscript --donor D3734 --replicate T1 \
   --threads 4 --output runs/local-pair
-python paired.py --executor local --manuscript-panel --threads 4 --output runs/local-panel
+python paired.py --executor local --manuscript-panel --read-mode manuscript --threads 4 --output runs/local-panel
 ```
 
 To select a specific native CRISPResso executable, set `ABSOLVE_CRISPRESSO2213_EXECUTABLE` to its path. To analyze frozen counts directly, use [the count refit](historical-maxi.md#refit-existing-counts). Reference rebuilding and Figure 3b export also run directly from Python.
@@ -106,7 +105,7 @@ For each sample and target, the worker passes both mates to CRISPResso2 2.2.13, 
 
 ## Inspect the results
 
-Panel output includes 8,216 target/strategy/library count rows and 632 modeled contrasts in `results/`. For each treatment, manuscript mode averages the fitted logits for D3734, D3742 and D3908 with weight 1/3 each, then applies the inverse logit. It subtracts the NoEP rate from the edited treatment rate. In `donor_weights.tsv`, `marginal_weight` is the weight used for prediction and `family_row_weight` is the observed share of pBC-family rows. The fast panel uses the observed shares. Both modes use a one-sided treatment-coefficient Wald test and BH correction within each 79-target strategy/editor group. A hit requires Δ greater than 0.1 percentage points and q below 0.05. With a previous panel as the baseline, `results/call_changes.tsv` labels contrasts as concordant, resolved, persistent or new. Its legacy `fast_*` columns contain the values from the supplied baseline.
+Panel output includes 8,216 target/strategy/library count rows and 632 modeled contrasts in `results/`. For each treatment, manuscript mode averages the fitted logits for D3734, D3742 and D3908 with weight 1/3 each, then applies the inverse logit. It subtracts the NoEP rate from the edited treatment rate. In `donor_weights.tsv`, `marginal_weight` is the weight used for prediction and `family_row_weight` is the observed share of pBC-family rows. The panel uses a one-sided treatment-coefficient Wald test and BH correction within each 79-target strategy/editor group. A hit requires Δ greater than 0.1 percentage points and q below 0.05. With a previous panel as the baseline, `results/call_changes.tsv` labels contrasts as concordant, resolved, persistent or new. Its legacy `fast_*` columns contain the values from the supplied baseline.
 
 Each completed library stage and target writes its output atomically. A failed alignment task can be retried for its original array index with the same run configuration. Consult the stage logs and submit the final aggregation after all affected indices complete.
 
@@ -138,7 +137,3 @@ All four remaining discrepancies were WT hits in the submitted tables. Values be
 | Dedup | `1450_OT_0210_ALT` | 0.061067 | 0.118504 | 0.091502 | 0.000254 |
 
 The two Unfiltered contrasts crossed only the Δ threshold. The two Dedup contrasts crossed both thresholds. WT library count rows matched the previous replay exactly. The shared model also uses the newly trimmed NoEP and HiFi counts.
-
-## Legacy fast compatibility
-
-Existing analyses that use cached single-read alignments can select `--read-mode fast` explicitly with the CRISPResso2 2.3.4 runtime. The study cache is configured with `ABSOLVE_CACHE`. For a matched pair, `--maxi-method merged` uses the merged QC reference in `ABSOLVE_MAXI_MERGED`. The `any-pool`, `two-pools` and `all-pools` methods use the three QC references under `ABSOLVE_MAXI_POOLS`. A legacy pair accepts `--target-filter pbc-only`. For the original fast public example with its default filters, verify using `pair-fast`.

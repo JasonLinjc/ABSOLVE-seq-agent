@@ -23,7 +23,7 @@ python setup_references.py --historical-maxi /data/original_maxi \
   --output /data/references/historical-maxi
 ```
 
-The builder verifies all six input hashes and each of the 79 target memberships against the selected rule’s SHA-256 manifest before publishing the new directory. The published-rule manifest was computed independently from the pinned published annotation by taking the first row for each target/pBC, selecting qualifying barcodes, and hashing the sorted barcode list for each target. Only counts and digests from that comparison are packaged with the builder. Outputs include one sorted pBC list per target, a combined `target_pbc.tsv.gz`, per-target counts and hashes in `target_comparison.tsv`, trimming logs and `provenance.json`. The published rule has **5,190,216 target/pBC keys** and the historical rule has **5,248,941**. Reference files are checked again when read by a worker. Keep the directory accessible from all worker nodes and bind it into the container when using a path outside the standard mounts. The [legacy fast guide](manuscript-reads.md#legacy-fast-compatibility) describes the older pool-voting methods.
+The builder verifies all six input hashes and each of the 79 target memberships against the selected rule’s SHA-256 manifest before publishing the new directory. The published-rule manifest was computed independently from the pinned published annotation by taking the first row for each target/pBC, selecting qualifying barcodes, and hashing the sorted barcode list for each target. Only counts and digests from that comparison are packaged with the builder. Outputs include one sorted pBC list per target, a combined `target_pbc.tsv.gz`, per-target counts and hashes in `target_comparison.tsv`, trimming logs and `provenance.json`. The published rule has **5,190,216 target/pBC keys** and the historical rule has **5,248,941**. Reference files are checked again when read by a worker. Keep the directory accessible from all worker nodes and bind it into the container when using a path outside the standard mounts.
 
 ## Analyze a matched pair or the panel
 
@@ -45,7 +45,7 @@ python paired.py --manuscript-panel --read-mode manuscript \
   --output runs/panel-historical
 ```
 
-The paired output has 316 target/strategy records. The full model estimates 632 editor/target/strategy contrasts. The new reference governs Dedud and Dedud+Dedup. The read mode and its allele tie handling are separate choices from the Maxi rule. For existing fast-mode comparisons, add `--read-mode fast` when submitting the pair with `sbatch paired.sbatch`.
+The paired output has 316 target/strategy records. The full model estimates 632 editor/target/strategy contrasts. The new reference governs Dedud and Dedud+Dedup. The read mode and its allele tie handling are separate choices from the Maxi rule.
 
 ## Refit existing counts
 

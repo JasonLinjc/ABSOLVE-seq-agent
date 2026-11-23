@@ -14,12 +14,15 @@ from panel_report.manuscript_reads import demultiplex, summarize
 
 class HistoricalReadTests(unittest.TestCase):
     def test_cli_routes_raw_panel_to_the_historical_membership(self):
-        argv = ["paired.py", "--manuscript-panel", "--read-mode", "historical", "--fresh"]
-        with patch.object(sys, "argv", argv), patch.dict(os.environ, {"ABSOLVE_HISTORICAL_MAXI_REFERENCE": "/maxi"}), \
-                patch("panel_report.manuscript_run.start") as start:
-            paired.main()
-        args = start.call_args.args[0]
-        self.assertEqual((args.maxi_method, args.maxi_reference, args.fresh), ("historical", "/maxi", True))
+        for mode in ([], ["--read-mode", "historical"]):
+            argv = ["paired.py", "--manuscript-panel", "--fresh", *mode]
+            with self.subTest(mode=mode), patch.object(sys, "argv", argv), \
+                    patch.dict(os.environ, {"ABSOLVE_HISTORICAL_MAXI_REFERENCE": "/maxi"}), \
+                    patch("panel_report.manuscript_run.start") as start:
+                paired.main()
+            args = start.call_args.args[0]
+            self.assertEqual((args.read_mode, args.maxi_method, args.maxi_reference, args.fresh),
+                             ("historical", "historical", "/maxi", True))
 
     def test_motif_first_occurrence_and_arm_specific_split(self):
         motif = b"CCAACCTCATAGAACA"

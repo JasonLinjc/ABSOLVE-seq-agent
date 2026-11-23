@@ -10,14 +10,11 @@ from panel_report import manuscript_reads, manuscript_run
 
 
 class LocalExecutionTest(unittest.TestCase):
-    pair = {"NoEP": {}, "HiFi": {}}
-
-    def invoke_fast_pair(self, *args):
-        argv = ["paired.py", "--read-mode", "fast", "--donor", "D3734", "--replicate", "T1", *args]
-        with patch.object(sys, "argv", argv), patch.object(paired, "discover",
-                return_value={("D3734", "T1"): self.pair}), patch.object(paired, "execute") as execute:
+    def run_pair(self, *args):
+        argv = ["paired.py", "--donor", "D3734", "--replicate", "T1", *args]
+        with patch.object(sys, "argv", argv), patch.object(manuscript_run, "start") as start:
             paired.main()
-        return execute.call_args.args
+        return start.call_args.kwargs
 
     def test_default_pair_uses_uniform_reads_and_published_annotation(self):
         argv = ["paired.py", "--donor", "D3734", "--replicate", "T1", "--executor", "local"]
@@ -41,22 +38,29 @@ class LocalExecutionTest(unittest.TestCase):
 
     def test_auto_uses_local_workers_without_slurm(self):
         with patch.dict(os.environ, {}, clear=True), patch("settings.shutil.which", return_value=None):
-            _, samples, workers, job = self.invoke_fast_pair("--threads", "2")
-            self.assertEqual((samples, workers, job), (self.pair, 2, None))
+            self.assertEqual(self.run_pair("--threads", "2"), {"local": True, "workers": 2})
 
     def test_existing_allocation_and_local_override(self):
         with patch.dict(os.environ, {"SLURM_JOB_ID": "55", "SLURM_CPUS_PER_TASK": "8"}):
-            self.assertEqual(self.invoke_fast_pair()[2:], (8, "55"))
-            self.assertEqual(self.invoke_fast_pair("--executor", "local")[2:], (1, None))
+            self.assertEqual(self.run_pair(), {"local": False, "workers": 8})
+            self.assertEqual(self.run_pair("--executor", "local"), {"local": True, "workers": 1})
 
-    def test_login_node_does_not_start_fast_workers(self):
+    def test_login_node_dispatches_default_pair_to_slurm(self):
         with patch.dict(os.environ, {}, clear=True), patch("settings.shutil.which", return_value="/bin/sbatch"):
-            with self.assertRaises(SystemExit):
-                self.invoke_fast_pair()
+            self.assertEqual(self.run_pair(), {"local": False, "workers": 1})
+
+    def test_removed_mode_is_rejected_before_processing_inputs(self):
+        root = Path(paired.__file__).resolve().parent
+        env = {**os.environ, "ABSOLVE_HOST_PYTHON": sys.executable, "SLURM_SUBMIT_DIR": str(root)}
+        for prefix in ([sys.executable, str(root / "paired.py")], ["bash", str(root / "paired.sbatch")]):
+            result = subprocess.run([*prefix, "--read-mode", "fast"], env=env, capture_output=True, text=True)
+            self.assertEqual(result.returncode, 2)
+            self.assertIn("invalid choice", result.stderr)
+            self.assertIn("historical", result.stderr)
 
     def test_manuscript_panel_uses_same_local_stages(self):
         with patch.dict(os.environ, {}, clear=True), patch("settings.shutil.which", return_value=None), \
-                patch.object(sys, "argv", ["paired.py", "--manuscript-panel", "--threads", "3"]), \
+                patch.object(sys, "argv", ["paired.py", "--manuscript-panel", "--read-mode", "manuscript", "--threads", "3"]), \
                 patch.object(manuscript_run, "start") as start:
             paired.main()
         self.assertEqual(start.call_args.kwargs, {"local": True, "workers": 3})
