@@ -26,7 +26,7 @@
 
 ### Start with one message
 
-Open a folder in Codex or Claude Code and send the **User** message below. The agent can use your study manifest or download the 52 public FASTQs. The current panel workflow also needs the model references extracted from Supplementary Tables 2–5, or the four workbooks to prepare them. [Full-panel setup](docs/manuscript-reads.md#analyze-all-study-samples)
+Open a folder in Codex or Claude Code and send the **User** message below. The agent can use your study manifest or download the 52 public FASTQs. The current panel workflow also needs the model references extracted from Supplementary Tables 2–5, or the four workbooks to prepare them. [Full-panel setup](docs/manuscript-reads.md#analyze-all-study-samples) · [DeepSeek Harness FASTQ-to-report acceptance](docs/dsh-panel-acceptance.md)
 
 <table>
 <tbody>
