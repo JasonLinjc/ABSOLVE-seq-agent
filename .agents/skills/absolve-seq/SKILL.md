@@ -1,6 +1,6 @@
 ---
 name: absolve-seq
-description: Analyze original ABSOLVE-seq pooled reporter FASTQs end to end and deliver a report locally or on Slurm. Select a matched donor and replicate, compare plasmid barcode filtering criteria, export four indel-rate strategies, simulate detection power, deliver the report and figure, or reproduce manuscript treatment margins across the 79-target panel. Use this skill for requests in any language to validate pBC annotation reproducibility on Luminary.
+description: Analyze original ABSOLVE-seq pooled reporter FASTQs end to end and deliver a report locally or on Slurm. Select a matched donor and replicate, compare plasmid barcode filtering criteria, export four indel-rate strategies, simulate detection power, deliver the report and figure, or reproduce manuscript treatment margins across the 79-target panel. Use this skill for requests in any language to validate pBC annotation reproducibility on Luminary or audit historical pBC family completeness across WT, NoEP and HiFi.
 ---
 
 # ABSOLVE-seq analysis
@@ -18,6 +18,10 @@ Route “Validate pBC annotation reproducibility” and equivalent requests in a
 1. From the client checkout run `python3 luminary_pbc.py`. The launcher uses the configured Luminary checkout and prints the job ID and local delivery directory. If the user supplies a checkout or SSH alias, pass `--repo` or `--host`. For a missing configuration, follow the [one-time setup](../../../docs/pbc-validation.md#run-from-codex-or-claude-code). Skip donor selection, annotation rebuilding and local execution for this request.
 2. Follow that process through completion. If monitoring or delivery was interrupted, run `python3 luminary_pbc.py --resume LOCAL_DELIVERY_DIR` with the directory from the same request. If submission was interrupted before a job ID was recorded, check the Luminary queue and accounting before attempting another submission.
 3. Read `summary.tsv` and `differences.tsv` from the verified delivery. In the user's language, give the job ID, counts and model rows checked per mode and observed differences. Link the local `summary.tsv`, `differences.tsv` and `SHA256SUMS`. Exit 1 delivers completed comparisons with differences. For exit 2, identify the failed stage using the job receipt and Slurm log when available.
+
+### Audit historical pBC family completeness
+
+For a request to check missing families across WT, NoEP and HiFi, run the [full-panel family acceptance command](../../../docs/historical-panel-acceptance.md#rerun-the-full-panel-pbc-family-audit) with the historical project archive and the receipt-checked FASTQ family replays. Use `--expect-study` to verify the documented study result. Return the batch summary and per-pBC differences with their evidence source and the changes in both filtered numerators and denominators. A matching historical baseline includes the documented omission. A request to compare Maxi annotation methods uses the separate annotation validation command above.
 
 ### Choices in chat
 

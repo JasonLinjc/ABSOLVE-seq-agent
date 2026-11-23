@@ -67,9 +67,37 @@ Job `21338648` repeated this control with the [agent’s historical per-pBC coll
 
 ## pBC completeness across all NoEP and HiFi batches
 
-The audit covered 1,343 donor–replicate–target batches across 79 targets: 711 from nine NoEP libraries and 632 from eight HiFi libraries. The archive search found no complete historical per-pBC success list for any of these batches. Luminary job `21341762` reconstructed the family IDs from the target-split paired FASTQs. In every batch, the archived guide-window and full-length allele tables each contained exactly the reconstructed set of pBCs.
+For all 711 NoEP batches and 632 HiFi batches, the accessible archives contained no complete historical list of successful pBC families. In every batch, the pBCs reconstructed from FASTQs matched those in both archived allele tables exactly.
+
+Luminary job `21341762` used the target-split paired FASTQs from nine NoEP libraries and eight HiFi libraries. It checked all 79 targets in each library against both the guide-window and full-length allele tables.
 
 All **2,686 batch-by-strategy comparisons** matched the historical filtered tables in both numerator and denominator. For Dedud, the audit compared indel reads and total retained reads. For Dedud+Dedup, it compared families with an indel-positive representative and total retained families.
+
+## Rerun the full-panel pBC family audit
+
+From the agent checkout, run the command below where the historical archive and the saved FASTQ family replays are readable. It uses Python and pandas and can run locally or in a Slurm allocation. Set the three input paths to your copies and choose a new output directory.
+
+```bash
+python validate_family_panel.py \
+  --archive-root "$HISTORICAL_PROJECT" \
+  --replay-root "$WT_REPLAY" --replay-root "$NOEP_HIFI_REPLAY" \
+  --expect-study --output family-audit
+```
+
+The historical project supplies `metadata/NovaSeq3_sample_info_new.csv`, the batch plans in `singleUMI_crispresso_input`, the three historical CRISPResso run directories and the original allele tables. The command reads the window and full tables under `singleUMI_crispresso_WTCas9/alleles_all` and `alleles_all_HiFi_NoEP/alleles_all`. It reads the archived Dedud and Dedud+Dedup tables under `target_umi_barcode_table_WTCas9_HiFi_NoEP/{dedudS_filtered_v3,dedudS_filtered_v3_dedup}`.
+
+Point each replay root at the directory containing the `ARM_pool_DONOR_REPLICATE` folders from the FASTQ family reconstruction. Each folder has a `TARGET.tsv.gz` per-family export and its `TARGET.json` receipt. The audit verifies the batch identity, historical read profile, historical Maxi reference digest, sorted pBC membership digest and count totals before comparison. One combined replay root also works. These family-level inputs come from the historical acceptance runs and are needed in addition to the public sequencing data. Use `--workers N` for parallel batch readers within the CPUs allocated to the command.
+
+| Output | What to read |
+| --- | --- |
+| `batch_summary.tsv` | One row per arm, donor, replicate and target. See missing and unexpected pBC counts for each archived table, plus archived and replayed numerators and denominators. Each delta is replay minus archive. |
+| `pbc_differences.tsv` | One row per discrepant pBC. The expected, replay, window and full flags identify which table omitted or added it. The four signed count changes show its contribution even when changes cancel at batch level. Dedud counts reads. Dedud+Dedup counts one representative per retained family. |
+| `sources.jsonl` | One record per batch with the selected evidence, historical records found and their status, the expected family-set digest, the replay receipt and the four archive table paths. |
+| `summary.json`, `SHA256SUMS` | Overall acceptance, evidence totals by arm, portable result signatures and checksums of the four output files. |
+
+A historical success list qualifies when successes and failures partition the original batch plan and the quantification table confirms the successes. Multiple complete lists must agree. Where a complete list is unavailable, the expected pBCs come from the FASTQ replay. The evidence column records which comparison supports each conclusion.
+
+With `--expect-study`, exit 0 means the expected family sets, full batch summary and per-pBC differences match the verified study fingerprints, including the 932 omissions described above. Without that flag, exit 0 requires zero discrepancies. Exit 1 delivers a complete audit that differs from the selected expectation. Exit 2 indicates an input or execution error. To verify a delivered directory, run `sha256sum -c SHA256SUMS` inside it.
 
 ## Export checks
 
