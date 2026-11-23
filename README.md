@@ -27,7 +27,7 @@
 
 > Set up https://github.com/JasonLinjc/ABSOLVE-seq-agent and run the public D3734/T1 example from the raw sequencing reads. How much editing do we see with HiFi compared with its control at each target? Show me the report, figure and Excel data.
 
-The agent downloads four FASTQ files (1.58 GB) and analyzes all 79 targets using both ends of each read pair and the published plasmid barcode annotation. Before handing you the report, it checks the editing rates against the verified example and checks the power estimates for detecting small editing differences. Start with `results/report.md` for the figure and links to the tables. [Public dataset](https://trace.ncbi.nlm.nih.gov/Traces/?view=study&acc=SRP722226) · [Verified example results](docs/d3734-t1-quick-start.md#verified-on-luminary)
+The agent downloads four FASTQ files (1.58 GB) and analyzes all 79 targets using both ends of each read pair and the published plasmid barcode annotation. Before handing you the report, it checks the editing rates against the verified example and checks the power estimates for detecting small editing differences. Start with `results/report.md` for the figure and links to the tables. [Public dataset](https://trace.ncbi.nlm.nih.gov/Traces/?view=study&acc=SRP722226) · [Verified example results](docs/d3734-t1-quick-start.md#verified-on-luminary) · [Docker acceptance](docs/container.md#d3734t1-docker-acceptance)
 
 You’ll need a signed-in client, Git, internet access and either Conda/Mamba or a supported container runtime. [Setup options](docs/container.md)
 
