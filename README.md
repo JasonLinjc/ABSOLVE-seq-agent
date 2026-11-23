@@ -23,17 +23,19 @@
 
 ## Start with one message
 
-**New to the agent?** Open an empty project folder in a signed-in Codex or Claude Code session on a machine with Git, internet access and either Conda/Mamba or a supported container runtime. Paste this message to set up the project **and run the public example**:
+**Try the public example.** Open an empty folder in Codex or Claude Code and paste this message.
 
-> Set up https://github.com/JasonLinjc/ABSOLVE-seq-agent in this empty folder. Follow the public D3734/T1 quick start, prepare the fast-mode environment and references, and download the paired NoEP and HiFi FASTQs. Run all 79 targets with `--fresh` and the default filters. Wait for completion, run the `pair-fast` and `power` checks in the analysis environment, and give me the report, effect and power tables, figure and Excel source data.
+> Set up https://github.com/JasonLinjc/ABSOLVE-seq-agent and run the public D3734/T1 example from the raw sequencing reads. How much editing do we see with HiFi compared with its control at each target? Show me the report, figure and Excel data.
 
-This example uses four compressed FASTQs (1.58 GB) from [SRA study SRP722226](https://trace.ncbi.nlm.nih.gov/Traces/?view=study&acc=SRP722226). A completed run produces **316 target/strategy comparisons**. Open `results/report.md` for read retention and a four-strategy summary, or `results/paired_target_rates.tsv` for the counts behind any target. [Clean-checkout acceptance results](docs/d3734-t1-quick-start.md#verified-on-luminary)
+The agent downloads four FASTQ files (1.58 GB), applies the study’s standard filters and analyzes all 79 targets. Before handing you the report, it checks the editing rates against the verified example and checks the power estimates for detecting small editing differences. Start with `results/report.md` for the figure and links to the tables. [Public dataset](https://trace.ncbi.nlm.nih.gov/Traces/?view=study&acc=SRP722226) · [Verified example results](docs/d3734-t1-quick-start.md#verified-on-luminary)
 
-**Using a cluster from your laptop?** Include its SSH host and an empty shared project directory in the same message. The agent can use a login shell to find Slurm and stage public downloads from a networked machine if cluster downloads are slow. It builds the reference index and verifies the four FASTQs in the new checkout before submitting the pair. [Cluster setup and transfer](docs/container.md#stage-public-inputs-from-a-networked-machine)
+You’ll need a signed-in client, Git, internet access and either Conda/Mamba or a supported container runtime. [Setup options](docs/container.md)
+
+**Using a cluster from your laptop?** Add the cluster’s SSH name and an empty shared folder to your message so the agent knows where to run the analysis. [Cluster setup and transfer](docs/container.md#stage-public-inputs-from-a-networked-machine)
 
 **Already have original-study FASTQs?** Once the project is set up, give the agent the paths visible on the machine that will run the analysis:
 
-> My FASTQs are in `/path/to/fastqs` and my sample sheet is at `/path/to/sample-sheet`. Find matched HiFi and NoEP samples. If more than one donor/replicate pair is available, ask me which to use. Run the selected pair with the study defaults and return the report, target-level rates, estimated power and figure.
+> My sequencing files are in `/path/to/fastqs` and my sample sheet is at `/path/to/sample-sheet`. Find a HiFi sample and its NoEP control from the same donor and replicate. If there are several pairs, let me choose one. Then analyze it and show me the results.
 
 ## Set up in Codex or Claude Code
 
@@ -96,14 +98,14 @@ The [one-message prompt](#start-with-one-message) runs the public example end to
 
 <table>
 <tbody>
-<tr><td><strong>👤 User</strong><br>Find the paired FASTQs for public D3734/T1. Verify their archive checksums and build my sample manifest.</td></tr>
-<tr><td><strong>🤖 Agent</strong><br>NoEP is <code>SRR39887646</code> and HiFi is <code>SRR39887695</code>. Both mates of each run passed the archive checksum check. The manifest records all four FASTQs and their SHA-256 digests.</td></tr>
-<tr><td><strong>👤 User</strong><br>Run all 79 targets from scratch with four local workers, fast read processing and the published pBC annotation. Save the results under <code>runs/D3734-T1</code> and wait for completion.</td></tr>
+<tr><td><strong>👤 User</strong><br>Can you get the public D3734/T1 example? Which sample is the control?</td></tr>
+<tr><td><strong>🤖 Agent</strong><br>NoEP is the control (<code>SRR39887646</code>). Its matched HiFi sample is <code>SRR39887695</code>. I checked all four sequencing files against the archive and recorded them in the sample list.</td></tr>
+<tr><td><strong>👤 User</strong><br>Analyze all 79 targets from those reads and show me how the two samples compare.</td></tr>
 <tr><td><strong>🤖 Agent</strong><br>The run produced 316 comparisons across four strategies. Read preparation retained 5,971,199 of 10,084,551 NoEP pairs and 6,979,407 of 9,868,448 HiFi pairs.</td></tr>
-<tr><td><strong>👤 User</strong><br>Is the HiFi minus NoEP difference positive at <code>1617_OT_0040_ALT</code> after Dedud+Dedup? Show me the counts.</td></tr>
-<tr><td><strong>🤖 Agent</strong><br>Yes. HiFi had 9 edited pBC families out of 675 (1.33%). NoEP had 0 out of 1,619 (0.00%). The difference was <strong>+1.33 percentage points</strong>.</td></tr>
-<tr><td><strong>👤 User</strong><br>Check the pair benchmark and power estimates. Where are my report, tables, figure and Excel data?</td></tr>
-<tr><td><strong>🤖 Agent</strong><br>Both checks passed. Open <code>runs/D3734-T1/results/report.md</code>. In the same folder, <code>paired_target_rates.tsv</code> contains the target-level rates and differences, and <code>power_estimates.tsv</code> contains the power estimates. The figure and its Excel source data are in <code>figures/</code>.</td></tr>
+<tr><td><strong>👤 User</strong><br>At <code>1617_OT_0040_ALT</code>, do we still see more editing with HiFi if we count each qualifying plasmid barcode just once?</td></tr>
+<tr><td><strong>🤖 Agent</strong><br>Yes. With that counting method (Dedud+Dedup), HiFi had 9 edited barcode families out of 675 (1.33%). NoEP had 0 out of 1,619 (0.00%). The difference was <strong>+1.33 percentage points</strong>.</td></tr>
+<tr><td><strong>👤 User</strong><br>Did my results match the public example? Where can I see the figure and the numbers behind it?</td></tr>
+<tr><td><strong>🤖 Agent</strong><br>Yes. All 316 editing comparisons matched the verified example. I also checked the power estimates and the data used for the figure. Open <code>runs/D3734-T1/results/report.md</code> for the figure and links to the editing rates, power estimates and Excel file.</td></tr>
 </tbody>
 </table>
 
@@ -157,6 +159,8 @@ python paired.py --executor local --donor D3734 --replicate T1 --threads 4 --fre
 python verify_results.py pair-fast runs/D3734-T1/results
 python verify_results.py power runs/D3734-T1/results
 ```
+
+`--fresh` starts from the raw reads and repeats the alignments. For this example, the default filters use the published plasmid barcode annotation and check that edited reads match their assigned target. The `pair-fast` check compares the 316 editing results with the verified D3734/T1 run. The `power` check verifies the simulation outputs and checks that the plotted values and Excel data agree with the result tables.
 
 Use a new output directory for each run. Local execution defaults to one worker. On Slurm, submit `sbatch paired.sbatch --donor D3734 --replicate T1 --fresh --output runs/D3734-T1` from the repository root. Run the two verification commands after the job completes.
 
