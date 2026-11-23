@@ -8,134 +8,75 @@
 <h1 align="center">Quantify off-target gene editing with ABSOLVE-seq</h1>
 
 <p align="center">
-  Ask Codex or Claude Code to analyze your FASTQs from the original 79-target reporter panel.<br />
-  Get indel rates, paired editing effects and detection power in a report with a figure and Excel source data.
+  A conversational analysis agent for the original 79-target reporter panel, available in Codex and Claude Code.
 </p>
 
 <p align="center">
   <a href="#start-with-one-message">💬 <strong>Start in chat</strong></a> &nbsp;·&nbsp;
   <a href="docs/d3734-t1-quick-start.md">🧬 Public dataset tutorial</a> &nbsp;·&nbsp;
-  <a href="#example-conversations">📖 Example conversations</a> &nbsp;·&nbsp;
-  <a href="#figure-3b-and-reproducibility">📊 Figure 3b &amp; Excel</a>
+  <a href="#paired-results">📊 Read the results</a> &nbsp;·&nbsp;
+  <a href="#figure-3b-and-reproducibility">📄 Manuscript Figure 3b</a>
 </p>
 
-**What is ABSOLVE-seq?** ABSOLVE-seq (Assessment By Stand-in Off-target LentiViral Ensemble with sequencing) measures how often CRISPR causes insertions or deletions (indels) in reporters carrying reference or variant sequences from candidate off-target sites. From FASTQs, the agent reports indel rates for HiFi Cas9 and its matched control, their difference at each target, and estimated detection power, with a figure and Excel table. [Original ABSOLVE-seq study](https://doi.org/10.1101/2024.07.24.605019)
-
-## Start with one message
-
-**Try the public example.** Open an empty folder in Codex or Claude Code and paste this message.
-
-> Set up https://github.com/JasonLinjc/ABSOLVE-seq-agent and run the public D3734/T1 example from the raw sequencing reads. How much editing do we see with HiFi compared with its control at each target? Show me the report, figure and Excel data.
-
-[See the example conversation and results](#from-paired-fastqs-to-a-report)
-
-The agent downloads four FASTQ files (1.58 GB) and analyzes all 79 targets using both ends of each read pair and the published plasmid barcode annotation. Before handing you the report, it checks the editing rates against the verified example and checks the power estimates for detecting small editing differences. Start with `results/report.md` for the figure and links to the tables. [Public dataset](https://trace.ncbi.nlm.nih.gov/Traces/?view=study&acc=SRP722226) · [Verified example results](docs/d3734-t1-quick-start.md#verified-on-luminary) · [Docker acceptance](docs/container.md#d3734t1-docker-acceptance)
-
-You’ll need a signed-in client, Git, internet access and either Conda/Mamba or a supported container runtime. [Download the Docker or Apptainer image](https://github.com/JasonLinjc/ABSOLVE-seq-agent/releases/tag/v0.2.0) · [Container setup](docs/container.md#download-a-prebuilt-image)
-
-**Using a cluster from your laptop?** Add the cluster’s SSH name and an empty shared folder to your message so the agent knows where to run the analysis. [Cluster setup and transfer](docs/container.md#stage-public-inputs-from-a-networked-machine)
-
-**Already have original-study FASTQs?** Once the project is set up, give the agent the paths visible on the machine that will run the analysis:
-
-> My sequencing files are in `/path/to/fastqs` and my sample sheet is at `/path/to/sample-sheet`. Find a HiFi sample and its NoEP control from the same donor and replicate. If there are several pairs, let me choose one. Then analyze it and show me the results.
-
-## Set up in Codex or Claude Code
-
-Both skills ship with the repository. To set up manually, clone it and open the checkout in your client.
-
-```bash
-git clone https://github.com/JasonLinjc/ABSOLVE-seq-agent.git
-cd ABSOLVE-seq-agent
-```
-
-| Client | Open the project | Try the analysis skill |
-| --- | --- | --- |
-| Codex | Open the cloned folder in the Codex app, or run `codex` in the checkout. Sign in with your ChatGPT account. | Type `$absolve-seq` in the CLI, or ask for the skill by name. |
-| Claude Code | Run `claude` in the cloned folder and sign in. | Enter `/absolve-seq` followed by your request. |
-
-The clients use the same [analysis instructions](.agents/skills/absolve-seq/SKILL.md) and [Figure 3b instructions](.agents/skills/absolve-seq-figures/SKILL.md). For client installation, see the [Codex quick start](https://developers.openai.com/codex/quickstart/) or [Claude Code quick start](https://code.claude.com/docs/en/quickstart).
-
-<details>
-<summary><strong>🔧 Check setup before downloading reads</strong></summary>
-
-Ask: “List the pairs in `examples/manifest.example.tsv` and stop there.” You should see D3734/T1 with `NoEP_pool_D3734_T1` and `HiFi_pool_D3734_T1`. This command lists matched manifest entries and flags a missing arm. The example paths are placeholders. File and checksum checks happen during setup and processing.
-
-```bash
-ABSOLVE_MANIFEST=examples/manifest.example.tsv python paired.py --list
-```
-
-In the paired analysis environment, check that CRISPResso reports 2.2.13 and that the model and plotting dependencies load.
-
-```bash
-CRISPResso --version
-Rscript -e 'stopifnot(requireNamespace("brglm2", quietly=TRUE))'
-python -c 'import matplotlib, numpy, openpyxl'
-```
-
-For a real run, follow the [reference, manifest and FASTQ setup](docs/d3734-t1-quick-start.md). For the pinned Linux environment, use the [Docker or Apptainer instructions](docs/container.md).
-
-</details>
-
-## How the agent works
-
-<a id="fastq-to-report-workflow"></a>
-
-### Agent architecture
-
-The default workflow trims both mates with Trimmomatic 0.36 and assigns each read pair to a target by tBC. **CRISPResso2 2.2.13** uses FLASH to merge the mates, aligns the merged reads to each target’s reference amplicon and identifies insertions and deletions in the cut-site window. The agent then groups aligned reads by pBC and calculates indel rates under the four counting strategies.
-
-<p align="center">
-  <img src="docs/assets/agent-architecture.svg" width="660" alt="A chat request selects the analysis or figure skill in Codex or Claude Code. The skills use the CLI directly. The published pBC annotation is the default. The original study’s six Maxi FASTQs can rebuild the annotation under the published or historical rule for reuse across runs. The local or Slurm workflow assigns reads by tBC, uses CRISPResso2 2.2.13 to merge and align the mates and identify cut-site indels, groups them by pBC, estimates NoEP and HiFi indel rates, calculates Δindel rate (HiFi minus NoEP) and simulates detection power. It exports indel rates and paired differences in paired_target_rates.tsv and detection power in power_estimates.tsv, alongside a report and a figure with Excel source data." />
-</p>
-
-**What to prepare.** Provide four FASTQ files (R1 and R2 for both NoEP and HiFi) from the same donor and replicate, plus a sample sheet or manifest that maps each file to its sample. The agent uses the published pBC annotation by default. To rebuild it from reads, use the original study’s six Maxi FASTQs (R1 and R2 for each of three pools) and choose the published or historical rule. Later runs can reuse the saved annotation directory. To try the agent with public data, ask for the [D3734/T1 example](docs/d3734-t1-quick-start.md).
-
-**Where to find results.** Open `results/report.md` in your run directory. In the same folder, `paired_target_rates.tsv` gives indel rates and Δindel rates (HiFi minus NoEP), and `power_estimates.tsv` gives detection power by target and strategy. The PDF, PNG and Excel source data are in `results/figures/`.
+**What is ABSOLVE-seq?** ABSOLVE-seq (Assessment By Stand-in Off-target LentiViral Ensemble with sequencing) measures insertions and deletions (indels) in reporters carrying reference or variant sequences from candidate CRISPR off-target sites. The agent estimates how much editing differs between HiFi Cas9 and a matched NoEP control at each target, and how likely the experiment is to detect a small increase. [Original study](https://doi.org/10.1101/2024.07.24.605019)
 
 ## Example conversations
 
-### From paired FASTQs to a report
+<a id="from-paired-fastqs-to-a-report"></a>
+
+### Start with one message
+
+Open an empty folder in Codex or Claude Code and copy the **User** message below. The public example downloads four FASTQs (1.58 GB). You’ll need Git, internet access and a machine with Docker, Apptainer or Conda/Mamba. [Setup options](#set-up-in-codex-or-claude-code)
 
 <table>
 <tbody>
-<tr><td><strong>👤 User</strong> · <a href="#start-with-one-message">One-message prompt</a><br>Set up https://github.com/JasonLinjc/ABSOLVE-seq-agent and run the public D3734/T1 example from the raw sequencing reads. How much editing do we see with HiFi compared with its control at each target? Show me the report, figure and Excel data.</td></tr>
-<tr><td><strong>🤖 Agent</strong><br>I checked all four FASTQs and analyzed both ends of each read pair using the published plasmid barcode annotation. All 316 comparisons (79 targets × four counting strategies) and all 632 power estimates matched the verified public example.<br><br>For example, at <code>1617_OT_0040_ALT</code>, counting each qualifying barcode once (Dedud+Dedup) gave 11 edited families out of 691 with HiFi and 0 out of 1,694 with NoEP. HiFi was <strong>1.59 percentage points higher</strong> at this target.<br><br>Open <code>runs/D3734-T1/results/report.md</code> for the full results. It links to the per-target rates and differences, the detection power table, and the Dedud figure with its Excel source data.</td></tr>
+<tr><td><strong>👤 User · One-message prompt</strong><br>Set up https://github.com/JasonLinjc/ABSOLVE-seq-agent and run the public D3734/T1 example from the raw sequencing reads. How much editing do we see with HiFi compared with its control at each target? Show me the report, figure and Excel data.</td></tr>
+<tr><td><strong>🤖 Agent</strong><br>I compared HiFi with its matched NoEP control at all 79 targets. The 316 editing comparisons and 632 power estimates matched the verified public example.<br><br>At <code>1617_OT_0040_ALT</code>, counting each qualifying plasmid barcode once gave 11 edited families out of 691 with HiFi and 0 out of 1,694 with NoEP. Editing was <strong>1.59 percentage points higher with HiFi</strong> at this target.<br><br>Open <code>runs/D3734-T1/results/report.md</code> for the tables, figure and Excel source data.</td></tr>
 </tbody>
 </table>
 
-<a id="choose-settings-in-chat"></a>
+[Public sequencing data](https://trace.ncbi.nlm.nih.gov/Traces/?view=study&acc=SRP722226) · [Docker acceptance record](docs/container.md#d3734t1-docker-acceptance)
+
 <details>
-<summary><strong>Choose a pBC annotation</strong></summary>
+<summary><strong>Analyze original-study FASTQs on your machine or cluster</strong></summary>
 
 <table>
 <tbody>
-<tr><td><strong>👤 User</strong><br>Use the public D3734/T1 pair on my workstation. Let me choose the pBC annotation before you start.</td></tr>
-<tr><td><strong>🤖 Agent</strong><br>Which pBC annotation should I use for Dedud and Dedud+Dedup?
-<ol>
-<li>Use the published annotation (default).</li>
-<li>Rebuild from the original study’s six Maxi FASTQs. Use the published rule, or select the historical two-tBC exception.</li>
-<li>Reuse the annotation from a previous Maxi rebuild with its saved rule.</li>
-</ol>
-</td></tr>
-<tr><td><strong>👤 User</strong><br>Option 3. I rebuilt it on my last run.</td></tr>
-<tr><td><strong>🤖 Agent</strong><br>Where did you save the annotation directory?</td></tr>
-<tr><td><strong>👤 User</strong><br>Use the annotation in <code>/data/annotations/maxi</code> and run the pair.</td></tr>
+<tr><td><strong>👤 User</strong><br>My FASTQs are in <code>/path/to/fastqs</code> and my sample sheet is at <code>/path/to/sample-sheet</code>. Find the matched HiFi and NoEP pairs. If several are available, let me choose one, then run it through to the report.</td></tr>
 </tbody>
 </table>
 
-You can also ask to choose among donor/replicate pairs in your manifest or to run on Slurm. For option 2, the agent checks the six compressed FASTQs against the [study file manifest](runtime/maxi/inputs.sha256).
+For remote execution, include the cluster’s SSH alias and a shared working directory. Give paths that the compute nodes can read. [Cluster setup and transfer](docs/container.md#stage-public-inputs-from-a-networked-machine)
 
 </details>
 
+<a id="choose-settings-in-chat"></a>
+<details>
+<summary><strong>Choose a plasmid barcode annotation</strong></summary>
+
+<table>
+<tbody>
+<tr><td><strong>👤 User</strong><br>I generated a pBC annotation from the study’s plasmid pools last week. Can I reuse it for this pair?</td></tr>
+<tr><td><strong>🤖 Agent</strong><br>Yes. Give me the saved annotation directory and I’ll use the rule recorded there. You can also use the published annotation or ask me to rebuild it from the original study’s six Maxi FASTQs using the published entropy threshold or the historical two-tBC rule.</td></tr>
+</tbody>
+</table>
+
+[Maxi inputs and build instructions](docs/historical-maxi.md#build-the-reference-once)
+
+</details>
+
+<a id="manuscript-comparison"></a>
 <details>
 <summary><strong>Reproduce Supplementary Tables 2–5</strong></summary>
 
 <table>
 <tbody>
-<tr><td><strong>👤 User</strong><br>I have the original 26 libraries and the submitted workbooks. Can you reproduce Supplementary Tables 2–5 and show me any differences?</td></tr>
-<tr><td><strong>🤖 Agent</strong><br>I’ll use the historical processing recorded for WT, NoEP and HiFi. I’ll check the historical pBC annotation, compare all 632 target, strategy and editor combinations with the workbooks, and report differences in rates, q-values and positive calls.</td></tr>
+<tr><td><strong>👤 User</strong><br>I have the original 26 libraries and the submitted workbooks. Can you reproduce Supplementary Tables 2–5?</td></tr>
+<tr><td><strong>🤖 Agent</strong><br>I’ll use the historical processing for WT, NoEP and HiFi and the historical pBC annotation. I’ll compare the indel rates, editing differences, q-values and positive calls with the workbooks across all 632 contrasts.</td></tr>
 </tbody>
 </table>
+
+[Historical runtime and inputs](docs/manuscript-reads.md#reproduce-the-submitted-calls-from-the-original-fastqs) · [Full-panel acceptance](docs/historical-panel-acceptance.md)
 
 </details>
 
@@ -146,19 +87,80 @@ You can also ask to choose among donor/replicate pairs in your manifest or to ru
 <table>
 <tbody>
 <tr><td><strong>👤 User</strong><br>Validate pBC annotation reproducibility.</td></tr>
-<tr><td><strong>🤖 Agent</strong><br>I’ll compare the published and rebuilt annotations against the saved alignments for all 26 libraries in the Luminary archive. I’ll return the comparison summary, field-level differences and SHA-256 manifest.</td></tr>
+<tr><td><strong>🤖 Agent</strong><br>I’ll compare the published and rebuilt annotations using the saved alignments for all 26 libraries in the configured Luminary archive. I’ll return the summary, field-level differences and SHA-256 manifest.</td></tr>
 </tbody>
 </table>
 
-You can make this request in your preferred language in Codex or Claude Code. [One-time setup and output guide](docs/pbc-validation.md#run-from-codex-or-claude-code)
+[Archive setup and output guide](docs/pbc-validation.md#run-from-codex-or-claude-code)
+
+</details>
+
+## How the agent works
+
+<a id="fastq-to-report-workflow"></a>
+
+### Agent architecture
+
+<p align="center">
+  <img src="docs/assets/agent-architecture.svg" width="660" alt="Codex and Claude Code use shared skills to run the analysis locally or on Slurm. The workflow connects sequencing and barcode inputs to editing and power estimates, a report, a figure and Excel data." />
+</p>
+
+**Inputs.** A paired analysis uses R1 and R2 for both arms from the same donor and replicate. The manifest maps the four FASTQs to their samples and records their SHA-256 checksums. [Manifest template](examples/manifest.example.tsv)
+
+**Processing.** Trimmomatic 0.36 trims both mates. The target barcode (tBC) assigns each read pair to a target. CRISPResso2 2.2.13 uses FLASH to merge the mates, aligns the merged reads to the target amplicon and calls indels in the cut-site window. Reads from the same sample and target are grouped by plasmid barcode (pBC) for counting.
+
+## Paired results
+
+Open the `results/` folder inside your run directory.
+
+| File | What it tells you |
+| --- | --- |
+| `report.md` | Start here for the summary and links to each output. |
+| `paired_target_rates.tsv` | Indel counts, denominators and rates (%) for both arms. Δindel rate is HiFi minus NoEP in **percentage points**. A zero denominator leaves the rate undefined. |
+| `power_estimates.tsv` | Estimated probability of detecting an increase of 0.01 or 0.1 percentage points at the observed depth for each target and strategy. [Power method](docs/power.md) |
+| `figures/paired_effect_power.{pdf,png,xlsx}` | The Dedud figure for this pair and the Excel table containing the values plotted. |
+
+The four strategies below use the same alignments. By default, the published plasmid barcode annotation determines which pBCs qualify for each target.
+
+| Strategy | What counts toward the indel rate |
+| --- | --- |
+| Unfiltered | All aligned reads |
+| Dedup | One representative allele per sample, target and pBC |
+| Dedud | Reads with a qualifying pBC that pass cross-target filtering |
+| Dedud+Dedup | One representative allele per retained pBC family |
+
+The paired workflow selects the most frequent allele in each family for deduplication. It breaks ties by aligned read sequence, then by aligned reference sequence. Library counts, sample identity and processing settings are recorded in `library_counts.tsv`, `sample_inventory.tsv` and `provenance.json`.
+
+## Set up in Codex or Claude Code
+
+For manual setup, clone the repository and open the checkout in your signed-in client.
+
+```bash
+git clone https://github.com/JasonLinjc/ABSOLVE-seq-agent.git
+cd ABSOLVE-seq-agent
+```
+
+| Client | How to start |
+| --- | --- |
+| Codex | Open the folder in the Codex app or run `codex` in the checkout. Ask for the ABSOLVE-seq skill or type `$absolve-seq` in the CLI. [Codex quick start](https://developers.openai.com/codex/quickstart/) |
+| Claude Code | Run `claude` in the checkout and enter `/absolve-seq` followed by your request. [Claude Code quick start](https://code.claude.com/docs/en/quickstart) |
+
+For the analysis runtime, download the prebuilt Linux x86-64 Docker or Apptainer image, or install the locked Conda environment. [Download v0.2.0](https://github.com/JasonLinjc/ABSOLVE-seq-agent/releases/tag/v0.2.0) · [Load and run the image](docs/container.md#download-a-prebuilt-image) · [Conda setup](docs/d3734-t1-quick-start.md#1-get-the-agent-and-create-an-environment)
+
+<details>
+<summary><strong>Check sample discovery before downloading data</strong></summary>
+
+```bash
+ABSOLVE_MANIFEST=examples/manifest.example.tsv python paired.py --list
+```
+
+The example manifest lists `NoEP_pool_D3734_T1` and `HiFi_pool_D3734_T1`. Its FASTQ paths are placeholders.
 
 </details>
 
 ## Quick start
 
-Prefer the terminal? Follow the [D3734/T1 walkthrough](docs/d3734-t1-quick-start.md) to install the environment, fetch the pinned upstream references, verify both mates and create the manifest. The public runs are NoEP `SRR39887646` and HiFi `SRR39887695`. The same donor and replicate also have a [WT library](https://www.ebi.ac.uk/ena/browser/view/SRR39887693) for the [full-panel comparison](#manuscript-comparison).
-
-With inputs ready, run the public pair on a workstation:
+For a terminal run, follow the [D3734/T1 walkthrough](docs/d3734-t1-quick-start.md) to prepare the reference index and manifest and verify the NoEP (`SRR39887646`) and HiFi (`SRR39887695`) FASTQs. Run the following in the paired environment after preparing those inputs.
 
 ```bash
 python paired.py --executor local --donor D3734 --replicate T1 --threads 4 --output runs/D3734-T1
@@ -166,36 +168,21 @@ python verify_results.py pair-manuscript runs/D3734-T1/results
 python verify_results.py power runs/D3734-T1/results
 ```
 
-The first command starts from the raw reads and writes a new run directory. The next two commands check the public example against its 316 accepted results and verify that the power estimates, plot data and Excel values agree.
+The second command checks the public pair against its accepted count and rate tables. The third checks the simulated power estimates, figure data and Excel values. Use a new output directory for each analysis.
 
-On Slurm, run `python paired.py --donor D3734 --replicate T1 --output runs/D3734-T1` on the submission host with the analysis environment active. It prints the preparation, alignment and finish job IDs. Wait for the finish job before opening the report. [Cluster setup and verification](docs/d3734-t1-quick-start.md#slurm-submission)
+On a Slurm submission host, omit `--executor local` and `--threads 4`. The agent submits preparation, alignment and reporting jobs. Wait for the finish job recorded in `jobs.json` before opening the report. [Slurm instructions](docs/d3734-t1-quick-start.md#slurm-submission)
 
-## Paired results
+<a id="local-inputs-and-caches"></a>
+<details>
+<summary><strong>Configure local inputs</strong></summary>
 
-In `results/paired_target_rates.tsv`, each row gives the NoEP and HiFi numerators, denominators, rates (%) and difference (percentage points). A zero denominator leaves the rate blank. The default workflow writes `library_counts.tsv`, `sample_inventory.tsv` and `provenance.json` alongside the report.
+`ABSOLVE_DATA` selects the data directory (default `data/` in the checkout). `ABSOLVE_MANIFEST` defaults to `$ABSOLVE_DATA/sample_manifest.tsv`. For the original laboratory files, `python -m tools.resolve_inputs INVENTORY.tsv METADATA.xlsx OUTPUT.tsv` joins both mate filenames from the checksum-verified inventory to the submission workbook’s `SRA_data` sheet.
 
-| Strategy | What counts toward the rate |
-| --- | --- |
-| Unfiltered | All aligned reads |
-| Dedup | One most frequent allele per sample, target and pBC |
-| Dedud | Reads with a qualifying plasmid barcode that pass cross-target filtering |
-| Dedud+Dedup | One representative allele per retained family after filtering |
-
-When alleles tie for the highest read count, the paired-end workflow breaks the tie by aligned read sequence and then aligned reference sequence.
-
-Plasmid pool sequencing identifies which plasmid barcodes (pBCs) qualify for each target. The default `--maxi-method manuscript` uses the published annotation derived from the study’s Maxi plasmid pool. To rebuild from the six original Maxi FASTQs, use `setup_references.py --published-maxi` for the published entropy threshold or `--historical-maxi` for the historical two-tBC exception. On later runs, pass the saved directory with `--maxi-reference DIR` and its matching `--maxi-method manuscript` or `--maxi-method historical`. [Build commands and rule comparison](docs/historical-maxi.md#build-the-reference-once)
-
-[Full-panel pBC annotation validation using archived alignments](docs/pbc-validation.md)
+</details>
 
 ## Figure 3b and reproducibility
 
-The panel workflow writes `figures/Figure3b.pdf` and `figures/Figure3b_source_data.xlsx` using its fitted effects and freshly simulated power. To reproduce the published graphic, ask for **Figure 3b with submitted power**. The redraw can use submitted or refitted effects while retaining the original Supplementary Table 2 power values. Both versions export 158 plotted target/editor rows and record the power source. [Figure commands and verification](docs/manuscript-figures.md)
-
-## Manuscript comparison
-
-To reproduce the paper, ask “Reproduce Supplementary Tables 2–5 from the original 26 libraries.” The full-panel command `python paired.py --manuscript-panel` selects `historical` processing for each study arm. Supply the historical pBC annotation and WT runtime as described in the guide below.
-
-[Raw FASTQ reproduction of Supplementary Tables 2–5: acceptance results and run instructions](docs/historical-panel-acceptance.md)
+The full panel combines three donors to generate `Figure3b.pdf` and `Figure3b_source_data.xlsx`, with 158 plotted target/editor rows. The default panel figure uses newly simulated power. To redraw the published graphic with its original power values, ask for **“Figure 3b with submitted power.”** [Figure 3b commands and verification](docs/manuscript-figures.md)
 
 ## Repository layout
 
@@ -211,10 +198,4 @@ The three main commands live at the top level. Use [setup_references.py](setup_r
 
 Run optional tools from the checkout root, for example `python -m tools.luminary_pbc --help`. In the v0.2.0 release these utilities are top-level scripts.
 
-## Local inputs and caches
-
-Keep inputs on storage visible to the workers. `ABSOLVE_DATA` selects the data directory (default `data/` in the checkout). `ABSOLVE_MANIFEST` defaults to `$ABSOLVE_DATA/sample_manifest.tsv`. Use a new output directory for each paired-end run.
-
-For laboratory files, follow the [manifest template](examples/manifest.example.tsv). Supply the original study sample names, absolute R1 and R2 paths and their SHA-256 digests. The importer `python -m tools.resolve_inputs INVENTORY.tsv METADATA.xlsx OUTPUT.tsv` joins a checksum-verified inventory to the submission workbook’s `SRA_data` sheet by both original filenames. The public quick start builds a manifest for the D3734/T1 NoEP and HiFi pair from the four ENA downloads.
-
-The analysis uses a pinned revision of the [upstream ABSOLVE-seq repository](https://github.com/pellinlab/ABSOLVE-seq/tree/271355dfe40cf46b952e82b88dd4521f23f9feb4). Its code and reference assets are covered by the [upstream license](https://github.com/pellinlab/ABSOLVE-seq/blob/271355dfe40cf46b952e82b88dd4521f23f9feb4/LICENSE.md).
+The analysis uses a pinned revision of the upstream code and reference assets. [Upstream ABSOLVE-seq repository](https://github.com/pellinlab/ABSOLVE-seq/tree/271355dfe40cf46b952e82b88dd4521f23f9feb4) · [Upstream license](https://github.com/pellinlab/ABSOLVE-seq/blob/271355dfe40cf46b952e82b88dd4521f23f9feb4/LICENSE.md)
