@@ -26,7 +26,7 @@
 
 ### Start with one message
 
-Paste the **User** message below into your configured client. The agent can build the report from the 52 public FASTQs (51.7 GB) and the published barcode and target references. If you already have the reads, give it their manifest. Supplementary Tables 2–5 are optional for comparison with the paper. [Full-panel input guide](docs/manuscript-reads.md#analyze-all-study-samples)
+Paste the **User** message below into your configured client. The agent can build the report from the 52 public FASTQs (51.7 GB) and the published barcode and target references. If you already have the reads, give it their manifest. Supplementary Tables 2–5 are optional for comparison with the paper. [Full-panel input guide](docs/manuscript-reads.md#analyze-all-study-samples) · [Verified 26-library run](docs/manuscript-reads.md#new-user-acceptance)
 
 <table>
 <tbody>
