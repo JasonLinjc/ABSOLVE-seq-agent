@@ -31,7 +31,7 @@ def discover():
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--list', action='store_true', help='Show manifest pairs and any missing conditions.')
-    parser.add_argument('--manuscript-panel', action='store_true', help='Reproduce Supplementary Tables 2–5 using historical processing for the original 26 libraries.')
+    parser.add_argument('--manuscript-panel', action='store_true', help='Analyze all 26 original libraries. Use --read-mode manuscript for routine analysis. Omitting --read-mode selects historical reproduction.')
     parser.add_argument('--target-filter', choices=['manuscript'], help='Cross-target identity check after Maxi filtering (default manuscript).')
     parser.add_argument('--donor')
     parser.add_argument('--replicate')

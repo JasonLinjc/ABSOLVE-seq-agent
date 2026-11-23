@@ -6,25 +6,50 @@ For matched NoEP/HiFi pairs the agent uses Trimmomatic 0.36 and paired-end CRISP
 
 The full panel covers 26 libraries from D3734, D3742 and D3908. The design has nine NoEP, nine WT and eight HiFi libraries. D3734/T3 includes WT and NoEP only. All 26 contribute to the donor-adjusted model.
 
-Use the [paired runtime and published reference setup](d3734-t1-quick-start.md#1-get-the-agent-and-create-an-environment). For the model fit, use R with brglm2 or configure the analysis image as described under [runtime setup](#configure-the-runtime). Point `ABSOLVE_MANIFEST` at an existing full study manifest, or run these commands from the current checkout to prepare the public inputs. The [ENA file list](../examples/study_panel_ena.tsv) identifies both mates and their archive MD5 checksums for every library in the original panel. [Public study](https://trace.ncbi.nlm.nih.gov/Traces/?view=study&acc=SRP722226)
+Run these Bash commands from the current agent checkout on a machine with internet access. Use the [locked Linux Conda environment](d3734-t1-quick-start.md#1-get-the-agent-and-create-an-environment) or the [Docker or Apptainer setup](container.md#download-a-prebuilt-image). These environments include R and brglm2 for the model fit. With a container, prefix each Python command below with `run_agent`.
+
+**1. Build the published reference index.** From the checkout, fetch the five files the analysis uses from the pinned upstream revision. For a new run the commands below use the default `data/` directory.
 
 ```bash
-export ABSOLVE_DATA="${ABSOLVE_DATA:-$PWD/data}"
-export FASTQ_ROOT="$ABSOLVE_DATA/sra/study-panel"
-export ABSOLVE_MANIFEST="$ABSOLVE_DATA/study-panel-manifest.tsv"
-mkdir -p "$FASTQ_ROOT"
-awk -F '\t' 'NR > 1 {print $4; print $6}' examples/study_panel_ena.tsv |
-  (cd "$FASTQ_ROOT" && xargs -P 4 -n 1 curl -fLsS --retry 4 -C - -O)
-python examples/d3734_t1_manifest.py --panel --ena "$FASTQ_ROOT" "$ABSOLVE_MANIFEST"
+set -e
+upstream=https://raw.githubusercontent.com/pellinlab/ABSOLVE-seq/271355dfe40cf46b952e82b88dd4521f23f9feb4/test/data
+ref=data/upstream/test/data
+mkdir -p "$ref/target_info"
+for file in adapters.fa plasmid_barcode_category.tsv.gz target_info/NovaSeq3_sample_info.csv target_info/OT_guide_amplicon_seq.csv target_info/target_oligos_sequenes.csv; do
+  curl -fLsS --retry 4 --retry-all-errors "$upstream/$file" -o "$ref/$file"
+done
+python setup_references.py
 ```
 
-The manifest builder verifies both mates against ENA and records their SHA-256 digests. The panel entry point reads full-model reference extracts from `$ABSOLVE_DATA/submitted_model_reference`. If those extracts are missing, prepare them once from the four original workbooks with `python panel_report/references.py /path/to/workbooks "$ABSOLVE_DATA/submitted_model_reference" --full-model`.
+**2. Prepare the 52 FASTQs.** The public FASTQs total 51.7 GB. A full run retained about 111 GiB of intermediate files in addition to the inputs. Allow extra free space for the environment and temporary alignment files. The download table provides both mate URLs and ENA MD5 checksums for each library. Use a networked workstation to stage the files if your cluster restricts internet access. [Study download table](../examples/study_panel_ena.tsv) · [Public study](https://trace.ncbi.nlm.nih.gov/Traces/?view=study&acc=SRP722226)
+
+```bash
+fastqs="$PWD/data/sra/study-panel"
+mkdir -p "$fastqs"
+awk -F '\t' 'NR > 1 {print $4; print $6}' examples/study_panel_ena.tsv |
+  (cd "$fastqs" && xargs -P 4 -n 1 curl -fLsS --retry 4 --retry-all-errors -C - -O)
+python examples/d3734_t1_manifest.py --panel --ena "$fastqs" data/sample_manifest.tsv
+```
+
+The manifest builder checks each compressed FASTQ against its ENA MD5 and records a local SHA-256. Run it where the analysis will execute so the absolute paths resolve. If you already have the original laboratory FASTQs under `WT/`, `NoEP/` and `HiFi/`, use `python examples/d3734_t1_manifest.py --panel /path/to/libraries data/sample_manifest.tsv`. An existing full manifest can also be selected with `ABSOLVE_MANIFEST` in a native environment.
+
+**3. Run the panel and verify the report.** On a Slurm submission host, load the scheduler commands and confirm `command -v sbatch` succeeds. The standard workflow fits all editing effects and estimates power directly from the sequencing counts. For an optional comparison with the paper, place the four full-model reference extracts and their `source_sha256.json` in `data/submitted_model_reference/` before launch.
 
 ```bash
 python paired.py --manuscript-panel --read-mode manuscript --fresh --output runs/study-panel
 ```
 
-On Slurm, wait for the finish job in `runs/study-panel/jobs.json`. A local run returns after aggregation. Run `python verify_results.py power runs/study-panel/results` and open `runs/study-panel/results/report.md`. [Full-panel result files](../README.md#study-panel-results)
+To use a workstation or one existing allocation, add `--executor local --threads N` with the allocated CPU count. Local execution returns after the report is written. On Slurm, wait for the finish job recorded in `runs/study-panel/jobs.json`. Then run `python verify_results.py power runs/study-panel/results` and open `runs/study-panel/results/report.md`. [Result files](../README.md#study-panel-results)
+
+### New-user acceptance
+
+We checked the public run IDs, mate URLs and archive MD5 values for all 26 libraries against ENA, tested all 52 download links and verified the four D3734/T1 files in full. The full-panel analysis used staged original laboratory FASTQs. Each library's input read-pair count matched its ENA record, totaling 334,970,765 pairs. We also downloaded all five pinned public reference files and rebuilt the 79-target index.
+
+On Luminary we built a fresh environment, index and sample manifest, then ran the routine workflow from FASTQs with no supplementary tables or cached alignments. All 2,054 library/target alignments completed. The report contained 8,216 count rows, 632 WT or HiFi contrasts, 1,264 power estimates and 158 Figure 3b source rows. The output verifier checked the plotted values and Excel cells. All 14 report links resolved.
+
+Against the earlier full-panel run with the supplementary tables, the library counts were byte-identical (SHA-256 `aefad456069a4eb3d8eef4e2cdef9b913c6e8d2791df2be04ea306f60b9fef40`). All 632 contrasts matched for indel rates, editing differences, p-values, q-values and calls. All 18,012 fitted model fields matched as well.
+
+For exact simulation results across runs, use the same runtime. Within each tested runtime, adding the supplementary tables produced identical power tables. Between the locked Conda environment (NumPy 1.26.4) and the v0.2.0 release container (NumPy 2.5.5), 79 of 1,264 simulated power estimates differed, by at most 1.2 percentage points. One power cell in the Figure 3b source data changed from 32.6% in the container to 32.5% in Conda. The container reproduced the previous run's power table and plotted data byte for byte, and every Figure 3b data cell matched.
 
 ## Reproduce the submitted calls from the original FASTQs
 
@@ -99,7 +124,7 @@ For a single complete donor/replicate pair, run `python paired.py --donor D3734 
 
 When neither a Slurm allocation nor `sbatch` is available, the same Python commands process each library on this machine and return after aggregation. Use `--threads N` to set the trimming and target alignment concurrency within one library. Libraries run sequentially. Allocate working space for trimmed FASTQs and per-target alignments across all requested libraries.
 
-For the image route, keep the JAR and image settings above. For a native run, use the following environment with the original JAR, a working CRISPResso2 2.2.13 executable, and FLASH on PATH. For a full panel, also configure R with brglm2 and prepare the submitted reference extracts. The workflow checks the historical tool versions.
+For the image route, keep the JAR and image settings above. For a native run, use the following environment with the original JAR, a working CRISPResso2 2.2.13 executable, and FLASH on PATH. For a full panel, also configure R with brglm2. For a submitted-workbook comparison, prepare the full-model reference extracts. The workflow checks the historical tool versions.
 
 ```sh
 export ABSOLVE_TRIMMOMATIC_JAR=/software/trimmomatic-0.36.jar

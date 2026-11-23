@@ -93,11 +93,12 @@ def load_panel(args):
             q = submitted_q[t]
             if args.results:
                 comp = panel[t,strategy,editor]
-                if abs(float(comp["manuscript_delta_pp"])-100*(marginal[1]-marginal[0]))>1e-8 or abs(float(comp["manuscript_q_bh"])-q)>1e-8:
-                    raise ValueError("Model and workbook describe different submitted estimates")
-                for k, original in zip(keys, marginal):
-                    if abs(float(fields[t,strategy,k]["submitted"])-original)>1e-8:
-                        raise ValueError("Model-field reference mismatch for " + t)
+                if "manuscript_delta_pp" in comp:
+                    if abs(float(comp["manuscript_delta_pp"])-100*(marginal[1]-marginal[0]))>1e-8 or abs(float(comp["manuscript_q_bh"])-q)>1e-8:
+                        raise ValueError("Model and workbook describe different submitted estimates")
+                    for k, original in zip(keys, marginal):
+                        if abs(float(fields[t,strategy,k]["submitted"])-original)>1e-8:
+                            raise ValueError("Model-field reference mismatch for " + t)
                 marginal = [float(fields[t,strategy,k]["agent"]) for k in keys]
                 q = float(comp["q_bh"])
                 if abs(float(comp["delta_pp"])-100*(marginal[1]-marginal[0]))>1e-8:

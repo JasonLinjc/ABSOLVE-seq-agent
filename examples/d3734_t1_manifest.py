@@ -32,13 +32,18 @@ def make_manifest(root, output, ena=False, panel=False):
             pair_key = record["run_accession"] + "_{mate}.fastq.gz"
         else:
             library = record["library_id"]
-            candidates = sorted((root / condition).glob(f"{library}_CKDL*_1.fq.gz"))
+            patterns = [(f"{library}_CKDL*_1.fq.gz", "_{mate}.fq.gz")]
+            if condition == "WT":
+                donor_replicate = sample.removeprefix("WT_pool_")
+                patterns.append((f"*_LVpool_wtCas9_{donor_replicate}_R1.fastq.gz", "_R{mate}.fastq.gz"))
+            candidates = [(p, suffix) for pattern, suffix in patterns for p in (root / condition).glob(pattern)]
             if len(candidates) != 1:
                 raise ValueError(f"Expected one {library} R1 file in {root / condition}, found {len(candidates)}")
-            r1 = candidates[0].absolute()
-            stem = r1.name.removesuffix("_1.fq.gz")
-            r2 = r1.with_name(f"{stem}_2.fq.gz")
-            pair_key = f"{condition}/{stem}_{{mate}}.fq.gz"
+            path, suffix = candidates[0]
+            r1 = path.absolute()
+            stem = r1.name.removesuffix(suffix.format(mate=1))
+            r2 = r1.with_name(stem + suffix.format(mate=2))
+            pair_key = f"{condition}/{stem}{suffix}"
         row = dict(dataset=condition, pair_key=pair_key, r1=r1, r2=r2,
                    sha256_r1=sha256(r1, record["md5_r1"] if ena else None),
                    sha256_r2=sha256(r2, record["md5_r2"] if ena else None),

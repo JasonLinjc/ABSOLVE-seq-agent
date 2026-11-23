@@ -14,7 +14,7 @@ export PYTHONNOUSERSITE=1
 export OPENBLAS_NUM_THREADS=1 OMP_NUM_THREADS=1 MKL_NUM_THREADS=1
 source "$(conda info --base)/etc/profile.d/conda.sh"
 env_prefix="$PWD/../absolve-paired-env"
-mamba create -y -p "$env_prefix" --file docs/paired-linux-64.lock
+conda create -y -p "$env_prefix" --file docs/paired-linux-64.lock
 conda activate "$env_prefix"
 CRISPResso --version
 ```

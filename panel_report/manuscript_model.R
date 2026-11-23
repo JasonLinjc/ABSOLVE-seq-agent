@@ -11,7 +11,8 @@ d$donor <- factor(d$donor)
 key <- c("target","strategy","donor","replicate","arm")
 stopifnot(!anyDuplicated(d[key]), !anyNA(d), nrow(d)==26*79*4, all(d$indel>=0 & d$denominator>=d$indel),
           all(d$denominator>=d$family_rows & d$family_rows>=0))
-tbls <- lapply(stage_table,function(i) read.csv(file.path(refs,paste0("SupplementaryTable",i,".csv")),check.names=FALSE))
+compare_submitted <- refs != "-"
+tbls <- if (compare_submitted) lapply(stage_table,function(i) read.csv(file.path(refs,paste0("SupplementaryTable",i,".csv")),check.names=FALSE))
 tabulate_rates <- function(X, beta, V, tags) {
     eta <- drop(X %*% beta)
     se <- sqrt(rowSums((X %*% V)*X))
@@ -52,33 +53,48 @@ for (s in names(stage_table)) for (target in targets) {
     calculated <- c(setNames(beta,paste0("estim-",names(beta))),setNames(z,paste0("zScore-",names(z))),
         setNames(p,paste0("asymPval-",names(p))),tabulate_rates(X,beta,V,paste(x$donor,x$treat,sep="-")),
         tabulate_rates(Xmar,beta,V,arms))
-    tab <- tbls[[s]]
-    reference <- unlist(tab[match(target,tab$barcode),setdiff(names(tab),"barcode"),drop=FALSE],use.names=TRUE)
-    stopifnot(setequal(names(reference),names(calculated)))
-    reference <- reference[names(calculated)]
-    details[[id]] <- data.frame(target=target,strategy=s,table=stage_table[[s]],field=names(calculated),
-        agent=unname(calculated),submitted=unname(reference),difference=unname(calculated-reference))
+    fields <- data.frame(target=target,strategy=s,table=stage_table[[s]],field=names(calculated),agent=unname(calculated))
+    if (compare_submitted) {
+        tab <- tbls[[s]]
+        reference <- unlist(tab[match(target,tab$barcode),setdiff(names(tab),"barcode"),drop=FALSE],use.names=TRUE)
+        stopifnot(setequal(names(reference),names(calculated)))
+        reference <- reference[names(calculated)]
+        fields$submitted <- unname(reference)
+        fields$difference <- unname(calculated-reference)
+    }
+    details[[id]] <- fields
     for (a in arms[-1]) {
         pick <- function(vec,arm) unname(vec[paste0("predicted-",arm)])*100
         ctrl <- pick(calculated,"NoEP"); treated <- pick(calculated,a)
-        ref_ctrl <- pick(reference,"NoEP"); ref_treated <- pick(reference,a)
         term <- paste0("asymPval-treat",a)
-        rows[[paste(id,a)]] <- data.frame(target=target,strategy=s,editor=ifelse(a=="WTCas9","WT",a),
-            supp_table=stage_table[[s]],control_rate_pct=ctrl,edited_rate_pct=treated,delta_pp=treated-ctrl,
-            manuscript_control_pct=ref_ctrl,manuscript_edited_pct=ref_treated,manuscript_delta_pp=ref_treated-ref_ctrl,
-            difference_pp=(treated-ctrl)-(ref_treated-ref_ctrl),p_one_sided=unname(calculated[term]),manuscript_p=unname(reference[term]))
+        row <- data.frame(target=target,strategy=s,editor=ifelse(a=="WTCas9","WT",a),
+            supp_table=stage_table[[s]],control_rate_pct=ctrl,edited_rate_pct=treated,delta_pp=treated-ctrl)
+        if (compare_submitted) {
+            row$manuscript_control_pct <- pick(reference,"NoEP")
+            row$manuscript_edited_pct <- pick(reference,a)
+            row$manuscript_delta_pp <- row$manuscript_edited_pct-row$manuscript_control_pct
+            row$difference_pp <- row$delta_pp-row$manuscript_delta_pp
+        }
+        row$p_one_sided <- unname(calculated[term])
+        if (compare_submitted) row$manuscript_p <- unname(reference[term])
+        rows[[paste(id,a)]] <- row
     }
 }
 panel <- do.call(rbind,rows)
 adjust <- function(p) ave(p,panel$strategy,panel$editor,FUN=function(x) p.adjust(x,"BH"))
-panel$q_bh <- adjust(panel$p_one_sided); panel$manuscript_q_bh <- adjust(panel$manuscript_p)
+panel$q_bh <- adjust(panel$p_one_sided)
+if (compare_submitted) panel$manuscript_q_bh <- adjust(panel$manuscript_p)
 hit <- function(delta,q) delta>.1 & q<.05
 panel$agent_hit <- hit(panel$delta_pp,panel$q_bh)
-panel$submitted_hit <- hit(panel$manuscript_delta_pp,panel$manuscript_q_bh)
-panel$hit_agrees <- panel$agent_hit==panel$submitted_hit
+if (compare_submitted) {
+    panel$submitted_hit <- hit(panel$manuscript_delta_pp,panel$manuscript_q_bh)
+    panel$hit_agrees <- panel$agent_hit==panel$submitted_hit
+}
 summary <- do.call(rbind,lapply(split(panel,list(panel$strategy,panel$editor),drop=TRUE),function(z) {
+    counts <- data.frame(strategy=z$strategy[1],editor=z$editor[1],targets=nrow(z),agent_hits=sum(z$agent_hit))
+    if (!compare_submitted) return(counts)
     abs_diff <- abs(z$difference_pp)
-    data.frame(strategy=z$strategy[1],editor=z$editor[1],targets=nrow(z),agent_hits=sum(z$agent_hit),
+    data.frame(counts,
        submitted_hits=sum(z$submitted_hit),hit_agreement=sum(z$hit_agrees),agent_only=sum(z$agent_hit & !z$submitted_hit),
        submitted_only=sum(!z$agent_hit & z$submitted_hit),median_abs_delta_diff_pp=median(abs_diff),
        max_abs_delta_diff_pp=max(abs_diff),largest_difference_target=z$target[which.max(abs_diff)])
@@ -90,5 +106,5 @@ writeLines(c(paste("brglm2",packageVersion("brglm2")), "Model: Firth logistic re
     if (margin=="equal-donor") "Treatment margin: inverse logit of the equally weighted mean of the three donor-specific logits for each treatment."
     else "Treatment margin: inverse logit after averaging donor design columns over original sample/target/pBC rows across treatments.",
     "Tests: one-sided coefficient Wald. BH within each 79-target editor/strategy combination.",
-    "The field-level comparison covers submitted model coefficients, z, p, donor/treatment and treatment estimates, SE and 95% limits.",
+    if (compare_submitted) "The field-level comparison covers submitted model coefficients, z, p, donor/treatment and treatment estimates, SE and 95% limits.",
     "The separate simulation-based power columns are outside the indel-rate comparison."),file.path(stage,"model_info.txt"))

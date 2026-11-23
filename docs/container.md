@@ -4,7 +4,7 @@ The Linux x86-64 Dockerfile builds the paired-end analysis environment and inclu
 
 ## Download a prebuilt image
 
-The [v0.2.0 release](https://github.com/JasonLinjc/ABSOLVE-seq-agent/releases/tag/v0.2.0) packages the Linux x86-64 image from the D3734/T1 acceptance run at commit `b7964ed`. Choose Docker or Apptainer below. Run the commands in a writable project directory. The image includes the analysis code and software. The reference files, sample manifest, FASTQs and outputs live in the project directory.
+The [v0.2.0 release](https://github.com/JasonLinjc/ABSOLVE-seq-agent/releases/tag/v0.2.0) packages the Linux x86-64 image from the D3734/T1 acceptance run at commit `b7964ed`. Choose Docker or Apptainer below. Run these commands from the current agent checkout. The image provides the locked software environment. Both wrappers below mount the checkout and run its code so the public full-panel workflow is available with the v0.2.0 image. The reference files, sample manifest, FASTQs and outputs live in the project directory.
 
 Set the release URL and download the checksum manifest once:
 
@@ -22,7 +22,7 @@ docker load -i absolve-linux-amd64.tar.gz
 image=absolve-seq-agent:b7964edb00a5b7c61f1e3db922630e21c12e20ff
 run_agent() {
     docker run --rm --platform linux/amd64 --user "$(id -u):$(id -g)" \
-        --volume "$PWD:$PWD" --env "ABSOLVE_DATA=$PWD/data" --env HOME=/tmp \
+        --volume "$PWD:$PWD" --workdir "$PWD" --env "ABSOLVE_DATA=$PWD/data" --env HOME=/tmp \
         --env MPLCONFIGDIR=/tmp/matplotlib "$image" "$@"
 }
 run_agent python paired.py --help
@@ -36,10 +36,19 @@ On a Linux x86-64 workstation or compute node:
 curl -fLO "$release/absolve-linux-amd64.sif"
 awk '$2 == "absolve-linux-amd64.sif"' SHA256SUMS | sha256sum -c -
 run_agent() {
-    apptainer exec --cleanenv --bind "$PWD:$PWD" --pwd /opt/absolve \
+    apptainer exec --cleanenv --bind "$PWD:$PWD" --pwd "$PWD" \
         --env "ABSOLVE_DATA=$PWD/data" "$PWD/absolve-linux-amd64.sif" "$@"
 }
 run_agent python paired.py --help
+```
+
+### Analyze the full study from public data
+
+Follow the [full-panel walkthrough](manuscript-reads.md#analyze-all-study-samples) to stage the public references and FASTQs in `data/`. Use the `run_agent` wrapper for the Python steps. To run from a workstation or within one compute allocation:
+
+```bash
+run_agent python paired.py --executor local --threads 4 --manuscript-panel --read-mode manuscript --fresh --output runs/study-panel
+run_agent python verify_results.py power runs/study-panel/results
 ```
 
 ### Analyze the public pair

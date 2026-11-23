@@ -64,6 +64,18 @@ class RunReportTest(unittest.TestCase):
             self.assertIn("| Unfiltered | WT | 1 | 0 | 1 |", report)
             self.assertIn("| 1617_OT_0040_ALT | Unfiltered | WT | 0.2 | 0 | 0.01 | 1 |", report)
 
+    def test_panel_report_without_submitted_tables(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            dest = Path(tmp)
+            rows = [dict(target=t, strategy=s, editor=e, agent_hit="TRUE" if t == self.targets[0] else "FALSE")
+                    for t in self.targets for s in STRATEGIES for e in ("WT", "HiFi")]
+            write_table(dest / "panel_comparison.tsv", rows)
+            write_report(dest, "manuscript", panel=True)
+            report = (dest / "report.md").read_text()
+            self.assertIn("| Dedud | HiFi | 1 |", report)
+            self.assertIn("632 comparisons", report)
+            self.assertNotIn("submitted supplements", report)
+
     def test_fast_workflow_publishes_tables_and_report_together(self):
         script = Path(__file__).resolve().parents[1] / "workers/summarize.py"
         with tempfile.TemporaryDirectory() as tmp:

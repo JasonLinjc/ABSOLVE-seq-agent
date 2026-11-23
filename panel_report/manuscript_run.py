@@ -42,15 +42,27 @@ def compare(baseline, current, output):
     save(output,records)
 
 
+def panel_references(required=False):
+    refs = DATA / "submitted_model_reference"
+    if not required and not refs.exists():
+        return None
+    for name in [*(f"SupplementaryTable{i}.csv" for i in range(2, 6)), "source_sha256.json"]:
+        if not (refs / name).is_file():
+            raise FileNotFoundError(f"Missing panel comparison reference: {refs / name}")
+    return refs.resolve()
+
+
 def fit_panel(stage, refs, image):
-    refs = refs.resolve(strict=True)
     margin = "equal-donor"
-    command = ["Rscript", str(PANEL / "manuscript_model.R"), str(stage), str(refs), margin]
+    command = ["Rscript", str(PANEL / "manuscript_model.R"), str(stage), str(refs) if refs else "-", margin]
     if image:
-        binds = ",".join(str(p) for p in sorted({stage.resolve(), refs.resolve(), PANEL.resolve()}))
+        paths = {stage.resolve(), PANEL.resolve()}
+        if refs:
+            paths.add(refs)
+        binds = ",".join(str(p) for p in sorted(paths))
         command = ["apptainer", "exec", "--cleanenv", "--bind", binds, image, *command]
     subprocess.run(command, check=True)
-    return dict(donor_margin=margin, submitted_workbooks=json.loads((refs / "source_sha256.json").read_text()))
+    return dict(donor_margin=margin, submitted_workbooks=json.loads((refs / "source_sha256.json").read_text()) if refs else None)
 
 
 def refit_counts(source, output):
@@ -59,7 +71,7 @@ def refit_counts(source, output):
     if output.exists():
         raise FileExistsError(output)
     output.parent.mkdir(parents=True, exist_ok=True)
-    refs = DATA / "submitted_model_reference"
+    refs = panel_references()
     design = {(r["donor_id"], r["replicate"], ARM[r["cas_type"]])
               for r in table(PUBLIC / "NovaSeq3_sample_info.csv", ",")}
     targets = {r["OT_name"] for r in table(PUBLIC / "OT_guide_amplicon_seq.csv", ",")}
@@ -135,7 +147,7 @@ def finish(config):
         if rebuilt:
             receipt[reference_key(cfg.get("maxi_method", "historical"))] = rebuilt
         if len(libs)==26:
-            refs=Path(cfg["refs"]).resolve(strict=True)
+            refs=Path(cfg["refs"]).resolve(strict=True) if cfg.get("refs") else None
             receipt.update(fit_panel(stage, refs, cfg.get("stats_image")))
             if cfg.get("baseline"):
                 compare(Path(cfg["baseline"]),stage/"panel_comparison.tsv",stage/"call_changes.tsv")
@@ -186,6 +198,8 @@ def submit(config, stages=("prepare","align","finish")):
 
 
 def start(args, *, local, workers):
+    if not local and shutil.which("sbatch") is None:
+        raise RuntimeError("Load the Slurm submission environment or run within this allocation with --executor local --threads N.")
     manifest={}
     for r in table(MANIFEST):
         if r["status"]=="matched":
@@ -205,7 +219,7 @@ def start(args, *, local, workers):
     from absolve.maxi_qc import PUBLISHED_SHA256
     if not args.maxi_reference and (PUBLISHED/"source.sha256").read_text().strip()!=PUBLISHED_SHA256:
         raise ValueError("Published Maxi annotation checksum mismatch")
-    cfg=dict(libraries=libs,reference=str(PUBLIC),published=str(PUBLISHED),refs=str(DATA/"submitted_model_reference"),
+    cfg=dict(libraries=libs,reference=str(PUBLIC),published=str(PUBLISHED),
              adapters=str(DATA/"upstream/test/data/adapters.fa"),stats_image=os.getenv("ABSOLVE_IMAGE"),
              baseline=str(Path(args.baseline_panel).resolve()) if args.baseline_panel else None)
     cfg["maxi_method"] = args.maxi_method
@@ -249,12 +263,15 @@ def start(args, *, local, workers):
         checked_version([cfg["crispresso"], "--version"], "2.2.13")
     inputs=[cfg["adapters"]]+[s[k] for s in libs for k in ("r1","r2")]
     if args.manuscript_panel:
-        refs = Path(cfg["refs"])
-        inputs.extend(refs / f"SupplementaryTable{i}.csv" for i in range(2, 6))
-        inputs.append(refs / "source_sha256.json")
+        refs = panel_references(required=args.read_mode == "historical" or bool(args.baseline_panel))
+        cfg["refs"] = str(refs) if refs else None
         if cfg["stats_image"]:
             cfg["stats_image"] = str(Path(cfg["stats_image"]).expanduser().resolve(strict=True))
-    if cfg["baseline"]: inputs.append(cfg["baseline"])
+    if cfg["baseline"]:
+        with Path(cfg["baseline"]).open() as stream:
+            columns = stream.readline().rstrip("\r\n").split("\t")
+        if not {"manuscript_delta_pp", "manuscript_q_bh", "hit_agrees"}.issubset(columns):
+            raise ValueError("--baseline-panel requires a previous panel comparison fitted with the submitted references.")
     for path in inputs:
         if not Path(path).is_file():raise FileNotFoundError(path)
     if args.output:

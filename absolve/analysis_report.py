@@ -81,6 +81,24 @@ def paired_report(folder, mode):
 def panel_report(folder, mode):
     rows = read_table(folder / "panel_comparison.tsv")
     check_coverage(rows, panel=True)
+    if "submitted_hit" in rows[0]:
+        lines = panel_comparison_lines(rows, mode)
+    else:
+        lines = ["# ABSOLVE-seq panel analysis", "", f"Analysis: {mode}.",
+                 "All 632 comparisons use counts from the 26 input libraries.",
+                 "Positive calls require an increase above 0.1 percentage points and a BH-adjusted q-value below 0.05.",
+                 "", "| Strategy | Editor | Positive targets out of 79 |", "| --- | --- | ---: |"]
+        for strategy in STRATEGIES:
+            for editor in ("WT", "HiFi"):
+                calls = [r["agent_hit"] for r in rows if r["strategy"] == strategy and r["editor"] == editor]
+                if not set(calls) <= {"TRUE", "FALSE"}:
+                    raise ValueError("Invalid panel call")
+                lines.append(f"| {strategy} | {editor} | {calls.count('TRUE')} |")
+    return lines, ["panel_comparison.tsv", "comparison_summary.tsv", "library_counts.tsv", "model_field_comparison.tsv",
+                   "donor_weights.tsv", "sample_inventory.tsv", "provenance.json"]
+
+
+def panel_comparison_lines(rows, mode):
     differences = [r for r in rows if r["agent_hit"] != r["submitted_hit"]]
     max_delta = max(abs(float(r["delta_pp"]) - float(r["manuscript_delta_pp"])) for r in rows)
     max_q = max(abs(float(r["q_bh"]) - float(r["manuscript_q_bh"])) for r in rows)
@@ -105,8 +123,7 @@ def panel_report(folder, mode):
         for r in differences:
             lines.append(f"| {r['target']} | {r['strategy']} | {r['editor']} | {number(r['delta_pp'])} "
                          f"| {number(r['manuscript_delta_pp'])} | {number(r['q_bh'])} | {number(r['manuscript_q_bh'])} |")
-    return lines, ["panel_comparison.tsv", "comparison_summary.tsv", "library_counts.tsv", "model_field_comparison.tsv",
-                   "donor_weights.tsv", "sample_inventory.tsv", "provenance.json"]
+    return lines
 
 
 def write_report(folder: Path, mode, *, panel=False, run_config=None):
