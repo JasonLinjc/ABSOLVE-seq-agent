@@ -23,14 +23,14 @@ python setup_references.py --historical-maxi /data/original_maxi \
   --output /data/references/historical-maxi
 ```
 
-The builder verifies all six input hashes and each of the 79 target memberships against the selected rule’s SHA-256 manifest before publishing the new directory. The published-rule manifest was computed independently from the pinned published annotation by taking the first row for each target/pBC, selecting qualifying barcodes, and hashing the sorted barcode list for each target. Only counts and digests from that comparison are packaged with the builder. Outputs include one sorted pBC list per target, a combined `target_pbc.tsv.gz`, per-target counts and hashes in `target_comparison.tsv`, trimming logs and `provenance.json`. The published rule has **5,190,216 target/pBC keys** and the historical rule has **5,248,941**. Reference files are checked again when read by a worker. Keep the directory accessible from all worker nodes and bind it into the container when using a path outside the standard mounts. See the main README for the alternative pool-voting methods.
+The builder verifies all six input hashes and each of the 79 target memberships against the selected rule’s SHA-256 manifest before publishing the new directory. The published-rule manifest was computed independently from the pinned published annotation by taking the first row for each target/pBC, selecting qualifying barcodes, and hashing the sorted barcode list for each target. Only counts and digests from that comparison are packaged with the builder. Outputs include one sorted pBC list per target, a combined `target_pbc.tsv.gz`, per-target counts and hashes in `target_comparison.tsv`, trimming logs and `provenance.json`. The published rule has **5,190,216 target/pBC keys** and the historical rule has **5,248,941**. Reference files are checked again when read by a worker. Keep the directory accessible from all worker nodes and bind it into the container when using a path outside the standard mounts. The [legacy fast guide](manuscript-reads.md#legacy-fast-compatibility) describes the older pool-voting methods.
 
 ## Analyze a matched pair or the panel
 
 Prepare the normal sample manifest and target definitions as in the [quick start](d3734-t1-quick-start.md). Configure manuscript read-processing dependencies as in [the read-mode guide](manuscript-reads.md). Use an absolute reference path and a new run directory. To reuse a build, select the method recorded in its `provenance.json`. Only the first build needs the Maxi FASTQs.
 
 ```bash
-# Published-rule rebuild, using the same fast paired workflow as the default.
+# Published-rule rebuild, using the default unified paired-end workflow.
 python paired.py --donor D3734 --replicate T1 \
   --maxi-method manuscript --maxi-reference /data/references/published-maxi \
   --output runs/D3734-T1-rebuilt-published
@@ -45,7 +45,7 @@ python paired.py --manuscript-panel --read-mode manuscript \
   --output runs/panel-historical
 ```
 
-The paired output has 316 target/strategy records. The full model estimates 632 editor/target/strategy contrasts. The new reference governs Dedud and Dedud+Dedup. The read mode and its allele tie handling are separate choices from the Maxi rule. A fast-mode pair also accepts the historical reference via `sbatch paired.sbatch`.
+The paired output has 316 target/strategy records. The full model estimates 632 editor/target/strategy contrasts. The new reference governs Dedud and Dedud+Dedup. The read mode and its allele tie handling are separate choices from the Maxi rule. For existing fast-mode comparisons, add `--read-mode fast` when submitting the pair with `sbatch paired.sbatch`.
 
 ## Refit existing counts
 

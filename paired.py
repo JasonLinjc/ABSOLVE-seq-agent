@@ -140,8 +140,8 @@ def main():
     parser.add_argument('--maxi-reference', type=Path, help='Saved Maxi FASTQ rebuild for the selected rule (manuscript or historical).')
     parser.add_argument('--min-exact-reads', type=int, help='Reconstructed Maxi methods only (default 1).')
     parser.add_argument('--output', type=Path, help='New output directory (default: a unique directory under runs/).')
-    parser.add_argument('--fresh', action='store_true', help='Prepare and align full FASTQs again.')
-    parser.add_argument('--read-mode', choices=['fast','manuscript','historical'], help='Historical reproduces the arm-specific submission workflow from FASTQs. Pairs default to fast and manuscript panels default to manuscript.')
+    parser.add_argument('--fresh', action='store_true', help='Start from FASTQs (already standard for paired-end reads). In legacy fast mode this bypasses cached alignments.')
+    parser.add_argument('--read-mode', choices=['manuscript','historical','fast'], default='manuscript', help='Use uniform paired-end reads (default), reproduce the historical full panel, or explicitly select legacy fast processing.')
     parser.add_argument('--baseline-panel', type=Path, help='Earlier panel_comparison.tsv for tracking resolved, persistent and new disagreements.')
     parser.add_argument('--refit-counts', type=Path, help='Fit the equal-donor manuscript panel from a complete existing library_counts.tsv.')
     parser.add_argument('--finish-manuscript', type=Path, help=argparse.SUPPRESS)
@@ -182,12 +182,12 @@ def main():
         parser.error('--maxi-reference requires the manuscript or historical rule')
     if args.maxi_method == 'historical' and args.min_exact_reads is not None:
         parser.error('The historical rule has no adjustable read threshold')
-    mode = args.read_mode or ('manuscript' if args.manuscript_panel else 'fast')
+    mode = args.read_mode
     if args.baseline_panel and not (args.manuscript_panel and mode in ('manuscript','historical')):
         parser.error('--baseline-panel requires a manuscript read-mode panel')
     if mode in ('manuscript','historical') and not args.list:
         if args.maxi_method not in (DEFAULT_METHOD, "historical") or args.min_exact_reads is not None or args.target_filter == 'pbc-only':
-            parser.error('Manuscript reads use manuscript or historical Maxi membership and cross-target filtering.')
+            parser.error('Uniform paired-end reads use published or rebuilt Maxi membership and cross-target filtering. Legacy QC rules and pbc-only filtering require --read-mode fast.')
         if args.manuscript_panel and (args.donor or args.replicate):
             parser.error('The manuscript panel covers the entire submitted design.')
         if not args.manuscript_panel and not (args.donor and args.replicate):
@@ -199,7 +199,7 @@ def main():
         if args.list or args.donor or args.replicate or args.maxi_method not in (DEFAULT_METHOD, "historical") or args.min_exact_reads is not None or args.fresh or args.target_filter == 'pbc-only':
             parser.error('--manuscript-panel uses the full original design, manuscript or historical Maxi membership and manuscript target filter.')
         if not local and not job_id:
-            parser.error('Submit the panel with sbatch paired.sbatch --manuscript-panel.')
+            parser.error('Submit the legacy panel with sbatch paired.sbatch --manuscript-panel --read-mode fast.')
         from panel_report.reproduce import run_panel
         run_panel(args.output, maxi_reference(args.maxi_reference, args.maxi_method) if args.maxi_reference else None, workers=workers, job_id=job_id)
         return
@@ -217,7 +217,7 @@ def main():
         parser.error('--min-exact-reads requires a reconstructed Maxi method and a positive integer.')
     args.min_exact_reads = args.min_exact_reads or 1
     if not local and not job_id:
-        parser.error('Run with sbatch paired.sbatch or use --list.')
+        parser.error('Submit the legacy pair with sbatch paired.sbatch --read-mode fast or use --list.')
     execute(args, samples, workers, job_id)
 
 

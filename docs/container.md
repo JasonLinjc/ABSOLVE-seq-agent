@@ -1,8 +1,25 @@
 # Run the analysis container
 
-The Linux x86-64 image includes the agent source, CRISPResso2, Python and R with brglm2. The Docker archive and Apptainer SIF contain the same build. FASTQs, the sample manifest, reference tables and results stay on mounted storage.
+The Linux x86-64 Dockerfile builds the paired-end analysis environment and includes the agent source, CRISPResso2 2.2.13, Python and R with brglm2. Keep FASTQs, the sample manifest, reference tables and results on mounted storage.
 
-## Acceptance on Luminary
+## Run the default paired workflow in Docker
+
+Build from this checkout for the unified 2.2.13 runtime. The image uses the same package lock as the [paired quick start](d3734-t1-quick-start.md). With the example references and manifest prepared, mount the checkout at the same absolute path used by the manifest. Mount any external input directories at their original paths too.
+
+```bash
+docker build --platform linux/amd64 -t absolve-seq-agent:local .
+run_agent() {
+    docker run --rm --platform linux/amd64 --user "$(id -u):$(id -g)" \
+        --volume "$PWD:$PWD" --workdir "$PWD" absolve-seq-agent:local "$@"
+}
+run_agent python paired.py --executor local --donor D3734 --replicate T1 --threads 4 --output runs/D3734-T1
+run_agent python verify_results.py pair-manuscript runs/D3734-T1/results
+run_agent python verify_results.py power runs/D3734-T1/results
+```
+
+For an existing Linux cluster installation, the default workflow also supports Trimmomatic 0.36 on the host and a separate CRISPResso2 2.2.13 Apptainer image. [Cluster runtime configuration](manuscript-reads.md#configure-the-runtime)
+
+## Legacy container acceptance on Luminary
 
 Release `container-v0.1.0` used Apptainer 1.4.2 and CRISPResso2 2.3.4. The reference index built inside the SIF matched the Conda-built index file by file. The two jobs below each used six allocated CPUs and `--fresh`. Their elapsed times cover the paired analysis and exclude data transfer and indexing.
 
@@ -13,7 +30,7 @@ Release `container-v0.1.0` used Apptainer 1.4.2 and CRISPResso2 2.3.4. The refer
 
 Both jobs processed 10,084,551 NoEP read pairs and 9,868,448 HiFi read pairs. All four strategy counts, denominators, indel rates and paired differences matched the baseline. Both exported tables had SHA-256 `0b0465ecc5aa244cc2a10654e153dbe8467322cbedd4f5bfc72806058018980b`. The verified SIF had SHA-256 `bdf50ad7f94c562b99c1bdcd869bf5b7f4c362d8f4d9590088439df52e7fb972`.
 
-## Apptainer on Slurm
+## Legacy fast release with Apptainer on Slurm
 
 Use a shared checkout visible to the login and compute nodes. For a scripted SSH session, start a login shell (for example, `ssh CLUSTER 'bash -lc "command -v sbatch && command -v apptainer"'`). On Luminary, the login profile adds Slurm to the command path. Use a current checkout for the power and figure steps. The versioned SIF supplies the scientific environment.
 
@@ -43,7 +60,7 @@ apptainer exec --cleanenv --bind "$PWD" "$ABSOLVE_IMAGE" python "$PWD/setup_refe
 apptainer exec --cleanenv --bind "$PWD" "$ABSOLVE_IMAGE" python "$PWD/examples/d3734_t1_manifest.py" \
     --ena "$PWD/data/sra/SRP722226" "$PWD/data/sample_manifest.tsv"
 apptainer exec --cleanenv --bind "$PWD" "$ABSOLVE_IMAGE" python "$PWD/paired.py" --list
-job_id=$(sbatch --parsable --partition=cpu1,cpu2 paired.sbatch --donor D3734 --replicate T1 --fresh \
+job_id=$(sbatch --parsable --partition=cpu1,cpu2 paired.sbatch --read-mode fast --donor D3734 --replicate T1 --fresh \
     --output "$PWD/runs/container-D3734-T1")
 sacct -j "$job_id" --format=JobID,State,ExitCode,Elapsed
 ```
@@ -69,7 +86,7 @@ rsync -aP --relative data/containers/ data/upstream/test/data/ data/sra/SRP72222
 
 Back in the cluster checkout, verify the SIF against `SHA256SUMS`, set the image and data environment variables above, then run the reference builder and the `--ena` manifest helper there. Building the manifest on the cluster records paths visible to the job and verifies the ENA MD5 of each transferred mate. Submit the documented `--fresh` command and verify the results in the image.
 
-## Docker
+## Run the legacy release in Docker
 
 Download `absolve-linux-amd64.tar.gz` and `SHA256SUMS` from the [container release](https://github.com/JasonLinjc/ABSOLVE-seq-agent/releases/tag/container-v0.1.0). Verify the archive, load it and check the analysis runtime.
 
@@ -80,20 +97,11 @@ image=absolve-seq-agent:2fde728f8359d79cd17eceb161e53aaced9b67f8
 docker run --rm --platform linux/amd64 "$image" CRISPResso --version
 ```
 
-To build locally, run these commands from the repository root. The second command displays the available CLI options.
-
-```bash
-docker build --platform linux/amd64 -t absolve-seq-agent:local .
-docker run --rm --platform linux/amd64 absolve-seq-agent:local
-```
-
 From a current checkout, use the loaded image as a local runtime for the fast workflow. Prepare the inputs and manifest following the [paired quick start](d3734-t1-quick-start.md). Mount the checkout at its original absolute path so the manifest and the output refer to the same files on the host and inside the container. Mount any external FASTQ directories at their original paths as well.
 
 ```bash
 docker run --rm --platform linux/amd64 --user "$(id -u):$(id -g)" \
     --volume "$PWD:$PWD" --workdir "$PWD" "$image" \
-    python paired.py --donor D3734 --replicate T1 --threads 4 --fresh --output runs/local-pair
+    python paired.py --read-mode fast --donor D3734 --replicate T1 --threads 4 --fresh --output runs/local-pair
 python verify_results.py pair-fast runs/local-pair/results
 ```
-
-For a locally built image use `image=absolve-seq-agent:local`. The [manuscript workflow](manuscript-reads.md#run-locally) uses its own historical read-processing runtime.

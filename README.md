@@ -27,7 +27,7 @@
 
 > Set up https://github.com/JasonLinjc/ABSOLVE-seq-agent and run the public D3734/T1 example from the raw sequencing reads. How much editing do we see with HiFi compared with its control at each target? Show me the report, figure and Excel data.
 
-The agent downloads four FASTQ files (1.58 GB), applies the study’s standard filters and analyzes all 79 targets. Before handing you the report, it checks the editing rates against the verified example and checks the power estimates for detecting small editing differences. Start with `results/report.md` for the figure and links to the tables. [Public dataset](https://trace.ncbi.nlm.nih.gov/Traces/?view=study&acc=SRP722226) · [Verified example results](docs/d3734-t1-quick-start.md#verified-on-luminary)
+The agent downloads four FASTQ files (1.58 GB) and analyzes all 79 targets using both ends of each read pair and the published plasmid barcode annotation. Before handing you the report, it checks the editing rates against the verified example and checks the power estimates for detecting small editing differences. Start with `results/report.md` for the figure and links to the tables. [Public dataset](https://trace.ncbi.nlm.nih.gov/Traces/?view=study&acc=SRP722226) · [Verified example results](docs/d3734-t1-quick-start.md#verified-on-luminary)
 
 You’ll need a signed-in client, Git, internet access and either Conda/Mamba or a supported container runtime. [Setup options](docs/container.md)
 
@@ -62,7 +62,7 @@ Ask: “List the pairs in `examples/manifest.example.tsv` and stop there.” You
 ABSOLVE_MANIFEST=examples/manifest.example.tsv python paired.py --list
 ```
 
-After installing the fast-mode environment, check that CRISPResso reports 2.3.4 and that the model and plotting dependencies load:
+In the paired analysis environment, check that CRISPResso reports 2.2.13 and that the model and plotting dependencies load.
 
 ```bash
 CRISPResso --version
@@ -80,10 +80,10 @@ For a real run, follow the [reference, manifest and FASTQ setup](docs/d3734-t1-q
 
 ### Agent architecture
 
-After target assignment by tBC, **CRISPResso2** aligns reads to each target’s reference amplicon and identifies insertions and deletions in the cut-site window. The agent then groups aligned reads by pBC and calculates indel rates under the four counting strategies.
+The default workflow trims both mates with Trimmomatic 0.36 and assigns each read pair to a target by tBC. **CRISPResso2 2.2.13** uses FLASH to merge the mates, aligns the merged reads to each target’s reference amplicon and identifies insertions and deletions in the cut-site window. The agent then groups aligned reads by pBC and calculates indel rates under the four counting strategies.
 
 <p align="center">
-  <img src="docs/assets/agent-architecture.svg" width="660" alt="A chat request selects the analysis or figure skill in Codex or Claude Code. The skills use the CLI directly. The published pBC annotation is the default. The original study’s six Maxi FASTQs can rebuild the annotation under the published or historical rule for reuse across runs. The local or Slurm workflow assigns reads by tBC, uses CRISPResso2 to align them and identify cut-site indels, groups them by pBC, estimates NoEP and HiFi indel rates, calculates Δindel rate (HiFi minus NoEP) and simulates detection power. It exports indel rates and paired differences in paired_target_rates.tsv and detection power in power_estimates.tsv, alongside a report and a figure with Excel source data." />
+  <img src="docs/assets/agent-architecture.svg" width="660" alt="A chat request selects the analysis or figure skill in Codex or Claude Code. The skills use the CLI directly. The published pBC annotation is the default. The original study’s six Maxi FASTQs can rebuild the annotation under the published or historical rule for reuse across runs. The local or Slurm workflow assigns reads by tBC, uses CRISPResso2 2.2.13 to merge and align the mates and identify cut-site indels, groups them by pBC, estimates NoEP and HiFi indel rates, calculates Δindel rate (HiFi minus NoEP) and simulates detection power. It exports indel rates and paired differences in paired_target_rates.tsv and detection power in power_estimates.tsv, alongside a report and a figure with Excel source data." />
 </p>
 
 **What to prepare.** Provide four FASTQ files (R1 and R2 for both NoEP and HiFi) from the same donor and replicate, plus a sample sheet or manifest that maps each file to its sample. The agent uses the published pBC annotation by default. To rebuild it from reads, use the original study’s six Maxi FASTQs (R1 and R2 for each of three pools) and choose the published or historical rule. Later runs can reuse the saved annotation directory. To try the agent with public data, ask for the [D3734/T1 example](docs/d3734-t1-quick-start.md).
@@ -101,9 +101,9 @@ The [one-message prompt](#start-with-one-message) runs the public example end to
 <tr><td><strong>👤 User</strong><br>Can you get the public D3734/T1 example? Which sample is the control?</td></tr>
 <tr><td><strong>🤖 Agent</strong><br>NoEP is the control (<code>SRR39887646</code>). Its matched HiFi sample is <code>SRR39887695</code>. I checked all four sequencing files against the archive and recorded them in the sample list.</td></tr>
 <tr><td><strong>👤 User</strong><br>Analyze all 79 targets from those reads and show me how the two samples compare.</td></tr>
-<tr><td><strong>🤖 Agent</strong><br>The run produced 316 comparisons across four strategies. Read preparation retained 5,971,199 of 10,084,551 NoEP pairs and 6,979,407 of 9,868,448 HiFi pairs.</td></tr>
+<tr><td><strong>🤖 Agent</strong><br>I compared HiFi with its matched NoEP control at 79 targets. The report shows 316 comparisons, one per target and counting strategy.</td></tr>
 <tr><td><strong>👤 User</strong><br>At <code>1617_OT_0040_ALT</code>, do we still see more editing with HiFi if we count each qualifying plasmid barcode just once?</td></tr>
-<tr><td><strong>🤖 Agent</strong><br>Yes. With that counting method (Dedud+Dedup), HiFi had 9 edited barcode families out of 675 (1.33%). NoEP had 0 out of 1,619 (0.00%). The difference was <strong>+1.33 percentage points</strong>.</td></tr>
+<tr><td><strong>🤖 Agent</strong><br>Yes. With that counting method (Dedud+Dedup), HiFi had 11 edited barcode families out of 691 (1.59%). NoEP had 0 out of 1,694 (0.00%). The difference was <strong>+1.59 percentage points</strong>.</td></tr>
 <tr><td><strong>👤 User</strong><br>Did my results match the public example? Where can I see the figure and the numbers behind it?</td></tr>
 <tr><td><strong>🤖 Agent</strong><br>Yes. All 316 editing comparisons matched the verified example. I also checked the power estimates and the data used for the figure. Open <code>runs/D3734-T1/results/report.md</code> for the figure and links to the editing rates, power estimates and Excel file.</td></tr>
 </tbody>
@@ -155,18 +155,18 @@ Prefer the terminal? Follow the [D3734/T1 walkthrough](docs/d3734-t1-quick-start
 With inputs ready, run the public pair on a workstation:
 
 ```bash
-python paired.py --executor local --donor D3734 --replicate T1 --threads 4 --fresh --output runs/D3734-T1
-python verify_results.py pair-fast runs/D3734-T1/results
+python paired.py --executor local --donor D3734 --replicate T1 --threads 4 --output runs/D3734-T1
+python verify_results.py pair-manuscript runs/D3734-T1/results
 python verify_results.py power runs/D3734-T1/results
 ```
 
-`--fresh` starts from the raw reads and repeats the alignments. For this example, the default filters use the published plasmid barcode annotation and check that edited reads match their assigned target. The `pair-fast` check compares the 316 editing results with the verified D3734/T1 run. The `power` check verifies the simulation outputs and checks that the plotted values and Excel data agree with the result tables.
+The first command starts from the raw reads and writes a new run directory. The next two commands check the public example against its 316 accepted results and verify that the power estimates, plot data and Excel values agree.
 
-Use a new output directory for each run. Local execution defaults to one worker. On Slurm, submit `sbatch paired.sbatch --donor D3734 --replicate T1 --fresh --output runs/D3734-T1` from the repository root. Run the two verification commands after the job completes.
+On Slurm, run `python paired.py --donor D3734 --replicate T1 --output runs/D3734-T1` on the submission host with the analysis environment active. It prints the preparation, alignment and finish job IDs. Wait for the finish job before opening the report. [Cluster setup and verification](docs/d3734-t1-quick-start.md#slurm-submission)
 
 ## Paired results
 
-In `results/paired_target_rates.tsv`, each row gives the NoEP and HiFi numerators, denominators, rates (%) and difference (percentage points). A zero denominator leaves the rate blank. Fast pairs also write `qc.json` and `strategy_summary.tsv`. Manuscript-read pairs write `library_counts.tsv`, `sample_inventory.tsv` and `provenance.json` alongside the report.
+In `results/paired_target_rates.tsv`, each row gives the NoEP and HiFi numerators, denominators, rates (%) and difference (percentage points). A zero denominator leaves the rate blank. The default workflow writes `library_counts.tsv`, `sample_inventory.tsv` and `provenance.json` alongside the report.
 
 | Strategy | What counts toward the rate |
 | --- | --- |
@@ -175,40 +175,33 @@ In `results/paired_target_rates.tsv`, each row gives the NoEP and HiFi numerator
 | Dedud | Reads with a qualifying plasmid barcode that pass cross-target filtering |
 | Dedud+Dedup | One representative allele per retained family after filtering |
 
-When alleles tie for the highest read count, fast reads use the first allele encountered. Manuscript reads break the tie by aligned read sequence and then aligned reference sequence.
+When alleles tie for the highest read count, the paired-end workflow breaks the tie by aligned read sequence and then aligned reference sequence.
 
 Plasmid pool sequencing identifies which plasmid barcodes (pBCs) qualify for each target. The default `--maxi-method manuscript` uses the published annotation derived from the study’s Maxi plasmid pool. To rebuild from the six original Maxi FASTQs, use `setup_references.py --published-maxi` for the published entropy threshold or `--historical-maxi` for the historical two-tBC exception. On later runs, pass the saved directory with `--maxi-reference DIR` and its matching `--maxi-method manuscript` or `--maxi-method historical`. [Build commands and rule comparison](docs/historical-maxi.md#build-the-reference-once)
 
 [Full-panel pBC validation in fast and manuscript reproduction modes](docs/pbc-validation.md)
 
-<details>
-<summary><strong>Compare pBC definitions or change the target filter</strong></summary>
-
-For a **fast matched pair**, select `merged` for QC on pooled Maxi reads, or `any-pool`, `two-pools` or `all-pools` to require support from one, two or all three pools. Set `ABSOLVE_MAXI_MERGED` to the merged reference or `ABSOLVE_MAXI_POOLS` to the parent of `LV_Maxi_1`, `LV_Maxi_2` and `LV_Maxi_3`. Each reference needs its `summary.json` and checksum-matched `plasmid_barcode_category.tsv.gz`.
-
-The manuscript cross-target filter requires edited alleles to match the assigned target uniquely by minimum edit distance. A fast pair can use `--target-filter pbc-only` to skip this check. Manuscript-read pairs and both full-panel modes always apply the cross-target check and accept the published annotation or a Maxi FASTQ rebuild made with either rule.
-
-</details>
-
 ## Figure 3b and reproducibility
 
 The panel workflow writes `figures/Figure3b.pdf` and `figures/Figure3b_source_data.xlsx` using its fitted effects and freshly simulated power. To reproduce the published graphic, ask for **Figure 3b with submitted power**. The redraw can use submitted or refitted effects while retaining the original Supplementary Table 2 power values. Both versions export 158 plotted target/editor rows and record the power source. [Figure commands and verification](docs/manuscript-figures.md)
 
-The separate benchmark profiles cover a D3734/T1 fast pair, a manuscript-read pair with historical Maxi membership, and a panel refit from saved counts. Run the profile that matches your inputs and settings:
+Use the benchmark for the pBC annotation and data used in your run. The first command checks the public D3734/T1 example with the default published annotation.
 
 ```bash
-python verify_results.py pair-fast runs/paired-fast/results
+python verify_results.py pair-manuscript runs/D3734-T1/results
 python verify_results.py pair-historical runs/paired-historical/results
 python verify_results.py panel-refit runs/panel-refit
 ```
 
 ## Manuscript comparison
 
+To reproduce the paper, ask “Reproduce Supplementary Tables 2–5 from the original 26 libraries.” The agent uses the historical processing recorded for each study arm.
+
 [Raw FASTQ reproduction of Supplementary Tables 2–5: acceptance results and run instructions](docs/historical-panel-acceptance.md)
 
 ## Local inputs and caches
 
-Keep inputs on storage visible to the workers. `ABSOLVE_DATA` selects the data directory (default `data/` in the checkout). `ABSOLVE_MANIFEST` defaults to `$ABSOLVE_DATA/sample_manifest.tsv`. A fast pair can reuse a compatible alignment registered in the study cache under `ABSOLVE_CACHE`. Use `--fresh` to prepare and align the FASTQs again.
+Keep inputs on storage visible to the workers. `ABSOLVE_DATA` selects the data directory (default `data/` in the checkout). `ABSOLVE_MANIFEST` defaults to `$ABSOLVE_DATA/sample_manifest.tsv`. Use a new output directory for each paired-end run.
 
 For laboratory files, follow the [manifest template](examples/manifest.example.tsv). Supply the original study sample names, absolute R1 and R2 paths and their SHA-256 digests. The importer `resolve_inputs.py INVENTORY.tsv METADATA.xlsx OUTPUT.tsv` joins a checksum-verified inventory to the submission workbook’s `SRA_data` sheet by both original filenames. The public quick start builds a manifest for the D3734/T1 NoEP and HiFi pair from the four ENA downloads.
 

@@ -195,7 +195,10 @@ def start(args, *, local, workers):
     for r in table(PUBLIC/"NovaSeq3_sample_info.csv",","):
         d,rep,arm=r["donor_id"],r["replicate"],ARM[r["cas_type"]]
         if not args.manuscript_panel and (d!=args.donor or rep!=args.replicate or arm=="WT"): continue
-        libs.append(dict(manifest[f"{arm}_pool_{d}_{rep}"],donor=d,replicate=rep,arm=arm,
+        sample_name = f"{arm}_pool_{d}_{rep}"
+        if sample_name not in manifest:
+            raise ValueError(f"Missing {sample_name} in the manifest. See paired.py --list for available pairs.")
+        libs.append(dict(manifest[sample_name],donor=d,replicate=rep,arm=arm,
                          trim_steps=HISTORICAL_TRIM_STEPS[arm]))
     if len(libs)!=(26 if args.manuscript_panel else 2) or len({s["sample_name"] for s in libs})!=len(libs):
         raise ValueError("Incomplete or duplicated manuscript design")
@@ -224,7 +227,10 @@ def start(args, *, local, workers):
             sample["read_profile"] = "historical-wt" if sample["arm"] == "WT" else "historical-hifi-noep"
     jar = os.environ.get("ABSOLVE_TRIMMOMATIC_JAR")
     if not jar:
-        raise ValueError("Set ABSOLVE_TRIMMOMATIC_JAR to the Trimmomatic 0.36 JAR")
+        jars = list((Path(sys.prefix) / "share").glob("trimmomatic-0.36-*/trimmomatic.jar"))
+        if len(jars) != 1:
+            raise ValueError("Install the paired environment or set ABSOLVE_TRIMMOMATIC_JAR to the Trimmomatic 0.36 JAR")
+        jar = jars[0]
     cfg["jar"] = str(Path(jar).expanduser().resolve(strict=True))
     cfg["executor"] = "local" if local else "slurm"
     image = os.environ.get("ABSOLVE_CRISPRESSO2213_IMAGE")
@@ -234,15 +240,13 @@ def start(args, *, local, workers):
         if local and not shutil.which("apptainer"):
             raise ValueError("Install Apptainer for the configured image, or unset ABSOLVE_CRISPRESSO2213_IMAGE and configure native CRISPResso2 2.2.13")
         cfg["image"] = str(Path(image).expanduser().resolve(strict=True))
-    elif local:
+    else:
         from panel_report.manuscript_reads import checked_version
         executable = shutil.which(os.getenv("ABSOLVE_CRISPRESSO2213_EXECUTABLE", "CRISPResso"))
         if not executable or not shutil.which("flash"):
-            raise ValueError("Local manuscript mode requires CRISPResso2 2.2.13 and flash, or ABSOLVE_CRISPRESSO2213_IMAGE")
+            raise ValueError("Install CRISPResso2 2.2.13 and FLASH in the paired environment or set ABSOLVE_CRISPRESSO2213_IMAGE")
         cfg["crispresso"] = str(Path(executable).absolute())
         checked_version([cfg["crispresso"], "--version"], "2.2.13")
-    else:
-        raise ValueError("Set ABSOLVE_CRISPRESSO2213_IMAGE")
     inputs=[cfg["adapters"]]+[s[k] for s in libs for k in ("r1","r2")]
     if args.manuscript_panel:
         refs = Path(cfg["refs"])

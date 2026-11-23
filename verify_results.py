@@ -15,6 +15,10 @@ PLOT = "plotted_data.tsv"
 PANEL = "panel_comparison.tsv"
 FIELDS = "model_field_comparison.tsv"
 BASELINES = {
+    "pair-manuscript": {
+        PAIR: "003cf3fa670477f811f5c697d0abb896525825a7991e263c1e985a78d9629a3b",
+        COUNTS: "008a9aad4f0749d0b38c27205ca32ed2e5d58ce3aa67e73e9e56cc29d327ae9a",
+    },
     "pair-fast": {PAIR: "0b0465ecc5aa244cc2a10654e153dbe8467322cbedd4f5bfc72806058018980b"},
     "pair-historical": {
         PAIR: "8cc8ca5c19e34a7838d03ee5d4658cae50b3c27664bab9959956c10faa4a22c1",

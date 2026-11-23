@@ -6,19 +6,17 @@
 set -eo pipefail
 # Slurm executes a spool copy. A direct invocation can resolve the checkout from this file.
 agent_dir=${SLURM_SUBMIT_DIR:-$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)}
-# Manuscript mode orchestrates two software environments from the Slurm host.
-panel=0
-read_mode=
+# The paired and historical launchers select their scientific runtimes on the host.
+read_mode=manuscript
 previous=
 for arg in "$@"; do
     case "$arg" in
-        --manuscript-panel) panel=1 ;;
         --read-mode=*) read_mode=${arg#*=} ;;
     esac
     if [[ "$previous" == --read-mode ]]; then read_mode=$arg; fi
     previous=$arg
 done
-if [[ "$read_mode" == manuscript || ( "$panel" == 1 && -z "$read_mode" ) ]]; then
+if [[ "$read_mode" != fast ]]; then
     exec "${ABSOLVE_HOST_PYTHON:-python3}" -u "$agent_dir/paired.py" "$@"
 fi
 if [[ -n "${ABSOLVE_IMAGE:-}" ]]; then

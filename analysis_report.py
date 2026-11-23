@@ -39,8 +39,11 @@ def paired_report(folder, mode):
     if len(settings) != 1:
         raise ValueError("Inconsistent pair or filter settings")
     donor, rep, maxi, target_filter = settings.pop()
+    read_label = "paired-end CRISPResso2 2.2.13" if mode == "manuscript" else f"{mode} mode"
+    barcode_label = "published pBC rule" if maxi == "manuscript" else f"{maxi} pBC rule"
+    filter_label = "cross-target identity check" if target_filter == "manuscript" else target_filter
     lines = [f"# ABSOLVE-seq paired analysis: {donor} / {rep}", "",
-             f"Read mode: {mode}. Plasmid barcode rule: {maxi}. Target filter: {target_filter}.",
+             f"Reads were processed with {read_label}. Filtering used the {barcode_label} and {filter_label}.",
              "The table contains 316 unique comparisons across 79 targets and four strategies.",
              "Differences are HiFi minus NoEP in percentage points (pp)."]
     if (folder / "qc.json").is_file():
@@ -108,7 +111,7 @@ def panel_report(folder, mode):
 
 def write_report(folder: Path, mode, *, panel=False, run_config=None):
     lines, files = panel_report(folder, mode) if panel else paired_report(folder, mode)
-    profiles = ("panel-refit",) if panel else ("pair-fast", "pair-historical")
+    profiles = ("panel-refit",) if panel else ("pair-manuscript", "pair-historical", "pair-fast")
     for profile in profiles:
         reference = BASELINES[profile]
         if all((folder / name).is_file() and hashlib.sha256((folder / name).read_bytes()).hexdigest() == digest

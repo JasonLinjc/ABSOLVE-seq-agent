@@ -1,33 +1,25 @@
 # Run D3734/T1 from paired FASTQs
 
-This walkthrough runs the original D3734/T1 NoEP (LV_S3) and HiFi (LV_S1) libraries through all 79 targets. Each output row includes both indel rates and their paired difference (HiFi minus NoEP). The manuscript pBC rule and cross-target filter are the defaults.
-
-For a prebuilt environment, use the [container instructions](container.md). The published SIF reproduced the paired rate table on Luminary with the full public ENA downloads. Use the current checkout for the report, power estimates and figure.
+This walkthrough runs the original D3734/T1 NoEP (LV_S3) and HiFi (LV_S1) libraries through all 79 targets. Each output row includes both indel rates and their paired difference (HiFi minus NoEP). The agent trims both mates with Trimmomatic 0.36, aligns them with CRISPResso2 2.2.13 and uses the published pBC annotation and cross-target filter.
 
 ## 1. Get the agent and create an environment
 
-Use a local working directory on a workstation or a shared working directory on a Slurm cluster. Download the inputs on a machine with access to GitHub, ENA and the Conda channels. Use a new checkout and an empty environment prefix.
+Use a shared checkout and environment on a Slurm cluster. For a workstation, use the local executor in step 4. These commands install the locked Linux x86-64 environment, including Java, Trimmomatic, CRISPResso2, FLASH and the reporting tools.
 
 ```bash
 git clone https://github.com/JasonLinjc/ABSOLVE-seq-agent.git
 cd ABSOLVE-seq-agent
-unset ABSOLVE_DATA ABSOLVE_MANIFEST ABSOLVE_CACHE PYTHONPATH
+unset ABSOLVE_DATA ABSOLVE_MANIFEST ABSOLVE_CACHE ABSOLVE_RUNS ABSOLVE_IMAGE ABSOLVE_TRIMMOMATIC_JAR ABSOLVE_CRISPRESSO2213_IMAGE ABSOLVE_CRISPRESSO2213_EXECUTABLE PYTHONPATH
 export PYTHONNOUSERSITE=1
 export OPENBLAS_NUM_THREADS=1 OMP_NUM_THREADS=1 MKL_NUM_THREADS=1
 source "$(conda info --base)/etc/profile.d/conda.sh"
-```
-
-For a shared environment, run the following commands. For a node-local environment on Luminary, go directly to [Node-local installation](#node-local-installation).
-
-```bash
-env_prefix="$PWD/../absolve-pair-env"
-mamba create --no-rc -y -p "$env_prefix" -f environment.yml
+env_prefix="$PWD/../absolve-paired-env"
+mamba create -y -p "$env_prefix" --file docs/paired-linux-64.lock
 conda activate "$env_prefix"
-python --version
 CRISPResso --version
 ```
 
-CRISPResso2 should report version 2.3.4. For the exact Linux x86-64 package builds used during acceptance, substitute `--file docs/environment-linux-64.lock` for `-f environment.yml`.
+Check for version 2.2.13. The launcher discovers the Trimmomatic 0.36 JAR in this environment. For platforms with compatible native packages, the dependency specification is `environment.yml`. For Linux containers or an existing cluster installation, see [container setup](container.md) and [external runtime paths](manuscript-reads.md#configure-the-runtime).
 
 ## 2. Build the published reference index
 
@@ -88,86 +80,56 @@ The example hashes the four compressed files and writes a two-row manifest. Comp
 
 ## 4. Run the full pair
 
-The local command returns after it writes the report, tables, figure and Excel workbook. Use a new output directory.
+From the active paired environment, use a new run directory. Both mates of every selected library are checked against the manifest before trimming. The ordinary command uses the published pBC annotation.
 
 ```bash
-run_dir="$PWD/runs/acceptance"
-python paired.py --executor local --donor D3734 --replicate T1 --threads 4 --fresh --output "$run_dir"
-python verify_results.py pair-fast "$run_dir/results"
-python verify_results.py power "$run_dir/results"
+run_dir="$PWD/runs/D3734-T1"
+python paired.py --executor local --donor D3734 --replicate T1 --threads 4 --output "$run_dir"
 ```
 
 ### Slurm submission
 
-Submit from the agent repository root with the new environment active. Set the partition to one available on your cluster. The following command uses the Luminary CPU partitions.
+With the environment and inputs visible to the compute nodes, run the following on the **submission host**. Set your site’s partition or account as needed.
 
 ```bash
-run_dir="$PWD/runs/acceptance"
-job_id=$(sbatch --parsable --partition=cpu1,cpu2 paired.sbatch \
-    --donor D3734 --replicate T1 --fresh --output "$run_dir")
-squeue -j "$job_id"
+export SBATCH_PARTITION=cpu1,cpu2  # Luminary example
+run_dir="$PWD/runs/D3734-T1"
+python paired.py --donor D3734 --replicate T1 --output "$run_dir"
+cat "$run_dir/jobs.json"
 ```
 
-The job verifies both mates for each library, prepares all input pairs, and runs CRISPResso2 per library and target. Check for `COMPLETED` and exit code `0:0` before verifying results. Use a new output directory for each run.
-
-```bash
-sacct -j "$job_id" --format=JobID,State,ExitCode,Elapsed,MaxRSS
-```
+The launcher submits preparation, alignment and reporting jobs with dependencies. Wait for the **finish job** to reach `COMPLETED` with exit code `0:0`; use its ID from `jobs.json` with `sacct -j JOB_ID --format=JobID,State,ExitCode`. Then continue with step 5.
 
 ## 5. Read the report and verify the result
 
-Open `$run_dir/results/report.md` for QC, observed editing effects and estimated detection power. Its Dedud figure, PDF and Excel workbook are under `results/figures/`. The four-strategy power table has 632 rows (79 targets × 4 strategies × 2 effect sizes). [Power method](power.md)
-
-
-Check both the table layout and its content. The original laboratory FASTQs and the four public ENA FASTQs produced the same 316-row table with the manuscript defaults. The checksum below applies to both input routes.
+Open `$run_dir/results/report.md` for target-level indel rates, HiFi minus NoEP differences and estimated detection power. The PDF, PNG and Excel source data are under `results/figures/`.
 
 ```bash
-table="$run_dir/results/paired_target_rates.tsv"
-python - "$table" <<'PY'
-import csv
-import sys
-from collections import Counter
-
-with open(sys.argv[1]) as handle:
-    rows = list(csv.DictReader(handle, delimiter="\t"))
-
-strategies = ("Unfiltered", "Dedup", "Dedud", "Dedud+Dedup")
-keys = {(r["target"], r["strategy"]) for r in rows}
-assert len(rows) == len(keys) == 316
-assert len({t for t, _ in keys}) == 79
-assert Counter(s for _, s in keys) == {s: 79 for s in strategies}
-assert all((r["donor"], r["replicate"], r["maxi_method"], r["target_filter"])
-           == ("D3734", "T1", "manuscript", "manuscript") for r in rows)
-print("79 targets and 316 unique target/strategy rows.")
-PY
-printf '%s  %s\n' 0b0465ecc5aa244cc2a10654e153dbe8467322cbedd4f5bfc72806058018980b "$table" | sha256sum -c -
+python verify_results.py pair-manuscript "$run_dir/results"
+python verify_results.py power "$run_dir/results"
 ```
 
-Read `NoEP_rate_pct` and `HiFi_rate_pct` as percentages. The `delta_HiFi_minus_NoEP_pp` column subtracts NoEP from HiFi and is measured in percentage points. A zero denominator leaves the corresponding rate and difference blank.
+The first check compares all 316 paired results and 632 arm-level count rows against the accepted public pair. The second checks the 632 power estimates (two assumed effects for each target and strategy), the plotted values and the Excel source data. [Power method](power.md)
 
 ### Verified on Luminary
 
-A clean-checkout run on 2026-11-21 tested the [one-message workflow](../README.md#start-with-one-message) at agent revision `681f213`. All four ENA FASTQs were downloaded on a networked workstation, transferred to Luminary, and verified from the cluster manifest builder. The reference index was built in the new checkout. Slurm job `21298427` used the published Apptainer image and `--fresh`, completed in 10 min 13 s (analysis only), and produced 79 new alignments per arm.
+The public NoEP and HiFi FASTQs passed the ENA MD5 checks. Starting with a new reference index, the default CLI processed all 79 targets in both libraries using paired-end CRISPResso2 2.2.13 and the published annotation (finish job `21343015`). All 632 arm/target/strategy count rows matched the independent published-annotation panel recount, including numerators, denominators and retained family counts. Recomputing both arm rates and HiFi minus NoEP from those counts reproduced all 316 comparisons within 1e-12 percentage points. The power and Excel checks passed.
 
-| Check | Result |
+A second run used the local executor inside a Luminary allocation (job `21343242`). It installed the 157-package Linux lock, discovered Trimmomatic and CRISPResso2 in that environment and processed the four raw FASTQs again. The counts and indel-rate tables matched the Slurm exports byte for byte. Both runs produced the same plotted data and the same Excel values for all 79 targets.
+
+For identical detection-power estimates, use the same locked reporting environment. With the older reporting image (NumPy 2.5.5), 11 of 632 simulated estimates differed from the lock (NumPy 1.26.4), by at most 0.9 percentage points. Recomputing power from the Slurm rate table with the lock (job `21343314`) reproduced the local executor's entire power table byte for byte.
+
+| Accepted export | SHA-256 |
 | --- | --- |
-| Paired effects | All 316 rows matched the accepted SHA-256. Recalculation from the counts reproduced every arm rate and paired difference within 1e-12. |
-| Power | All 632 estimates were available. The power TSV matched the earlier public-pair run byte for byte (SHA-256 `e140f49224fd0d59a40f3a0257ffa5bad62e385c8cf858787c576ca2c0f3357b`). |
-| Report and figure | All report links resolved. The PDF contained the 79 target labels, the PNG decoded successfully, and the 79 rows in the Excel sheet matched the Dedud plotting table. |
+| `paired_target_rates.tsv` | `003cf3fa670477f811f5c697d0abb896525825a7991e263c1e985a78d9629a3b` |
+| `library_counts.tsv` | `008a9aad4f0749d0b38c27205ca32ed2e5d58ce3aa67e73e9e56cc29d327ae9a` |
+| `power_estimates.tsv` (locked environment) | `3cb3b127f0f1be573635beff772ec00e37a19361c3707fb8a341c218e9cb44e3` |
 
-
-Container release `container-v0.1.0` ran the complete public ENA pair and the complete laboratory pair in separate Slurm jobs with `--fresh`. The four ENA FASTQs passed their published MD5 checks. Each run produced 79 fresh alignments per library and matched the independently verified 316-row table byte for byte. Counts in the table below apply to both sources. [Container acceptance](container.md#acceptance-on-luminary)
-
-The full laboratory FASTQ run used analysis release `v0.1.1` (`526d368`), CRISPResso2 2.3.4, six allocated CPUs and 18 GiB of requested memory. The paired analysis took 9 min 3 s. The run directory occupied 705 MiB. All 316 rows matched the archived paired table byte for byte. An independent calculation from the exported counts and denominators also reproduced both rates and every paired difference to within 1e-12.
-
-| Library | Original read pairs | Pairs after preparation | Fresh target alignments |
-| --- | ---: | ---: | ---: |
-| NoEP | 10,084,551 | 5,971,199 | 79 |
-| HiFi | 9,868,448 | 6,979,407 | 79 |
+At `1617_OT_0040_ALT`, Dedud+Dedup retained 11 indel-positive HiFi families out of 691 and zero out of 1,694 for NoEP, a difference of +1.59 percentage points.
 
 ## Node-local installation
 
-On Luminary, linking the environment on the shared filesystem was slow. The acceptance run installed the Linux packages on a compute node's local `/tmp` and ran the analysis in that allocation. The shared working directory held the FASTQs, reference index and final output.
+On Luminary, linking the environment on the shared filesystem was slow. The acceptance run installed the Linux packages in a compute allocation's scratch directory and ran the analysis in that allocation. The shared working directory held the FASTQs, reference index and final output.
 
 After cloning the agent in step 1, run the Git commands in step 2 on the login node to fetch the upstream checkout. If using the public runs, also download the four files from step 3 on the login node. Defer reference indexing and manifest creation until the environment is active. Stage the locked archives in a shared cache and request an allocation from the agent repository root.
 
@@ -175,7 +137,7 @@ After cloning the agent in step 1, run the Git commands in step 2 on the login n
 export CONDA_PKGS_DIRS="$PWD/data/conda-pkgs"
 mkdir -p "$CONDA_PKGS_DIRS"
 mamba create --no-rc --download-only -y -p "$PWD/data/download-env" \
-    --file docs/environment-linux-64.lock
+    --file docs/paired-linux-64.lock
 salloc --partition=cpu1,cpu2 --cpus-per-task=6 --mem=18G --time=04:00:00
 srun --pty bash
 ```
@@ -194,7 +156,7 @@ from urllib.parse import urlsplit
 
 cache, output = map(Path, sys.argv[1:])
 lines = ["@EXPLICIT"]
-for entry in Path("docs/environment-linux-64.lock").read_text().splitlines():
+for entry in Path("docs/paired-linux-64.lock").read_text().splitlines():
     if entry.startswith("https://"):
         url = urlsplit(entry)
         package = cache / Path(url.path).name
@@ -213,5 +175,5 @@ Run `python setup_references.py` and the manifest commands in step 3. Then run t
 
 ```bash
 run_dir="$PWD/runs/acceptance"
-bash paired.sbatch --donor D3734 --replicate T1 --fresh --output "$run_dir"
+python paired.py --executor local --threads 6 --donor D3734 --replicate T1 --output "$run_dir"
 ```

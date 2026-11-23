@@ -1,6 +1,6 @@
 # Original paired-end read processing
 
-Choose manuscript mode to replay the original preprocessing with Trimmomatic 0.36 and paired-end CRISPResso2 2.2.13. The default for ordinary NoEP/HiFi pairs is the fast workflow. A full manuscript panel defaults to manuscript read processing. The Maxi annotation choice and the read processing mode are separate options.
+Choose manuscript mode to replay the original preprocessing with Trimmomatic 0.36 and paired-end CRISPResso2 2.2.13. Matched NoEP/HiFi pairs and full panels both default to uniform paired-end processing. The Maxi annotation choice and the read processing mode are separate options.
 
 ## Reproduce the submitted calls from the original FASTQs
 
@@ -56,7 +56,7 @@ The collector compares the unique pBCs in the `UMI` column of each combined tabl
 
 ## Configure the runtime
 
-Use Python 3.10 or later, Java and the upstream checkout and references from the main README. The cluster workflow uses Slurm and Apptainer. Local execution can use Apptainer on Linux or a native installation of the historical tools. Supply the original Trimmomatic 0.36 JAR and a Linux CRISPResso2 2.2.13 image. The final panel fit uses the agent analysis image when `ABSOLVE_IMAGE` is set, or an available `Rscript` with brglm2. All paths must be visible on the compute nodes. [Trimmomatic 0.36 distribution](https://anaconda.org/bioconda/trimmomatic/files) · [CRISPResso2 2.2.13 image](https://depot.galaxyproject.org/singularity/crispresso2:2.2.13--py310hd6be1da_0)
+Use Python 3.10 or later, Java and the upstream checkout and references from the main README. Use the native paired environment either locally or on a Slurm cluster. Linux hosts with Apptainer can also run the alignment in a separate image. The paired Conda environment includes Trimmomatic 0.36, FLASH and native CRISPResso2 2.2.13. The launcher finds its JAR in the environment. To use an external JAR and Linux alignment image, set the paths below. The final panel fit uses the agent analysis image when `ABSOLVE_IMAGE` is set, or an available `Rscript` with brglm2. All paths must be visible on the compute nodes. [Trimmomatic 0.36 distribution](https://anaconda.org/bioconda/trimmomatic/files) · [CRISPResso2 2.2.13 image](https://depot.galaxyproject.org/singularity/crispresso2:2.2.13--py310hd6be1da_0)
 
 ```sh
 export ABSOLVE_TRIMMOMATIC_JAR=/shared/software/trimmomatic-0.36.jar
@@ -138,3 +138,7 @@ All four remaining discrepancies were WT hits in the submitted tables. Values be
 | Dedup | `1450_OT_0210_ALT` | 0.061067 | 0.118504 | 0.091502 | 0.000254 |
 
 The two Unfiltered contrasts crossed only the Δ threshold. The two Dedup contrasts crossed both thresholds. WT library count rows matched the previous replay exactly. The shared model also uses the newly trimmed NoEP and HiFi counts.
+
+## Legacy fast compatibility
+
+Existing analyses that use cached single-read alignments can select `--read-mode fast` explicitly with the CRISPResso2 2.3.4 runtime. The study cache is configured with `ABSOLVE_CACHE`. For a matched pair, `--maxi-method merged` uses the merged QC reference in `ABSOLVE_MAXI_MERGED`. The `any-pool`, `two-pools` and `all-pools` methods use the three QC references under `ABSOLVE_MAXI_POOLS`. A legacy pair accepts `--target-filter pbc-only`. For the original fast public example with its default filters, verify using `pair-fast`.

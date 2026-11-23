@@ -3,9 +3,14 @@ channels:
   - conda-forge
   - bioconda
 dependencies:
-  - python>=3.10
-  - crispresso2=2.3.4
+  - python=3.10
+  - crispresso2=2.2.13
+  - flash
+  - openjdk
+  - trimmomatic=0.36
   - r-base
   - r-brglm2
   - openpyxl
-  - matplotlib
+  - matplotlib-base
+  - numpy
+  - pandas

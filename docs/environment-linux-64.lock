@@ -1,4 +1,4 @@
-# Linux x86-64 environment resolved from environment.yml for the D3734/T1 acceptance run.
+# Legacy fast and figure runtime for Linux x86-64 (CRISPResso2 2.3.4).
 @EXPLICIT
 https://conda.anaconda.org/conda-forge/linux-64/_openmp_mutex-4.5-20_gnu.conda#a9f577daf3de00bca7c3c76c0ecbd1de
 https://conda.anaconda.org/conda-forge/noarch/_r-mutex-1.0.1-anacondar_1.tar.bz2#19f9db5f4f1b7f5ef5f6d67207f25f38

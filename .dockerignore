@@ -2,7 +2,7 @@
 !Dockerfile
 !/*.py
 !docs/
-!docs/environment-linux-64.lock
+!docs/paired-linux-64.lock
 !examples/
 !examples/*.py
 !examples/*.tsv

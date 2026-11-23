@@ -4,6 +4,11 @@ on:
   push:
     tags: ['container-v*']
   workflow_dispatch:
+    inputs:
+      verify_public_pair:
+        description: Run the public D3734/T1 raw FASTQs through the built Docker image
+        type: boolean
+        default: false
 
 permissions:
   contents: read
@@ -50,3 +55,60 @@ jobs:
           path: dist/
           compression-level: 0
           retention-days: 3
+
+  verify-public-pair:
+    if: github.event_name == 'workflow_dispatch' && inputs.verify_public_pair
+    needs: build
+    runs-on: ubuntu-24.04
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: analysis-container
+          path: ${{ runner.temp }}/image
+      - name: Load and verify the image built from this commit
+        working-directory: ${{ runner.temp }}/image
+        run: |
+          sha256sum -c SHA256SUMS
+          docker load -i absolve-linux-amd64.tar.gz
+          image="absolve-seq-agent:$GITHUB_SHA"
+          test "$(docker image inspect --format '{{ index .Config.Labels "org.opencontainers.image.revision" }}' "$image")" = "$GITHUB_SHA"
+          docker image inspect --format '{{.Id}}' "$image" > "$RUNNER_TEMP/image-id.txt"
+      - name: Download the published references and both mates of each library
+        run: |
+          data="$RUNNER_TEMP/pair-data"
+          mkdir -p "$data/fastqs" "$data/upstream/test/data/target_info"
+          upstream=https://raw.githubusercontent.com/pellinlab/ABSOLVE-seq/271355dfe40cf46b952e82b88dd4521f23f9feb4/test/data
+          for file in plasmid_barcode_category.tsv.gz adapters.fa target_info/NovaSeq3_sample_info.csv target_info/OT_guide_amplicon_seq.csv target_info/target_oligos_sequenes.csv; do
+            curl -fLsS --retry 4 --retry-all-errors "$upstream/$file" -o "$data/upstream/test/data/$file"
+          done
+          awk -F '\t' 'NR > 1 { print $4; print $6 }' examples/d3734_t1_ena.tsv |
+            (cd "$data/fastqs" && xargs -P 4 -n 1 curl -fLsS --retry 4 --retry-all-errors -C - -O)
+      - name: Run the packaged agent from raw FASTQs and verify the report
+        run: |
+          mkdir -p "$RUNNER_TEMP/pair-output"
+          docker run --rm --user "$(id -u):$(id -g)" \
+            -v "$RUNNER_TEMP/pair-data:/data" -v "$RUNNER_TEMP/pair-output:/output" \
+            -e ABSOLVE_DATA=/data -e MPLCONFIGDIR=/tmp/matplotlib -e HOME=/tmp \
+            "absolve-seq-agent:$GITHUB_SHA" bash -eu -o pipefail -c '
+              python setup_references.py
+              python examples/d3734_t1_manifest.py --ena /data/fastqs /data/sample_manifest.tsv
+              python paired.py --executor local --threads 4 --donor D3734 --replicate T1 --fresh --output /output/pair
+              python verify_results.py pair-manuscript /output/pair/results
+              python verify_results.py power /output/pair/results
+              cd /output/pair/results
+              echo "3cb3b127f0f1be573635beff772ec00e37a19361c3707fb8a341c218e9cb44e3  power_estimates.tsv" | sha256sum -c -
+              echo "a206a3847e5ab58465a7924f4a36919d48fcb954d0ac06213560df63cdb26c5a  figures/plotted_data.tsv" | sha256sum -c -
+              sha256sum *.tsv *.json report.md figures/* > SHA256SUMS
+            '
+          cp "$RUNNER_TEMP/image-id.txt" "$RUNNER_TEMP/pair-output/pair/"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: D3734-T1-docker-report
+          path: |
+            ${{ runner.temp }}/pair-output/pair/results
+            ${{ runner.temp }}/pair-output/pair/run.json
+            ${{ runner.temp }}/pair-output/pair/image-id.txt
+          if-no-files-found: error
+          retention-days: 14
