@@ -47,7 +47,7 @@ run_agent python paired.py --help
 Follow the [full-panel walkthrough](manuscript-reads.md#analyze-all-study-samples) to stage the public references and FASTQs in `data/`. Use the `run_agent` wrapper for the Python steps. To run from a workstation or within one compute allocation:
 
 ```bash
-run_agent python paired.py --executor local --threads 4 --manuscript-panel --read-mode manuscript --fresh --output runs/study-panel
+run_agent python paired.py --executor local --threads 4 --manuscript-panel --output runs/study-panel
 run_agent python verify_results.py power runs/study-panel/results
 ```
 

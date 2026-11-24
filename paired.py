@@ -1,4 +1,4 @@
-"""Analyze a matched NoEP/HiFi pair or reproduce Supplementary Tables 2–5 from the full study panel."""
+"""Analyze a matched NoEP/HiFi pair or all 26 study libraries from paired-end FASTQs."""
 import argparse
 import csv
 import os
@@ -31,7 +31,7 @@ def discover():
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--list', action='store_true', help='Show manifest pairs and any missing conditions.')
-    parser.add_argument('--manuscript-panel', action='store_true', help='Analyze all 26 original libraries. Use --read-mode manuscript for routine analysis. Omitting --read-mode selects historical reproduction.')
+    parser.add_argument('--manuscript-panel', action='store_true', help='Analyze all 26 original libraries using uniform paired-end processing and the published pBC annotation by default.')
     parser.add_argument('--target-filter', choices=['manuscript'], help='Cross-target identity check after Maxi filtering (default manuscript).')
     parser.add_argument('--donor')
     parser.add_argument('--replicate')
@@ -39,7 +39,7 @@ def main():
     parser.add_argument('--maxi-reference', type=Path, help='Saved Maxi FASTQ rebuild for the selected rule (manuscript or historical).')
     parser.add_argument('--output', type=Path, help='New output directory (default: a unique directory under runs/).')
     parser.add_argument('--fresh', action='store_true', help='Start from FASTQs (the default for all read analyses).')
-    parser.add_argument('--read-mode', choices=['manuscript', 'historical'], help='Use uniform paired-end processing for routine analysis or historical processing for the submitted panel.')
+    parser.add_argument('--read-mode', choices=['manuscript', 'historical'], default='manuscript', help='Use manuscript (default) for uniform paired-end processing. Select historical to reproduce Supplementary Tables 2–5.')
     parser.add_argument('--baseline-panel', type=Path, help='Earlier panel_comparison.tsv for tracking resolved, persistent and new disagreements.')
     parser.add_argument('--refit-counts', type=Path, help='Fit the equal-donor manuscript panel from a complete existing library_counts.tsv.')
     parser.add_argument('--finish-manuscript', type=Path, help=argparse.SUPPRESS)
@@ -47,8 +47,6 @@ def main():
                         help='Use the local machine when Slurm is absent, or force local execution.')
     parser.add_argument('--threads', type=int, help='Local worker limit (default 1).')
     args = parser.parse_args()
-    if args.read_mode is None:
-        args.read_mode = 'historical' if args.manuscript_panel and not args.refit_counts else 'manuscript'
     if args.read_mode == 'historical':
         if not args.manuscript_panel or args.list or args.refit_counts or args.finish_manuscript:
             parser.error('Historical reads require --manuscript-panel and raw FASTQs')

@@ -1,6 +1,6 @@
 # Original paired-end read processing
 
-For matched NoEP/HiFi pairs the agent uses Trimmomatic 0.36 and paired-end CRISPResso2 2.2.13. A raw `--manuscript-panel` run defaults to the historical processing for the submitted workbooks. The Maxi annotation choice and the read processing mode are separate options.
+Both matched NoEP/HiFi pairs and the full study panel use Trimmomatic 0.36, paired-end CRISPResso2 2.2.13 and the published pBC annotation by default. To reproduce the submitted workbooks, explicitly select `--manuscript-panel --read-mode historical`. For routine analysis, you can also select a saved Maxi annotation independently of the read mode.
 
 ## Analyze all study samples
 
@@ -36,7 +36,7 @@ The manifest builder checks each compressed FASTQ against its ENA MD5 and record
 **3. Run the panel and verify the report.** On a Slurm submission host, load the scheduler commands and confirm `command -v sbatch` succeeds. The standard workflow fits all editing effects and estimates power directly from the sequencing counts. For an optional comparison with the paper, place the four full-model reference extracts and their `source_sha256.json` in `data/submitted_model_reference/` before launch.
 
 ```bash
-python paired.py --manuscript-panel --read-mode manuscript --fresh --output runs/study-panel
+python paired.py --manuscript-panel --output runs/study-panel
 ```
 
 To use a workstation or one existing allocation, add `--executor local --threads N` with the allocated CPU count. Local execution returns after the report is written. On Slurm, wait for the finish job recorded in `runs/study-panel/jobs.json`. Then run `python verify_results.py power runs/study-panel/results` and open `runs/study-panel/results/report.md`. [Result files](../README.md#study-panel-results)
@@ -132,7 +132,7 @@ unset ABSOLVE_CRISPRESSO2213_IMAGE ABSOLVE_IMAGE
 export PATH="/software/crispresso-2.2.13/bin:$PATH"
 python paired.py --executor local --read-mode manuscript --donor D3734 --replicate T1 \
   --threads 4 --output runs/local-pair
-python paired.py --executor local --manuscript-panel --read-mode manuscript --threads 4 --output runs/local-panel
+python paired.py --executor local --manuscript-panel --threads 4 --output runs/local-panel
 ```
 
 To select a specific native CRISPResso executable, set `ABSOLVE_CRISPRESSO2213_EXECUTABLE` to its path. To analyze frozen counts directly, use [the count refit](historical-maxi.md#refit-existing-counts). Reference rebuilding and Figure 3b export also run directly from Python.

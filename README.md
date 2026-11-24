@@ -202,10 +202,10 @@ The routine panel figure uses power simulated from the run's counts. To use the 
 
 ## Run from the terminal
 
-After preparing the runtime, manifest and references, run the full study in a new output directory. [Full-panel walkthrough](docs/manuscript-reads.md#analyze-all-study-samples)
+After preparing the runtime, manifest and references, run all 26 libraries from FASTQs with the default paired-end workflow and published pBC annotation. Add `--read-mode historical` only to reproduce Supplementary Tables 2–5. [Full-panel walkthrough](docs/manuscript-reads.md#analyze-all-study-samples)
 
 ```bash
-python paired.py --manuscript-panel --read-mode manuscript --fresh --output runs/study-panel
+python paired.py --manuscript-panel --output runs/study-panel
 ```
 
 On a workstation the command returns after aggregation. On Slurm, wait for the finish job listed in `runs/study-panel/jobs.json`. Then verify the power table, plotted values and Excel workbook.
