@@ -26,7 +26,9 @@
 
 ### Start with one message
 
-Paste the **User** message below into your configured client. The agent can build the report from the 52 public FASTQs (51.7 GB) and the published barcode and target references. If you already have the reads, give it their manifest. Supplementary Tables 2–5 are optional for comparison with the paper. [Full-panel input guide](docs/manuscript-reads.md#analyze-all-study-samples) · [Verified 26-library run](docs/manuscript-reads.md#new-user-acceptance)
+Paste the **User** message below into your configured client. The agent can download the 52 public FASTQs (51.7 GB), or use your manifest if you already have the reads. Supplementary Tables 2–5 are optional for comparison with the paper. [Full-panel input guide](docs/manuscript-reads.md#analyze-all-study-samples) · [Verified 26-library run](docs/manuscript-reads.md#new-user-acceptance)
+
+By default, the agent downloads the published plasmid barcode (pBC) annotation and verifies its SHA-256 checksum before building the target index. You only need the original study’s six Maxi FASTQs to rebuild the annotation from scratch. [Download the published pBC annotation](https://raw.githubusercontent.com/pellinlab/ABSOLVE-seq/271355dfe40cf46b952e82b88dd4521f23f9feb4/test/data/plasmid_barcode_category.tsv.gz)
 
 <table>
 <tbody>
